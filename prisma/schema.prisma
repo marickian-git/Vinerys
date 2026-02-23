@@ -1,16 +1,103 @@
- 
+// prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL") 
+  url      = env("DATABASE_URL")
 }
 
-model Task{
-  id String @id @default(uuid())
-  content String
+model User {
+  id        String   @id @default(cuid())
+  clerkId   String   @unique
+  email     String   @unique
+  name      String?
+  role      Role     @default(USER)
+  wines     Wine[]
   createdAt DateTime @default(now())
-  completed Boolean @default(false)
+  updatedAt DateTime @updatedAt
+}
+
+model Wine {
+  id                  String          @id @default(cuid())
+  userId              String
+  user                User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Basic Info
+  name                String
+  producer            String?
+  country             String?
+  region              String?
+  subregion           String?
+  type                WineType
+  color               WineColor?
+  vintage             Int?
+  
+  // Details
+  grapeVarieties      String[]
+  alcoholPercentage   Float?
+  price               Float?
+  quantity            Int             @default(1)
+  
+  // Storage
+  cellarLocation      String?
+  purchaseDate        DateTime?
+  purchasePrice       Float?
+  estimatedValue      Float?
+  
+  // Tasting
+  rating              Int?
+  tastingNotes        String?
+  servingTemperature  String?
+  foodPairing         String[]
+  agingPotential      String?
+  
+  // Bottle
+  bottleSize          String?         @default("0.75L")
+  bottleImageUrl      String?
+  labelImageUrl       String?
+  
+  // Status
+  isFavorite          Boolean         @default(false)
+  consumptionDate     DateTime?
+  status              WineStatus      @default(IN_CELLAR)
+  
+  // Timestamps
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  
+  @@index([userId])
+  @@index([type])
+  @@index([country])
+  @@index([vintage])
+  @@index([status])
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum WineType {
+  RED
+  WHITE
+  ROSE
+  SPARKLING
+  DESSERT
+  FORTIFIED
+}
+
+enum WineColor {
+  RED
+  WHITE
+  ROSE
+  ORANGE
+}
+
+enum WineStatus {
+  IN_CELLAR
+  CONSUMED
+  SOLD
+  GIFTED
 }

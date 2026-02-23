@@ -1,9 +1,12 @@
 'use client'
 import { Toaster } from 'react-hot-toast'
+import { ClerkProvider } from '@clerk/nextjs';
+
 
 const Providers = ({ children }) => {
     return (
-        <><Toaster />{children}</>
+        <>
+         <ClerkProvider><Toaster />{children}</ClerkProvider></>
     )
 }
 
