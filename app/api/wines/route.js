@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs';
 import prisma from '@/utils/db';
 
 // GET /api/wines - Lista toate vinurile utilizatorului

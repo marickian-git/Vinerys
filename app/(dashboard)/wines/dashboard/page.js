@@ -1,22 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useUser } from '@clerk/nextjs';
 import WineCard from '@/components/wines/WineCard';
 import WineFilters from '@/components/wines/WineFilters';
 import Link from 'next/link';
 
 export default function WinesPage() {
-  const { isLoaded, isSignedIn } = useUser();
   const [wines, setWines] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({});
 
   useEffect(() => {
-    if (isLoaded && isSignedIn) {
+    if (isLoaded ) {
       fetchWines();
     }
-  }, [isLoaded, isSignedIn, filters]);
+  }, [isLoaded, filters]);
 
   const fetchWines = async () => {
     try {
@@ -48,18 +46,7 @@ export default function WinesPage() {
     );
   }
 
-  if (!isSignedIn) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="text-center">
-          <p className="mb-4">Te rugăm să te autentifici pentru a vedea colecția ta</p>
-          <Link href="/sign-in" className="bg-vin-primary text-white px-4 py-2 rounded">
-            Autentificare
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  
 
   return (
     <div className="container mx-auto px-4 py-8">

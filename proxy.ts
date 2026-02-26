@@ -1,0 +1,12 @@
+// proxy.ts sau proxy.js
+import { NextRequest, NextResponse } from 'next/server';
+
+export function proxy(request: NextRequest) {
+  const url = request.nextUrl.clone();
+  return NextResponse.next();
+}
+
+// Configurare opțională
+export const config = {
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+};

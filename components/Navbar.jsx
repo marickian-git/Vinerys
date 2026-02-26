@@ -1,10 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { UserButton, useUser } from '@clerk/nextjs';
+ 
 
 export default function Navbar() {
-  const { isSignedIn } = useUser();
 
   return (
     <nav className="bg-white shadow-lg fixed w-full top-0 z-50">
@@ -24,7 +23,7 @@ export default function Navbar() {
               Acasă
             </Link>
             
-            {isSignedIn && (
+            {  (
               <>
                 <Link 
                   href="/wines" 
@@ -41,8 +40,7 @@ export default function Navbar() {
               </>
             )}
 
-            {/* User Button from Clerk */}
-            <UserButton afterSignOutUrl="/" />
+   
           </div>
         </div>
       </div>
