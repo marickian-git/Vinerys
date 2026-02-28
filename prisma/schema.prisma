@@ -6,71 +6,133 @@ datasource db {
   provider = "postgresql"
 }
 
+// ─────────────────────────────────────────
+// BETTER AUTH - tabele obligatorii
+// ─────────────────────────────────────────
+
 model User {
-  id        String   @id @default(cuid())
-  clerkId   String   @unique
-  email     String   @unique
-  name      String?
-  role      Role     @default(USER)
-  wines     Wine[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  role          Role      @default(USER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  sessions      Session[]
+  accounts      Account[]
+  wines         Wine[]
+
+  @@map("user")
 }
 
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  token     String   @unique
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("session")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  accountId         String
+  providerId        String
+  accessToken       String?
+  refreshToken      String?
+  idToken           String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope             String?
+  password          String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("verification")
+}
+
+// ─────────────────────────────────────────
+// VINERYS - modele aplicație
+// ─────────────────────────────────────────
+
 model Wine {
-  id                  String          @id @default(cuid())
-  userId              String
-  user                User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  // Basic Info
-  name                String
-  producer            String?
-  country             String?
-  region              String?
-  subregion           String?
-  type                WineType
-  color               WineColor?
-  vintage             Int?
-  
-  // Details
-  grapeVarieties      String[]
-  alcoholPercentage   Float?
-  price               Float?
-  quantity            Int             @default(1)
-  
-  // Storage
-  cellarLocation      String?
-  purchaseDate        DateTime?
-  purchasePrice       Float?
-  estimatedValue      Float?
-  
-  // Tasting
-  rating              Int?
-  tastingNotes        String?
-  servingTemperature  String?
-  foodPairing         String[]
-  agingPotential      String?
-  
-  // Bottle
-  bottleSize          String?         @default("0.75L")
-  bottleImageUrl      String?
-  labelImageUrl       String?
-  
+  id                   String      @id @default(cuid())
+  userId               String
+  user                 User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Info de bază
+  name                 String
+  producer             String?
+  country              String?
+  region               String?
+  subregion            String?
+  type                 WineType
+  color                WineColor?
+  vintage              Int?
+
+  // Detalii
+  grapeVarieties       String[]
+  alcoholPercentage    Float?
+  quantity             Int         @default(1)
+
+  // Stocare & preț
+  cellarLocation       String?
+  purchaseDate         DateTime?
+  purchasePrice        Float?
+  estimatedValue       Float?
+
+  // Degustare
+  rating               Int?        // 1-5
+  tastingNotes         String?
+  servingTemperature   String?
+  foodPairing          String[]
+  agingPotential       String?
+
+  // Sticlă
+  bottleSize           String?     @default("0.75L")
+  bottleImageUrl       String?
+  labelImageUrl        String?
+
   // Status
-  isFavorite          Boolean         @default(false)
-  consumptionDate     DateTime?
-  status              WineStatus      @default(IN_CELLAR)
-  
-  // Timestamps
-  createdAt           DateTime        @default(now())
-  updatedAt           DateTime        @updatedAt
-  
+  isFavorite           Boolean     @default(false)
+  consumptionDate      DateTime?
+  status               WineStatus  @default(IN_CELLAR)
+
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+
   @@index([userId])
   @@index([type])
   @@index([country])
   @@index([vintage])
   @@index([status])
 }
+
+// ─────────────────────────────────────────
+// ENUM-URI
+// ─────────────────────────────────────────
 
 enum Role {
   USER
