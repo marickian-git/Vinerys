@@ -16,7 +16,7 @@ export default function RootLayout({ children }) {
       <body className={inter.className}>
         <Providers>
           <Navbar />
-          <main className="pt-16 min-h-screen bg-gray-50">
+          <main className="pt-16 min-h-screen" style={{ background: '#0d0608' }}>
             {children}
           </main>
         </Providers>

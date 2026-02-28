@@ -1,129 +1,185 @@
-import Image from 'next/image';
+'use client';
+
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 
-export default function WineCard({ wine, onDelete }) {
-  const router = useRouter();
+const TYPE_CONFIG = {
+  RED:       { bg: 'rgba(139,26,46,0.25)',  border: 'rgba(139,26,46,0.5)',   dot: '#8b1a2e', label: 'Roșu' },
+  WHITE:     { bg: 'rgba(212,175,55,0.15)', border: 'rgba(212,175,55,0.4)',  dot: '#d4af37', label: 'Alb' },
+  ROSE:      { bg: 'rgba(196,69,105,0.2)',  border: 'rgba(196,69,105,0.45)', dot: '#c44569', label: 'Roze' },
+  SPARKLING: { bg: 'rgba(180,200,220,0.12)',border: 'rgba(180,200,220,0.3)', dot: '#b4c8dc', label: 'Spumant' },
+  DESSERT:   { bg: 'rgba(180,120,40,0.15)', border: 'rgba(180,120,40,0.35)', dot: '#b47828', label: 'Desert' },
+  FORTIFIED: { bg: 'rgba(100,40,120,0.15)', border: 'rgba(100,40,120,0.35)', dot: '#643078', label: 'Fortifiat' },
+};
 
-  const handleDelete = async () => {
-    if (confirm('Sigur dorești să ștergi acest vin?')) {
-      try {
-        const response = await fetch(`/api/wines/${wine.id}`, {
-          method: 'DELETE',
-        });
-        
-        if (response.ok) {
-          onDelete?.(wine.id);
-        }
-      } catch (error) {
-        console.error('Error deleting wine:', error);
-      }
-    }
-  };
+const STATUS_CONFIG = {
+  IN_CELLAR: { label: 'În pivniță', color: 'rgba(85,196,78,0.8)' },
+  CONSUMED:  { label: 'Consumat',   color: 'rgba(245,230,232,0.3)' },
+  SOLD:      { label: 'Vândut',     color: 'rgba(212,175,55,0.7)' },
+  GIFTED:    { label: 'Dăruit',     color: 'rgba(196,69,105,0.7)' },
+};
 
-  const getTypeColor = (type) => {
-    const colors = {
-      RED: 'bg-red-100 text-red-800',
-      WHITE: 'bg-yellow-100 text-yellow-800',
-      ROSE: 'bg-pink-100 text-pink-800',
-      SPARKLING: 'bg-purple-100 text-purple-800',
-      DESSERT: 'bg-amber-100 text-amber-800',
-      FORTIFIED: 'bg-orange-100 text-orange-800',
-    };
-    return colors[type] || 'bg-gray-100 text-gray-800';
-  };
+export default function WineCard({ wine }) {
+  const type   = TYPE_CONFIG[wine.type]   ?? TYPE_CONFIG.RED;
+  const status = STATUS_CONFIG[wine.status] ?? STATUS_CONFIG.IN_CELLAR;
+  const stars  = Array.from({ length: 5 }, (_, i) => i < (wine.rating ?? 0));
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-      <div className="relative h-48 bg-gray-200">
-        {wine.bottleImageUrl ? (
-          <img
-            src={wine.bottleImageUrl}
-            alt={wine.name}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-400">
-            <span>Fără imagine</span>
-          </div>
-        )}
-        
-        {wine.isFavorite && (
-          <div className="absolute top-2 right-2 bg-yellow-400 text-white p-1 rounded-full">
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-            </svg>
-          </div>
-        )}
-      </div>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,400&family=Jost:wght@300;400;500&display=swap');
 
-      <div className="p-4">
-        <div className="flex justify-between items-start mb-2">
-          <h3 className="text-lg font-semibold text-gray-800">{wine.name}</h3>
-          <span className={`text-xs px-2 py-1 rounded-full ${getTypeColor(wine.type)}`}>
-            {wine.type}
-          </span>
-        </div>
+        .wc-card {
+          position: relative;
+          background: rgba(255,255,255,0.03);
+          border: 1px solid rgba(196,69,105,0.1);
+          border-radius: 12px;
+          overflow: hidden;
+          transition: all 0.3s ease;
+          text-decoration: none;
+          display: block;
+          font-family: 'Jost', sans-serif;
+        }
+        .wc-card:hover {
+          border-color: rgba(196,69,105,0.3);
+          background: rgba(255,255,255,0.05);
+          transform: translateY(-3px);
+          box-shadow: 0 12px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(196,69,105,0.15);
+        }
 
-        <p className="text-sm text-gray-600 mb-2">
-          {wine.producer} {wine.vintage && `· ${wine.vintage}`}
-        </p>
+        .wc-image {
+          position: relative;
+          height: 180px;
+          background: linear-gradient(160deg, rgba(26,8,16,0.9), rgba(13,6,8,0.95));
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+        }
+        .wc-image-bg {
+          position: absolute;
+          inset: 0;
+          background: radial-gradient(ellipse at 50% 30%, rgba(139,26,46,0.2), transparent 70%);
+        }
+        .wc-bottle-icon {
+          font-size: 3.5rem;
+          position: relative;
+          z-index: 1;
+          filter: drop-shadow(0 4px 12px rgba(196,69,105,0.3));
+        }
+        .wc-img { width: 100%; height: 100%; object-fit: cover; opacity: 0.85; }
 
-        {wine.country && (
-          <p className="text-sm text-gray-500 mb-3">
-            {wine.country} {wine.region && `· ${wine.region}`}
-          </p>
-        )}
+        .wc-type-badge {
+          position: absolute;
+          top: 0.75rem; left: 0.75rem;
+          display: flex; align-items: center; gap: 0.4rem;
+          padding: 0.25rem 0.6rem;
+          border-radius: 20px;
+          font-size: 0.65rem;
+          font-weight: 500;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: rgba(245,230,232,0.9);
+          z-index: 2;
+        }
+        .wc-type-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+        .wc-favorite { position: absolute; top: 0.75rem; right: 0.75rem; font-size: 1rem; z-index: 2; }
 
-        <div className="flex justify-between items-center mb-3">
-          {wine.price && (
-            <span className="text-lg font-bold text-vin-primary">
-              {wine.price} RON
-            </span>
+        .wc-body { padding: 1rem 1.1rem 1.1rem; }
+
+        .wc-name {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 1.15rem;
+          font-weight: 600;
+          color: #f5e6e8;
+          line-height: 1.25;
+          margin-bottom: 0.2rem;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .wc-producer {
+          font-size: 0.75rem;
+          color: rgba(245,230,232,0.4);
+          font-weight: 300;
+          letter-spacing: 0.05em;
+          margin-bottom: 0.75rem;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .wc-meta { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.85rem; }
+        .wc-meta-item { font-size: 0.7rem; color: rgba(245,230,232,0.35); font-weight: 300; }
+        .wc-meta-sep { width: 3px; height: 3px; border-radius: 50%; background: rgba(196,69,105,0.4); flex-shrink: 0; }
+
+        .wc-footer { display: flex; align-items: center; justify-content: space-between; }
+        .wc-stars { display: flex; gap: 2px; }
+        .wc-star { font-size: 0.7rem; line-height: 1; color: #d4af37; }
+        .wc-star-empty { color: rgba(245,230,232,0.15); }
+        .wc-no-rating { font-size: 0.7rem; color: rgba(245,230,232,0.2); }
+
+        .wc-right { display: flex; align-items: center; gap: 0.6rem; }
+        .wc-price { font-family: 'Cormorant Garamond', serif; font-size: 1rem; font-weight: 600; color: rgba(212,175,55,0.85); }
+        .wc-status { font-size: 0.62rem; font-weight: 400; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.2rem 0.5rem; border-radius: 4px; background: rgba(255,255,255,0.04); }
+
+        .wc-qty {
+          position: absolute;
+          top: 0.75rem; right: 0.75rem;
+          font-size: 0.65rem;
+          color: rgba(245,230,232,0.35);
+          background: rgba(0,0,0,0.4);
+          padding: 0.15rem 0.4rem;
+          border-radius: 4px;
+          font-family: 'Jost', sans-serif;
+          z-index: 2;
+        }
+      `}</style>
+
+      <Link href={`/wines/${wine.id}`} className="wc-card">
+        <div className="wc-image">
+          <div className="wc-image-bg" />
+          {wine.labelImageUrl || wine.bottleImageUrl ? (
+            <img src={wine.labelImageUrl || wine.bottleImageUrl} alt={wine.name} className="wc-img" />
+          ) : (
+            <span className="wc-bottle-icon">🍷</span>
           )}
-          <span className="text-sm bg-gray-100 px-2 py-1 rounded">
-            {wine.quantity} {wine.quantity === 1 ? 'sticlă' : 'sticle'}
-          </span>
-        </div>
-
-        {wine.rating && (
-          <div className="flex items-center mb-3">
-            {[...Array(5)].map((_, i) => (
-              <svg
-                key={i}
-                className={`w-4 h-4 ${
-                  i < wine.rating ? 'text-yellow-400' : 'text-gray-300'
-                }`}
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-              </svg>
-            ))}
+          <div className="wc-type-badge" style={{ background: type.bg, border: `1px solid ${type.border}` }}>
+            <div className="wc-type-dot" style={{ background: type.dot }} />
+            {type.label}
           </div>
-        )}
-
-        <div className="flex justify-between gap-2">
-          <Link
-            href={`/wines/${wine.id}`}
-            className="flex-1 text-center bg-blue-500 text-white px-3 py-1.5 rounded hover:bg-blue-600 transition-colors text-sm"
-          >
-            Detalii
-          </Link>
-          <Link
-            href={`/wines/edit/${wine.id}`}
-            className="flex-1 text-center bg-gray-500 text-white px-3 py-1.5 rounded hover:bg-gray-600 transition-colors text-sm"
-          >
-            Editează
-          </Link>
-          <button
-            onClick={handleDelete}
-            className="flex-1 bg-red-500 text-white px-3 py-1.5 rounded hover:bg-red-600 transition-colors text-sm"
-          >
-            Șterge
-          </button>
+          {wine.isFavorite && <div className="wc-favorite">❤️</div>}
+          {wine.quantity > 1 && <div className="wc-qty">×{wine.quantity}</div>}
         </div>
-      </div>
-    </div>
+
+        <div className="wc-body">
+          <div className="wc-name">{wine.name}</div>
+          <div className="wc-producer">
+            {[wine.producer, wine.region, wine.country].filter(Boolean).join(' · ') || 'Producător necunoscut'}
+          </div>
+
+          <div className="wc-meta">
+            {wine.vintage && <span className="wc-meta-item">{wine.vintage}</span>}
+            {wine.vintage && wine.alcoholPercentage && <div className="wc-meta-sep" />}
+            {wine.alcoholPercentage && <span className="wc-meta-item">{wine.alcoholPercentage}% alc.</span>}
+            {wine.alcoholPercentage && wine.bottleSize && <div className="wc-meta-sep" />}
+            {wine.bottleSize && <span className="wc-meta-item">{wine.bottleSize}</span>}
+          </div>
+
+          <div className="wc-footer">
+            <div className="wc-stars">
+              {wine.rating
+                ? stars.map((filled, i) => (
+                    <span key={i} className={`wc-star ${filled ? '' : 'wc-star-empty'}`}>★</span>
+                  ))
+                : <span className="wc-no-rating">Neevaluat</span>
+              }
+            </div>
+            <div className="wc-right">
+              {wine.purchasePrice && <span className="wc-price">{wine.purchasePrice} €</span>}
+              <span className="wc-status" style={{ color: status.color }}>{status.label}</span>
+            </div>
+          </div>
+        </div>
+      </Link>
+    </>
   );
 }
