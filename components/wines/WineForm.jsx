@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createWine, updateWine } from '@/utils/actions';
 import toast from 'react-hot-toast';
+import ImageUpload from '@/components/wines/ImageUpload';
 
 const WINE_TYPES = [
   { value: 'RED',       label: '🔴 Roșu' },
@@ -23,7 +24,7 @@ const STATUSES = [
 
 const BOTTLE_SIZES = ['0.187L', '0.375L', '0.5L', '0.75L', '1L', '1.5L', '3L', '6L'];
 
-const SECTIONS = ['Informații de bază', 'Detalii', 'Stocare & Preț', 'Degustare'];
+const SECTIONS = ['Informații de bază', 'Imagini', 'Detalii', 'Stocare & Preț', 'Degustare'];
 
 const defaultForm = {
   name: '', producer: '', country: '', region: '', subregion: '',
@@ -32,6 +33,7 @@ const defaultForm = {
   rating: '', tastingNotes: '', servingTemperature: '', agingPotential: '',
   bottleSize: '0.75L', status: 'IN_CELLAR', isFavorite: false,
   grapeVarieties: '', foodPairing: '',
+  labelImageUrl: '', bottleImageUrl: '',
 };
 
 export default function WineForm({ wine = null }) {
@@ -39,16 +41,30 @@ export default function WineForm({ wine = null }) {
   const isEdit = !!wine;
 
   const [form, setForm] = useState(wine ? {
-    ...wine,
-    vintage: wine.vintage?.toString() || '',
-    alcoholPercentage: wine.alcoholPercentage?.toString() || '',
-    quantity: wine.quantity?.toString() || '1',
-    purchasePrice: wine.purchasePrice?.toString() || '',
-    estimatedValue: wine.estimatedValue?.toString() || '',
-    rating: wine.rating?.toString() || '',
-    purchaseDate: wine.purchaseDate ? new Date(wine.purchaseDate).toISOString().split('T')[0] : '',
-    grapeVarieties: wine.grapeVarieties?.join(', ') || '',
-    foodPairing: wine.foodPairing?.join(', ') || '',
+    name:               wine.name               || '',
+    producer:           wine.producer           || '',
+    country:            wine.country            || '',
+    region:             wine.region             || '',
+    subregion:          wine.subregion          || '',
+    type:               wine.type               || 'RED',
+    status:             wine.status             || 'IN_CELLAR',
+    bottleSize:         wine.bottleSize         || '0.75L',
+    cellarLocation:     wine.cellarLocation     || '',
+    servingTemperature: wine.servingTemperature || '',
+    agingPotential:     wine.agingPotential     || '',
+    tastingNotes:       wine.tastingNotes       || '',
+    labelImageUrl:      wine.labelImageUrl      || '',
+    bottleImageUrl:     wine.bottleImageUrl     || '',
+    isFavorite:         wine.isFavorite         ?? false,
+    vintage:            wine.vintage?.toString()          || '',
+    alcoholPercentage:  wine.alcoholPercentage?.toString()|| '',
+    quantity:           wine.quantity?.toString()         || '1',
+    purchasePrice:      wine.purchasePrice?.toString()    || '',
+    estimatedValue:     wine.estimatedValue?.toString()   || '',
+    rating:             wine.rating?.toString()           || '',
+    purchaseDate:       wine.purchaseDate ? new Date(wine.purchaseDate).toISOString().split('T')[0] : '',
+    grapeVarieties:     wine.grapeVarieties?.join(', ')   || '',
+    foodPairing:        wine.foodPairing?.join(', ')      || '',
   } : defaultForm);
 
   const [section, setSection] = useState(0);
@@ -101,7 +117,6 @@ export default function WineForm({ wine = null }) {
 
         .wform-wrap { font-family: 'Jost', sans-serif; }
 
-        /* Section tabs */
         .wform-tabs {
           display: flex;
           gap: 0;
@@ -128,16 +143,11 @@ export default function WineForm({ wine = null }) {
           margin-bottom: -1px;
         }
         .wform-tab:hover { color: rgba(245,230,232,0.65); }
-        .wform-tab.active {
-          color: #c44569;
-          border-bottom-color: #c44569;
-        }
+        .wform-tab.active { color: #c44569; border-bottom-color: #c44569; }
 
-        /* Section */
         .wform-section { display: none; }
         .wform-section.active { display: block; }
 
-        /* Grid */
         .wform-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
@@ -145,8 +155,6 @@ export default function WineForm({ wine = null }) {
         }
         .wform-full { grid-column: 1 / -1; }
 
-        /* Field */
-        .wform-field {}
         .wform-label {
           display: block;
           font-size: 0.68rem;
@@ -156,10 +164,8 @@ export default function WineForm({ wine = null }) {
           margin-bottom: 0.5rem;
           font-weight: 400;
         }
-        .wform-label.required::after {
-          content: ' *';
-          color: #c44569;
-        }
+        .wform-label.required::after { content: ' *'; color: #c44569; }
+
         .wform-input, .wform-select, .wform-textarea {
           width: 100%;
           padding: 0.75rem 1rem;
@@ -179,9 +185,7 @@ export default function WineForm({ wine = null }) {
           background: rgba(196,69,105,0.04);
           box-shadow: 0 0 0 3px rgba(196,69,105,0.07);
         }
-        .wform-input.error, .wform-select.error, .wform-textarea.error {
-          border-color: rgba(220,80,80,0.5);
-        }
+        .wform-input.error { border-color: rgba(220,80,80,0.5); }
         .wform-input:-webkit-autofill { -webkit-box-shadow: 0 0 0 100px #1a0810 inset; -webkit-text-fill-color: #f5e6e8; }
 
         .wform-select {
@@ -193,7 +197,6 @@ export default function WineForm({ wine = null }) {
           cursor: pointer;
         }
         .wform-select option { background: #1a0810; }
-
         .wform-textarea { resize: vertical; min-height: 90px; line-height: 1.6; }
 
         .wform-error-msg {
@@ -203,7 +206,18 @@ export default function WineForm({ wine = null }) {
           letter-spacing: 0.03em;
         }
 
-        /* Rating stars */
+        .wform-img-hint {
+          font-size: 0.78rem;
+          color: rgba(245,230,232,0.35);
+          font-weight: 300;
+          margin-bottom: 1.5rem;
+          padding: 0.85rem 1rem;
+          background: rgba(196,69,105,0.05);
+          border: 1px solid rgba(196,69,105,0.1);
+          border-radius: 8px;
+          line-height: 1.7;
+        }
+
         .wform-stars {
           display: flex;
           gap: 0.35rem;
@@ -219,7 +233,6 @@ export default function WineForm({ wine = null }) {
         .wform-star:hover, .wform-star.filled { color: #d4af37; }
         .wform-star:hover { transform: scale(1.2); }
 
-        /* Checkbox */
         .wform-check-wrap {
           display: flex;
           align-items: center;
@@ -245,7 +258,6 @@ export default function WineForm({ wine = null }) {
         .wform-check-box.checked { background: linear-gradient(135deg, #8b1a2e, #c44569); border-color: transparent; }
         .wform-check-label { font-size: 0.82rem; color: rgba(245,230,232,0.6); font-weight: 300; }
 
-        /* Nav buttons */
         .wform-nav {
           display: flex;
           justify-content: space-between;
@@ -292,11 +304,7 @@ export default function WineForm({ wine = null }) {
         .wform-btn-next:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
         .wform-btn-next span { position: relative; z-index: 1; }
 
-        .wform-progress {
-          display: flex;
-          gap: 4px;
-          align-items: center;
-        }
+        .wform-progress { display: flex; gap: 4px; align-items: center; }
         .wform-prog-dot {
           width: 6px; height: 6px;
           border-radius: 50%;
@@ -306,8 +314,8 @@ export default function WineForm({ wine = null }) {
         .wform-prog-dot.active { background: #c44569; transform: scale(1.3); }
         .wform-prog-dot.done { background: rgba(196,69,105,0.5); }
 
-        .wform-spinner { width: 14px; height: 14px; border: 2px solid rgba(245,230,232,0.3); border-top-color: #f5e6e8; border-radius: 50%; animation: spin 0.6s linear infinite; display: inline-block; margin-right: 6px; vertical-align: middle; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        .wform-spinner { width: 14px; height: 14px; border: 2px solid rgba(245,230,232,0.3); border-top-color: #f5e6e8; border-radius: 50%; animation: wfspin 0.6s linear infinite; display: inline-block; margin-right: 6px; vertical-align: middle; }
+        @keyframes wfspin { to { transform: rotate(360deg); } }
 
         @media (max-width: 600px) {
           .wform-grid { grid-template-columns: 1fr; }
@@ -316,7 +324,7 @@ export default function WineForm({ wine = null }) {
       `}</style>
 
       <form className="wform-wrap" onSubmit={handleSubmit}>
-        {/* Section tabs */}
+        {/* Tabs */}
         <div className="wform-tabs">
           {SECTIONS.map((s, i) => (
             <button
@@ -330,12 +338,18 @@ export default function WineForm({ wine = null }) {
           ))}
         </div>
 
-        {/* ── SECTION 0: Basic Info ── */}
+        {/* ── SECTION 0: Informații de bază ── */}
         <div className={`wform-section ${section === 0 ? 'active' : ''}`}>
           <div className="wform-grid">
             <div className="wform-field wform-full">
               <label className="wform-label required">Nume vin</label>
-              <input className={`wform-input ${errors.name ? 'error' : ''}`} placeholder="ex. Château Margaux" value={form.name} onChange={e => set('name', e.target.value)} required />
+              <input
+                className={`wform-input ${errors.name ? 'error' : ''}`}
+                placeholder="ex. Château Margaux"
+                value={form.name}
+                onChange={e => set('name', e.target.value)}
+                required
+              />
               {errors.name && <p className="wform-error-msg">{errors.name[0]}</p>}
             </div>
 
@@ -368,7 +382,15 @@ export default function WineForm({ wine = null }) {
 
             <div className="wform-field">
               <label className="wform-label">An recoltă</label>
-              <input className="wform-input" type="number" placeholder="ex. 2018" min="1800" max={new Date().getFullYear()} value={form.vintage} onChange={e => set('vintage', e.target.value)} />
+              <input
+                className="wform-input"
+                type="number"
+                placeholder="ex. 2018"
+                min="1800"
+                max={new Date().getFullYear()}
+                value={form.vintage}
+                onChange={e => set('vintage', e.target.value)}
+              />
             </div>
 
             <div className="wform-field">
@@ -380,8 +402,33 @@ export default function WineForm({ wine = null }) {
           </div>
         </div>
 
-        {/* ── SECTION 1: Details ── */}
+        {/* ── SECTION 1: Imagini ── */}
         <div className={`wform-section ${section === 1 ? 'active' : ''}`}>
+          <p className="wform-img-hint">
+            🖼️ Adaugă imagini pentru a personaliza vinul în colecție. Poți încărca eticheta și/sau sticla. Imaginile sunt stocate privat în pivnița ta digitală.
+          </p>
+          <div className="wform-grid">
+            <div className="wform-field">
+              <ImageUpload
+                label="Imagine etichetă"
+                value={form.labelImageUrl}
+                onChange={(url) => set('labelImageUrl', url || '')}
+                folder="wines/labels"
+              />
+            </div>
+            <div className="wform-field">
+              <ImageUpload
+                label="Imagine sticlă"
+                value={form.bottleImageUrl}
+                onChange={(url) => set('bottleImageUrl', url || '')}
+                folder="wines/bottles"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* ── SECTION 2: Detalii ── */}
+        <div className={`wform-section ${section === 2 ? 'active' : ''}`}>
           <div className="wform-grid">
             <div className="wform-field">
               <label className="wform-label">Alcool (%)</label>
@@ -433,8 +480,8 @@ export default function WineForm({ wine = null }) {
           </div>
         </div>
 
-        {/* ── SECTION 2: Storage & Price ── */}
-        <div className={`wform-section ${section === 2 ? 'active' : ''}`}>
+        {/* ── SECTION 3: Stocare & Preț ── */}
+        <div className={`wform-section ${section === 3 ? 'active' : ''}`}>
           <div className="wform-grid">
             <div className="wform-field">
               <label className="wform-label">Preț achiziție (€)</label>
@@ -458,8 +505,8 @@ export default function WineForm({ wine = null }) {
           </div>
         </div>
 
-        {/* ── SECTION 3: Tasting ── */}
-        <div className={`wform-section ${section === 3 ? 'active' : ''}`}>
+        {/* ── SECTION 4: Degustare ── */}
+        <div className={`wform-section ${section === 4 ? 'active' : ''}`}>
           <div className="wform-grid">
             <div className="wform-field wform-full">
               <label className="wform-label">Rating personal</label>
@@ -471,7 +518,11 @@ export default function WineForm({ wine = null }) {
                     onClick={() => set('rating', form.rating == n ? '' : n.toString())}
                   >★</span>
                 ))}
-                {form.rating && <span style={{ fontSize: '0.75rem', color: 'rgba(245,230,232,0.4)', alignSelf: 'center', marginLeft: '0.5rem' }}>{form.rating}/5</span>}
+                {form.rating && (
+                  <span style={{ fontSize: '0.75rem', color: 'rgba(245,230,232,0.4)', alignSelf: 'center', marginLeft: '0.5rem' }}>
+                    {form.rating}/5
+                  </span>
+                )}
               </div>
             </div>
 

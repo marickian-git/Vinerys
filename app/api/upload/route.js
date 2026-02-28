@@ -1,44 +1,77 @@
 import { NextResponse } from 'next/server';
-import { uploadFile } from '@/lib/minio';
+import { headers } from 'next/headers';
+import { auth } from '@/utils/auth';
+import minioClient, { BUCKET, initBucket, getPublicUrl } from '@/utils/minio';
 
-function generateUUID() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0;
-    const v = c === 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
-}
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 
 export async function POST(request) {
   try {
-    const { userId } = auth();
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    // Verifică autentificare
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Neautentificat' }, { status: 401 });
     }
 
     const formData = await request.formData();
     const file = formData.get('file');
-    const type = formData.get('type'); // 'bottle' sau 'label'
+    const folder = formData.get('folder') || 'wines';
 
     if (!file) {
+      return NextResponse.json({ error: 'Niciun fișier primit' }, { status: 400 });
+    }
+
+    // Validare tip
+    if (!ALLOWED_TYPES.includes(file.type)) {
       return NextResponse.json(
-        { error: 'No file provided' },
+        { error: 'Tip nepermis. Acceptăm: JPG, PNG, WebP, GIF' },
         { status: 400 }
       );
     }
 
-    // Generează nume unic pentru fișier
-    const extension = file.name.split('.').pop();
-    const fileName = `${userId}/${type}/${generateUUID()}.${extension}`;
+    // Validare mărime
+    if (file.size > MAX_SIZE) {
+      return NextResponse.json(
+        { error: 'Fișierul e prea mare. Maximum 5MB.' },
+        { status: 400 }
+      );
+    }
 
-    // Upload la MinIO
-    const url = await uploadFile(file, process.env.MINIO_BUCKET, fileName);
+    // Pregătire buffer
+    const buffer = Buffer.from(await file.arrayBuffer());
 
-    return NextResponse.json({ url });
+    // Nume unic: wines/userId_timestamp_filename.ext
+    const ext = file.name.split('.').pop().toLowerCase();
+    const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_').toLowerCase();
+    const objectName = `${folder}/${session.user.id}_${Date.now()}_${safeName}`;
+
+    // Init bucket (prima dată)
+    await initBucket();
+
+    // Upload către MinIO
+    await minioClient.putObject(
+      BUCKET,
+      objectName,
+      buffer,
+      buffer.length,
+      { 'Content-Type': file.type }
+    );
+
+    const url = getPublicUrl(objectName);
+
+    return NextResponse.json({
+      success: true,
+      url,
+      objectName,
+      size: file.size,
+      type: file.type,
+    });
+
   } catch (error) {
-    console.error('Error uploading file:', error);
+    console.error('Upload error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Eroare la upload: ' + error.message },
       { status: 500 }
     );
   }

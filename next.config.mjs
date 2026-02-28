@@ -1,15 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    images: {
-        remotePatterns: [
-            {
-                protocol: "https",
-                hostname: "www.thecocktaildb.com",
-                port: "",
-                pathname: "/images/**"
-            }
-        ]
-    }
+  images: {
+  remotePatterns: [
+    { protocol: 'http', hostname: 'casa-spiridus.go.ro', port: '9010' }
+  ]
+}
 };
 
 export default nextConfig;
