@@ -65,21 +65,75 @@ export async function getWines(filters = {}) {
 
   const where = { userId: user.id };
 
-  if (filters.type) where.type = filters.type;
-  if (filters.status) where.status = filters.status;
-  if (filters.country) where.country = filters.country;
+  // Filtre existente
+  if (filters.type)    where.type    = filters.type;
+  if (filters.status)  where.status  = filters.status;
+  if (filters.country) where.country = { equals: filters.country, mode: 'insensitive' };
+
+  // Filtre noi
+  if (filters.isFavorite === 'true') where.isFavorite = true;
+  if (filters.vintage) where.vintage = parseInt(filters.vintage);
+  if (filters.vintageMin || filters.vintageMax) {
+    where.vintage = {};
+    if (filters.vintageMin) where.vintage.gte = parseInt(filters.vintageMin);
+    if (filters.vintageMax) where.vintage.lte = parseInt(filters.vintageMax);
+  }
+  if (filters.ratingMin) where.rating = { gte: parseInt(filters.ratingMin) };
+  if (filters.priceMax)  where.purchasePrice = { lte: parseFloat(filters.priceMax) };
+
+  // Search
   if (filters.search) {
     where.OR = [
-      { name: { contains: filters.search, mode: "insensitive" } },
-      { producer: { contains: filters.search, mode: "insensitive" } },
-      { region: { contains: filters.search, mode: "insensitive" } },
+      { name:     { contains: filters.search, mode: 'insensitive' } },
+      { producer: { contains: filters.search, mode: 'insensitive' } },
+      { region:   { contains: filters.search, mode: 'insensitive' } },
+      { country:  { contains: filters.search, mode: 'insensitive' } },
     ];
   }
 
-  return await prisma.wine.findMany({
-    where,
-    orderBy: { createdAt: "desc" },
+  // Sortare
+  const SORT_MAP = {
+    newest:       { createdAt: 'desc' },
+    oldest:       { createdAt: 'asc'  },
+    name_asc:     { name: 'asc'       },
+    name_desc:    { name: 'desc'      },
+    vintage_desc: { vintage: 'desc'   },
+    vintage_asc:  { vintage: 'asc'    },
+    price_desc:   { purchasePrice: 'desc' },
+    price_asc:    { purchasePrice: 'asc'  },
+    rating_desc:  { rating: 'desc'    },
+    rating_asc:   { rating: 'asc'     },
+  };
+  const orderBy = SORT_MAP[filters.sort] ?? { createdAt: 'desc' };
+
+  // Paginare
+  const PAGE_SIZE = parseInt(filters.pageSize) || 24;
+  const page      = Math.max(1, parseInt(filters.page) || 1);
+  const skip      = (page - 1) * PAGE_SIZE;
+
+  const [wines, total] = await Promise.all([
+    prisma.wine.findMany({ where, orderBy, skip, take: PAGE_SIZE }),
+    prisma.wine.count({ where }),
+  ]);
+
+  return {
+    wines,
+    total,
+    page,
+    pageSize: PAGE_SIZE,
+    totalPages: Math.ceil(total / PAGE_SIZE),
+  };
+}
+
+export async function getWineCountries() {
+  const user = await getCurrentUser();
+  const results = await prisma.wine.findMany({
+    where:   { userId: user.id, country: { not: null } },
+    select:  { country: true },
+    distinct: ['country'],
+    orderBy: { country: 'asc' },
   });
+  return results.map(r => r.country).filter(Boolean);
 }
 
 export async function getWineById(id) {

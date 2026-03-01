@@ -12,13 +12,13 @@ const STATUS_COLORS = { IN_CELLAR: '#55c44e', CONSUMED: 'rgba(245,230,232,0.3)',
 export default async function DashboardPage() {
   let stats = { totalBottles: 0, totalValue: 0, totalWines: 0, byType: {}, byStatus: {} };
   let recentWines = [];
-
   try {
-    [stats, recentWines] = await Promise.all([
+    const [s, winesResult] = await Promise.all([
       getDashboardStats(),
-      getWines(),
+      getWines({ sort: 'newest', pageSize: '4', page: '1' }),
     ]);
-    recentWines = recentWines.slice(0, 4);
+    stats = s;
+    recentWines = winesResult.wines ?? [];
   } catch {}
 
   const topType = Object.entries(stats.byType).sort((a, b) => b[1] - a[1])[0];
