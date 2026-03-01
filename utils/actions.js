@@ -227,3 +227,86 @@ export async function getDashboardStats() {
     byStatus,
   };
 }
+
+// Adaugă acestea în utils/actions.js (la sfârșitul fișierului)
+
+// ── Profil ──────────────────────────────────────────────────────────────────
+
+export async function getProfile() {
+  const user = await getCurrentUser();
+  return prisma.user.findUnique({
+    where: { id: user.id },
+    select: {
+      id: true, name: true, email: true,
+      image: true, role: true, createdAt: true,
+      _count: { select: { wines: true } },
+    },
+  });
+}
+
+export async function updateProfile(formData) {
+  const user = await getCurrentUser();
+  const name  = formData.get('name')?.toString().trim();
+  const image = formData.get('image')?.toString().trim() || null;
+
+  if (!name || name.length < 2) {
+    return { error: { name: ['Numele trebuie să aibă minim 2 caractere'] } };
+  }
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { name, image, updatedAt: new Date() },
+  });
+
+  revalidatePath('/profile');
+  revalidatePath('/settings');
+}
+
+export async function updatePassword(formData) {
+  const user = await getCurrentUser();
+  const currentPassword = formData.get('currentPassword')?.toString();
+  const newPassword     = formData.get('newPassword')?.toString();
+  const confirmPassword = formData.get('confirmPassword')?.toString();
+
+  if (!currentPassword || !newPassword || !confirmPassword) {
+    return { error: 'Completează toate câmpurile' };
+  }
+  if (newPassword.length < 8) {
+    return { error: 'Parola nouă trebuie să aibă minim 8 caractere' };
+  }
+  if (newPassword !== confirmPassword) {
+    return { error: 'Parolele nu coincid' };
+  }
+
+  // Better Auth — schimbare parolă prin API
+  try {
+    const res = await fetch(`${process.env.BETTER_AUTH_URL}/api/auth/change-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      return { error: data.message || 'Parola curentă e incorectă' };
+    }
+  } catch {
+    return { error: 'Eroare la schimbarea parolei' };
+  }
+
+  return { success: true };
+}
+
+export async function deleteAccount() {
+  const user = await getCurrentUser();
+
+  // Șterge toate vinurile și pozele asociate
+  await prisma.wine.deleteMany({ where: { userId: user.id } });
+
+  // Șterge sesiunile
+  await prisma.session.deleteMany({ where: { userId: user.id } });
+
+  // Șterge contul
+  await prisma.user.delete({ where: { id: user.id } });
+
+  redirect('/sign-in');
+}
