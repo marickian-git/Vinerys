@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { signOut } from '@/utils/auth-client';
+import { updatePassword, deleteAccount } from '@/utils/actions';
 import toast from 'react-hot-toast';
 
 export default function SettingsPage() {
@@ -39,10 +40,13 @@ export default function SettingsPage() {
     try {
       const fd = new FormData();
       Object.entries(passwordForm).forEach(([k, v]) => fd.append(k, v));
-      const { updatePassword } = await import('@/utils/actions');
       const result = await updatePassword(fd);
       if (result?.error) { toast.error(result.error); }
-      else { toast.success('Parolă schimbată cu succes!'); setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' }); setPwStrength(0); }
+      else {
+        toast.success('Parolă schimbată cu succes!');
+        setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+        setPwStrength(0);
+      }
     } catch { toast.error('Eroare la schimbarea parolei'); }
     finally { setLoadingPw(false); }
   };
@@ -51,6 +55,14 @@ export default function SettingsPage() {
     setLoadingOut(true);
     await signOut();
     router.push('/sign-in');
+  };
+
+  const handleDeleteAccount = async () => {
+    try {
+      await deleteAccount();
+    } catch {
+      toast.error('Eroare la ștergerea contului');
+    }
   };
 
   const strengthLabel = ['', 'Slabă', 'Medie', 'Bună', 'Excelentă'][pwStrength];
@@ -89,7 +101,6 @@ export default function SettingsPage() {
         .set-input::placeholder { color: rgba(245,230,232,0.2); }
         .set-input[type="password"] { letter-spacing: 0.15em; }
 
-        /* Password strength */
         .set-strength { display: flex; gap: 4px; margin-top: 0.4rem; align-items: center; }
         .set-strength-bar { height: 3px; flex: 1; border-radius: 2px; background: rgba(255,255,255,0.06); transition: background 0.3s; }
         .set-strength-label { font-size: 0.65rem; color: rgba(245,230,232,0.3); margin-left: 0.4rem; transition: color 0.3s; white-space: nowrap; }
@@ -99,39 +110,31 @@ export default function SettingsPage() {
           border: none; border-radius: 8px; color: #f5e6e8;
           font-family: 'Jost', sans-serif; font-size: 0.78rem;
           font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase;
-          cursor: pointer; transition: all 0.25s;
-          box-shadow: 0 2px 10px rgba(196,69,105,0.2);
+          cursor: pointer; transition: all 0.25s; box-shadow: 0 2px 10px rgba(196,69,105,0.2);
         }
         .set-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(196,69,105,0.35); }
         .set-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
         .set-btn-ghost {
-          padding: 0.72rem 1.5rem;
-          background: transparent; border: 1px solid rgba(196,69,105,0.2);
-          border-radius: 8px; color: rgba(245,230,232,0.5);
-          font-family: 'Jost', sans-serif; font-size: 0.78rem;
-          letter-spacing: 0.12em; text-transform: uppercase;
-          cursor: pointer; transition: all 0.2s;
-          width: 100%;
+          padding: 0.72rem 1.5rem; background: transparent;
+          border: 1px solid rgba(196,69,105,0.2); border-radius: 8px;
+          color: rgba(245,230,232,0.5); font-family: 'Jost', sans-serif;
+          font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase;
+          cursor: pointer; transition: all 0.2s; width: 100%;
         }
         .set-btn-ghost:hover { border-color: rgba(196,69,105,0.4); color: rgba(245,230,232,0.8); }
 
-        /* Danger zone */
         .set-card-danger { border-color: rgba(220,80,80,0.15); }
         .set-card-danger .set-card-title { color: rgba(220,80,80,0.7); border-bottom-color: rgba(220,80,80,0.1); }
-
         .set-danger-text { font-size: 0.8rem; color: rgba(245,230,232,0.35); font-weight: 300; line-height: 1.7; margin-bottom: 1.25rem; }
-
-        .set-delete-input-wrap { margin-bottom: 1rem; }
         .set-delete-hint { font-size: 0.72rem; color: rgba(245,230,232,0.3); margin-bottom: 0.5rem; }
         .set-delete-hint strong { color: rgba(220,80,80,0.7); font-weight: 500; }
 
         .set-btn-danger {
-          padding: 0.72rem 1.5rem;
-          background: transparent; border: 1px solid rgba(220,80,80,0.3);
-          border-radius: 8px; color: rgba(220,80,80,0.6);
-          font-family: 'Jost', sans-serif; font-size: 0.78rem;
-          letter-spacing: 0.12em; text-transform: uppercase;
+          padding: 0.72rem 1.5rem; background: transparent;
+          border: 1px solid rgba(220,80,80,0.3); border-radius: 8px;
+          color: rgba(220,80,80,0.6); font-family: 'Jost', sans-serif;
+          font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase;
           cursor: pointer; transition: all 0.2s; width: 100%;
         }
         .set-btn-danger:hover:not(:disabled) { background: rgba(220,80,80,0.08); border-color: rgba(220,80,80,0.5); color: rgba(220,80,80,0.9); }
@@ -139,12 +142,6 @@ export default function SettingsPage() {
 
         .set-spinner { width: 12px; height: 12px; border: 2px solid rgba(245,230,232,0.3); border-top-color: #f5e6e8; border-radius: 50%; animation: setspin 0.6s linear infinite; display: inline-block; margin-right: 6px; vertical-align: middle; }
         @keyframes setspin { to { transform: rotate(360deg); } }
-
-        /* Info row */
-        .set-info-row { display: flex; align-items: center; justify-content: space-between; padding: 0.6rem 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
-        .set-info-row:last-child { border-bottom: none; }
-        .set-info-label { font-size: 0.75rem; color: rgba(245,230,232,0.35); font-weight: 300; }
-        .set-info-value { font-size: 0.82rem; color: rgba(245,230,232,0.65); }
 
         @media (max-width: 640px) { .set-page { padding: 5rem 1rem 3rem; } .set-card { padding: 1.25rem; } }
       `}</style>
@@ -185,9 +182,12 @@ export default function SettingsPage() {
                 {passwordForm.newPassword && (
                   <div className="set-strength">
                     {[1,2,3,4].map(i => (
-                      <div key={i} className="set-strength-bar" style={{ background: i <= pwStrength ? strengthColor : undefined }} />
+                      <div key={i} className="set-strength-bar"
+                        style={{ background: i <= pwStrength ? strengthColor : undefined }} />
                     ))}
-                    <span className="set-strength-label" style={{ color: strengthColor || undefined }}>{strengthLabel}</span>
+                    <span className="set-strength-label" style={{ color: strengthColor || undefined }}>
+                      {strengthLabel}
+                    </span>
                   </div>
                 )}
               </div>
@@ -201,7 +201,9 @@ export default function SettingsPage() {
                   required minLength={8}
                 />
                 {passwordForm.confirmPassword && passwordForm.newPassword !== passwordForm.confirmPassword && (
-                  <p style={{ fontSize: '0.68rem', color: 'rgba(220,80,80,0.8)', marginTop: '0.35rem' }}>Parolele nu coincid</p>
+                  <p style={{ fontSize: '0.68rem', color: 'rgba(220,80,80,0.8)', marginTop: '0.35rem' }}>
+                    Parolele nu coincid
+                  </p>
                 )}
               </div>
               <button type="submit" className="set-btn" disabled={loadingPw}>
@@ -233,8 +235,10 @@ export default function SettingsPage() {
               </button>
             ) : (
               <>
-                <div className="set-delete-input-wrap">
-                  <p className="set-delete-hint">Scrie <strong>ȘTERGE CONTUL</strong> pentru a confirma:</p>
+                <div style={{ marginBottom: '1rem' }}>
+                  <p className="set-delete-hint">
+                    Scrie <strong>ȘTERGE CONTUL</strong> pentru a confirma:
+                  </p>
                   <input
                     type="text" className="set-input"
                     placeholder="ȘTERGE CONTUL"
@@ -243,17 +247,18 @@ export default function SettingsPage() {
                   />
                 </div>
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
-                  <button className="set-btn-ghost" style={{ flex: 1 }} onClick={() => { setShowDelete(false); setDeleteConfirm(''); }}>
+                  <button
+                    className="set-btn-ghost"
+                    style={{ flex: 1 }}
+                    onClick={() => { setShowDelete(false); setDeleteConfirm(''); }}
+                  >
                     Anulează
                   </button>
                   <button
                     className="set-btn-danger"
                     style={{ flex: 1 }}
                     disabled={deleteConfirm !== 'ȘTERGE CONTUL'}
-                    onClick={async () => {
-                      const { deleteAccount } = await import('@/utils/actions');
-                      await deleteAccount();
-                    }}
+                    onClick={handleDeleteAccount}
                   >
                     Confirmă ștergerea
                   </button>
@@ -261,6 +266,7 @@ export default function SettingsPage() {
               </>
             )}
           </div>
+
         </div>
       </div>
     </>
