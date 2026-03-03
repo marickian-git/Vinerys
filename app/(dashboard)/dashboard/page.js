@@ -10,6 +10,7 @@ const STATUS_LABELS = { IN_CELLAR: 'În pivniță', CONSUMED: 'Consumat', SOLD: 
 const STATUS_COLORS = { IN_CELLAR: '#55c44e', CONSUMED: 'rgba(245,230,232,0.3)', SOLD: '#d4af37', GIFTED: '#c44569' };
 
 export default async function DashboardPage() {
+  
 
   let stats = { totalBottles: 0, totalValue: 0, totalWines: 0, byType: {}, byStatus: {} };
   let recentWines = [];
