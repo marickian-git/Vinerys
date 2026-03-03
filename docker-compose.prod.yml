@@ -1,0 +1,30 @@
+services:
+  vinerys:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vinerys-app
+    restart: unless-stopped
+    ports:
+      - "3989:3000"       # portul tău extern : portul intern app
+    env_file:
+      - .env.production
+    environment:
+      - NODE_ENV=production
+    networks:
+      - vinerys-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  vinerys-net:
+    driver: bridge

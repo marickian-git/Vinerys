@@ -4,7 +4,8 @@ const nextConfig = {
   remotePatterns: [
     { protocol: 'http', hostname: 'casa-spiridus.go.ro', port: '9010' }
   ]
-}
+}, 
+  output: 'standalone',
 };
 
 export default nextConfig;
