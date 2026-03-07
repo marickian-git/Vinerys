@@ -1,6 +1,7 @@
 import { getWines, getWineCountries } from '@/utils/actions';
 import WineCard from '@/components/wines/WineCard';
 import WineFilters from '@/components/wines/WineFilters';
+import ExportButton from '@/components/wines/ExportButton';
 import Link from 'next/link';
 
 export const metadata = { title: 'Colecția mea — Vinerys' };
@@ -101,6 +102,7 @@ export default async function WinesPage({ searchParams }) {
         .wl-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
         .wl-eyebrow { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.2em; color: #c44569; margin-bottom: 0.3rem; }
         .wl-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.8rem, 3vw, 2.8rem); font-weight: 300; color: #f5e6e8; line-height: 1; }
+        .wl-actions { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
         .wl-btn-add {
           display: inline-flex; align-items: center; gap: 0.5rem;
           padding: 0.7rem 1.35rem; background: linear-gradient(135deg, #8b1a2e, #c44569);
@@ -116,7 +118,7 @@ export default async function WinesPage({ searchParams }) {
         .wl-empty-sub { font-size: 0.82rem; color: rgba(245,230,232,0.25); font-weight: 300; margin-bottom: 2rem; }
         .wl-btn-empty { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.7rem 1.35rem; background: linear-gradient(135deg, #8b1a2e, #c44569); color: #f5e6e8; text-decoration: none; border-radius: 10px; font-size: 0.8rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; }
         .wl-error { padding: 1.25rem 1.5rem; border-radius: 10px; background: rgba(220,80,80,0.08); border: 1px solid rgba(220,80,80,0.2); color: rgba(220,80,80,0.8); font-size: 0.85rem; font-weight: 300; }
-        @media (max-width: 640px) { .wl-page { padding: 5rem 1rem 3rem; } }
+        @media (max-width: 640px) { .wl-page { padding: 5rem 1rem 3rem; } .wl-actions { width: 100%; justify-content: flex-end; } }
       `}</style>
 
       <div className="wl-page">
@@ -126,7 +128,10 @@ export default async function WinesPage({ searchParams }) {
               <p className="wl-eyebrow">Colecție</p>
               <h1 className="wl-title">Pivnița digitală</h1>
             </div>
-            <Link href="/wines/add" className="wl-btn-add">+ Adaugă vin</Link>
+            <div className="wl-actions">
+              <ExportButton />
+              <Link href="/wines/add" className="wl-btn-add">+ Adaugă vin</Link>
+            </div>
           </div>
 
           <WineFilters countries={countries} totalResults={total} />

@@ -18,6 +18,7 @@ model User {
   image         String?
   role          Role      @default(USER)
   cellarName    String?
+  shareId       String?   @unique @default(cuid())
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
