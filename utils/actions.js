@@ -477,3 +477,37 @@ export async function updateCellarName(name) {
   revalidatePath('/', 'layout');
   return { success: true };
 }
+
+export async function updateAISettings(provider, apiKey) {
+  const user = await getCurrentUser();
+
+  const validProviders = ['gemini', 'claude', 'openai', 'groq'];
+  if (!validProviders.includes(provider)) {
+    return { error: 'Provider invalid' };
+  }
+
+  const data = { aiProvider: provider };
+  if (apiKey !== null && apiKey !== undefined) {
+    data.aiApiKey = apiKey;
+  }
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data,
+  });
+
+  revalidatePath('/settings');
+  return { success: true };
+}
+
+export async function getAISettings() {
+  const user = await getCurrentUser();
+  const profile = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { aiProvider: true, aiApiKey: true },
+  });
+  return {
+    provider: profile?.aiProvider || 'gemini',
+    hasKey: !!profile?.aiApiKey,
+  };
+}

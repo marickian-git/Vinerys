@@ -7,8 +7,9 @@ import { signOut } from '@/utils/auth-client';
 import { updatePassword, deleteAccount } from '@/utils/actions';
 import toast from 'react-hot-toast';
 import ShareLinkSection from '@/components/ShareLinkSection';
+import AISettingsSection from '@/components/AISettingsSection';
 
-export default function SettingsClient({ shareUrl }) {
+export default function SettingsClient({ shareUrl, aiProvider, aiHasKey }) {
   const router = useRouter();
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [loadingPw, setLoadingPw]       = useState(false);
@@ -156,6 +157,12 @@ export default function SettingsClient({ shareUrl }) {
             <h1 className="set-title">Setări</h1>
           </div>
           <div className="set-divider" />
+
+          {/* AI Scan */}
+          <div className="set-card">
+            <div className="set-card-title">🤖 AI — Scanare etichetă</div>
+            <AISettingsSection initialProvider={aiProvider} initialHasKey={aiHasKey} />
+          </div>
 
           {/* Partajare colecție */}
           {shareUrl && (

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createWine, updateWine } from '@/utils/actions';
 import toast from 'react-hot-toast';
 import ImageUpload from '@/components/wines/ImageUpload';
+import ScanLabelButton from '@/components/wines/ScanLabelButton';
 
 const WINE_TYPES = [
   { value: 'RED',       label: '🔴 Roșu' },
@@ -70,8 +71,29 @@ export default function WineForm({ wine = null }) {
   const [section, setSection] = useState(0);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  
 
   const set = (key, value) => setForm(f => ({ ...f, [key]: value }));
+
+  const handleAIScan = (data) => {
+  setForm(f => ({
+    ...f,
+    ...(data.name               && { name: data.name }),
+    ...(data.producer           && { producer: data.producer }),
+    ...(data.country            && { country: data.country }),
+    ...(data.region             && { region: data.region }),
+    ...(data.subregion          && { subregion: data.subregion }),
+    ...(data.vintage            && { vintage: data.vintage }),
+    ...(data.type               && { type: data.type }),
+    ...(data.alcoholPercentage  && { alcoholPercentage: data.alcoholPercentage }),
+    ...(data.grapeVarieties     && { grapeVarieties: data.grapeVarieties }),
+    ...(data.agingPotential     && { agingPotential: data.agingPotential }),
+    ...(data.servingTemperature && { servingTemperature: data.servingTemperature }),
+    ...(data.tastingNotes       && { tastingNotes: data.tastingNotes }),
+  }));
+  setSection(0); // Navighează la Informații de bază
+};
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -403,29 +425,30 @@ export default function WineForm({ wine = null }) {
         </div>
 
         {/* ── SECTION 1: Imagini ── */}
-        <div className={`wform-section ${section === 1 ? 'active' : ''}`}>
-          <p className="wform-img-hint">
-            🖼️ Adaugă imagini pentru a personaliza vinul în colecție. Poți încărca eticheta și/sau sticla. Imaginile sunt stocate privat în pivnița ta digitală.
-          </p>
-          <div className="wform-grid">
-            <div className="wform-field">
-              <ImageUpload
-                label="Imagine etichetă"
-                value={form.labelImageUrl}
-                onChange={(url) => set('labelImageUrl', url || '')}
-                folder="wines/labels"
-              />
-            </div>
-            <div className="wform-field">
-              <ImageUpload
-                label="Imagine sticlă"
-                value={form.bottleImageUrl}
-                onChange={(url) => set('bottleImageUrl', url || '')}
-                folder="wines/bottles"
-              />
-            </div>
-          </div>
-        </div>
+       <div className={`wform-section ${section === 1 ? 'active' : ''}`}>
+  <ScanLabelButton onScan={handleAIScan} />
+  <p className="wform-img-hint">
+    🖼️ Adaugă imagini pentru a personaliza vinul în colecție. Poți încărca eticheta și/sau sticla. Imaginile sunt stocate privat în pivnița ta digitală.
+  </p>
+  <div className="wform-grid">
+    <div className="wform-field">
+      <ImageUpload
+        label="Imagine etichetă"
+        value={form.labelImageUrl}
+        onChange={(url) => set('labelImageUrl', url || '')}
+        folder="wines/labels"
+      />
+    </div>
+    <div className="wform-field">
+      <ImageUpload
+        label="Imagine sticlă"
+        value={form.bottleImageUrl}
+        onChange={(url) => set('bottleImageUrl', url || '')}
+        folder="wines/bottles"
+      />
+    </div>
+  </div>
+</div>
 
         {/* ── SECTION 2: Detalii ── */}
         <div className={`wform-section ${section === 2 ? 'active' : ''}`}>

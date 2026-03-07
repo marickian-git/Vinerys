@@ -19,6 +19,8 @@ model User {
   role          Role      @default(USER)
   cellarName    String?
   shareId       String?   @unique @default(cuid())
+  aiProvider    String?   @default("gemini")
+  aiApiKey      String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
