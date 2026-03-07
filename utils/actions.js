@@ -293,6 +293,7 @@ export async function getProfile() {
     select: {
       id: true, name: true, email: true,
       image: true, role: true, createdAt: true,
+        cellarName: true,
       _count: { select: { wines: true } },
     },
   });
@@ -363,4 +364,116 @@ export async function deleteAccount() {
   await prisma.user.delete({ where: { id: user.id } });
 
   redirect('/sign-in');
+}
+
+// ─────────────────────────────────────────
+// STATISTICI AVANSATE  
+// ─────────────────────────────────────────
+
+export async function getAdvancedStats() {
+  const user = await getCurrentUser();
+
+  const wines = await prisma.wine.findMany({
+    where: { userId: user.id },
+    select: {
+      id: true,
+      name: true,
+      producer: true,
+      country: true,
+      type: true,
+      rating: true,
+      purchasePrice: true,
+      estimatedValue: true,
+      quantity: true,
+      purchaseDate: true,
+      vintage: true,
+      agingPotential: true,
+      status: true,
+      labelImageUrl: true,
+      bottleImageUrl: true,
+    },
+  });
+
+  // ── Top 5 vinuri după rating ──────────────
+  const topWines = wines
+    .filter(w => w.rating != null)
+    .sort((a, b) => b.rating - a.rating)
+    .slice(0, 5);
+
+  // ── Distribuție pe țări ───────────────────
+  const byCountry = wines.reduce((acc, w) => {
+    if (!w.country) return acc;
+    acc[w.country] = (acc[w.country] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  // ── Evoluție achiziții lunar (12 luni) ────
+  const now = new Date();
+  const monthlyData = [];
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const label = d.toLocaleDateString('ro-RO', { month: 'short', year: '2-digit' });
+    const count = wines.filter(w => {
+      if (!w.purchaseDate) return false;
+      const pd = new Date(w.purchaseDate);
+      return pd.getFullYear() === d.getFullYear() && pd.getMonth() === d.getMonth();
+    }).length;
+    monthlyData.push({ label, count });
+  }
+
+  // ── Statistici preț ───────────────────────
+  const withPrice = wines.filter(w => w.purchasePrice != null && w.purchasePrice > 0);
+  const prices = withPrice.map(w => w.purchasePrice);
+  const avgPrice = prices.length > 0 ? prices.reduce((a, b) => a + b, 0) / prices.length : 0;
+  const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
+  const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+  const mostExpensive = withPrice.sort((a, b) => b.purchasePrice - a.purchasePrice)[0] ?? null;
+
+  // ── Vinuri aproape de maturitate ──────────
+  // agingPotential e string ex: "2025-2030" sau "2028"
+  const currentYear = now.getFullYear();
+  const nearMaturity = wines
+    .filter(w => {
+      if (!w.agingPotential || w.status !== 'IN_CELLAR') return false;
+      const match = w.agingPotential.match(/(\d{4})/g);
+      if (!match) return false;
+      const years = match.map(Number);
+      const readyYear = Math.min(...years);
+      return readyYear >= currentYear && readyYear <= currentYear + 3;
+    })
+    .map(w => {
+      const match = w.agingPotential.match(/(\d{4})/g);
+      const years = match.map(Number);
+      return { ...w, readyYear: Math.min(...years) };
+    })
+    .sort((a, b) => a.readyYear - b.readyYear)
+    .slice(0, 5);
+
+  return {
+    topWines,
+    byCountry,
+    monthlyData,
+    priceStats: { avg: avgPrice, max: maxPrice, min: minPrice, mostExpensive },
+    nearMaturity,
+  };
+}
+
+export async function updateCellarName(name) {
+  const user = await getCurrentUser();
+
+  const trimmed = name?.toString().trim();
+  if (!trimmed || trimmed.length < 1) {
+    return { error: 'Numele nu poate fi gol' };
+  }
+  if (trimmed.length > 50) {
+    return { error: 'Maxim 50 de caractere' };
+  }
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { cellarName: trimmed, updatedAt: new Date() },
+  });
+
+  revalidatePath('/', 'layout');
+  return { success: true };
 }

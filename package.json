@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.4.2",
-    "@prisma/client": "^7.4.1",
+    "@prisma/client": "^7.4.2",
     "@tabler/icons-react": "^3.37.1",
     "@tailwindcss/typography": "^0.5.19",
     "better-auth": "^1.4.19",
@@ -34,7 +34,7 @@
     "eslint": "10.0.2",
     "eslint-config-next": "16.1.6",
     "postcss": "^8.5.6",
-    "prisma": "^7.4.1",
+    "prisma": "^7.4.2",
     "sharp": "^0.34.5",
     "tailwindcss": "^4.2.1"
   }
