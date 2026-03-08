@@ -6,6 +6,8 @@ import { createWine, updateWine } from '@/utils/actions';
 import toast from 'react-hot-toast';
 import ImageUpload from '@/components/wines/ImageUpload';
 import ScanLabelButton from '@/components/wines/ScanLabelButton';
+import { useSearchParams } from 'next/navigation';
+
 
 const WINE_TYPES = [
   { value: 'RED',       label: '🔴 Roșu' },
@@ -41,6 +43,27 @@ export default function WineForm({ wine = null }) {
   const router = useRouter();
   const isEdit = !!wine;
 
+  const searchParams = useSearchParams();
+  const fromScan = searchParams.get('fromScan');
+
+  const getScanDefaults = () => {
+    if (!fromScan) return {};
+    return {
+      name:               searchParams.get('name')               || '',
+      producer:           searchParams.get('producer')           || '',
+      country:            searchParams.get('country')            || '',
+      region:             searchParams.get('region')             || '',
+      subregion:          searchParams.get('subregion')          || '',
+      vintage:            searchParams.get('vintage')            || '',
+      type:               searchParams.get('type')               || 'RED',
+      alcoholPercentage:  searchParams.get('alcoholPercentage')  || '',
+      grapeVarieties:     searchParams.get('grapeVarieties')     || '',
+      agingPotential:     searchParams.get('agingPotential')     || '',
+      servingTemperature: searchParams.get('servingTemperature') || '',
+      tastingNotes:       searchParams.get('tastingNotes')       || '',
+    };
+  };
+
   const [form, setForm] = useState(wine ? {
     name:               wine.name               || '',
     producer:           wine.producer           || '',
@@ -57,43 +80,43 @@ export default function WineForm({ wine = null }) {
     labelImageUrl:      wine.labelImageUrl      || '',
     bottleImageUrl:     wine.bottleImageUrl     || '',
     isFavorite:         wine.isFavorite         ?? false,
-    vintage:            wine.vintage?.toString()          || '',
-    alcoholPercentage:  wine.alcoholPercentage?.toString()|| '',
-    quantity:           wine.quantity?.toString()         || '1',
-    purchasePrice:      wine.purchasePrice?.toString()    || '',
-    estimatedValue:     wine.estimatedValue?.toString()   || '',
-    rating:             wine.rating?.toString()           || '',
+    vintage:            wine.vintage?.toString()           || '',
+    alcoholPercentage:  wine.alcoholPercentage?.toString() || '',
+    quantity:           wine.quantity?.toString()          || '1',
+    purchasePrice:      wine.purchasePrice?.toString()     || '',
+    estimatedValue:     wine.estimatedValue?.toString()    || '',
+    rating:             wine.rating?.toString()            || '',
     purchaseDate:       wine.purchaseDate ? new Date(wine.purchaseDate).toISOString().split('T')[0] : '',
-    grapeVarieties:     wine.grapeVarieties?.join(', ')   || '',
-    foodPairing:        wine.foodPairing?.join(', ')      || '',
-  } : defaultForm);
+    grapeVarieties:     wine.grapeVarieties?.join(', ')    || '',
+    foodPairing:        wine.foodPairing?.join(', ')       || '',
+  } : { ...defaultForm, ...getScanDefaults() });
 
   const [section, setSection] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({});
-  
+  const [errors, setErrors]   = useState({});
 
   const set = (key, value) => setForm(f => ({ ...f, [key]: value }));
 
   const handleAIScan = (data) => {
-  setForm(f => ({
-    ...f,
-    ...(data.name               && { name: data.name }),
-    ...(data.producer           && { producer: data.producer }),
-    ...(data.country            && { country: data.country }),
-    ...(data.region             && { region: data.region }),
-    ...(data.subregion          && { subregion: data.subregion }),
-    ...(data.vintage            && { vintage: data.vintage }),
-    ...(data.type               && { type: data.type }),
-    ...(data.alcoholPercentage  && { alcoholPercentage: data.alcoholPercentage }),
-    ...(data.grapeVarieties     && { grapeVarieties: data.grapeVarieties }),
-    ...(data.agingPotential     && { agingPotential: data.agingPotential }),
-    ...(data.servingTemperature && { servingTemperature: data.servingTemperature }),
-    ...(data.tastingNotes       && { tastingNotes: data.tastingNotes }),
-  }));
-  setSection(0); // Navighează la Informații de bază
-};
-
+    setForm(f => ({
+      ...f,
+      ...(data.name               && { name: data.name }),
+      ...(data.producer           && { producer: data.producer }),
+      ...(data.country            && { country: data.country }),
+      ...(data.region             && { region: data.region }),
+      ...(data.subregion          && { subregion: data.subregion }),
+      ...(data.vintage            && { vintage: data.vintage }),
+      ...(data.type               && { type: data.type }),
+      ...(data.alcoholPercentage  && { alcoholPercentage: data.alcoholPercentage }),
+      ...(data.bottleSize         && { bottleSize: data.bottleSize }),   // ← nou
+      ...(data.grapeVarieties     && { grapeVarieties: data.grapeVarieties }),
+      ...(data.foodPairing        && { foodPairing: data.foodPairing }), // ← nou
+      ...(data.agingPotential     && { agingPotential: data.agingPotential }),
+      ...(data.servingTemperature && { servingTemperature: data.servingTemperature }),
+      ...(data.tastingNotes       && { tastingNotes: data.tastingNotes }),
+      ...(data.estimatedValue && { estimatedValue: data.estimatedValue }),
+    }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -346,6 +369,22 @@ export default function WineForm({ wine = null }) {
       `}</style>
 
       <form className="wform-wrap" onSubmit={handleSubmit}>
+
+        {/* Banner AI scan */}
+        {fromScan && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '0.6rem',
+            padding: '0.65rem 1rem', marginBottom: '1.25rem',
+            background: 'rgba(212,175,55,0.08)',
+            border: '1px solid rgba(212,175,55,0.2)',
+            borderRadius: '10px', fontSize: '0.75rem',
+            color: 'rgba(212,175,55,0.9)',
+          }}>
+            <span>✨</span>
+            <span>Câmpurile au fost completate automat de AI. Verifică și corectează dacă e necesar.</span>
+          </div>
+        )}
+
         {/* Tabs */}
         <div className="wform-tabs">
           {SECTIONS.map((s, i) => (
@@ -362,6 +401,7 @@ export default function WineForm({ wine = null }) {
 
         {/* ── SECTION 0: Informații de bază ── */}
         <div className={`wform-section ${section === 0 ? 'active' : ''}`}>
+          <ScanLabelButton onScan={handleAIScan} />
           <div className="wform-grid">
             <div className="wform-field wform-full">
               <label className="wform-label required">Nume vin</label>
@@ -425,30 +465,29 @@ export default function WineForm({ wine = null }) {
         </div>
 
         {/* ── SECTION 1: Imagini ── */}
-       <div className={`wform-section ${section === 1 ? 'active' : ''}`}>
-  <ScanLabelButton onScan={handleAIScan} />
-  <p className="wform-img-hint">
-    🖼️ Adaugă imagini pentru a personaliza vinul în colecție. Poți încărca eticheta și/sau sticla. Imaginile sunt stocate privat în pivnița ta digitală.
-  </p>
-  <div className="wform-grid">
-    <div className="wform-field">
-      <ImageUpload
-        label="Imagine etichetă"
-        value={form.labelImageUrl}
-        onChange={(url) => set('labelImageUrl', url || '')}
-        folder="wines/labels"
-      />
-    </div>
-    <div className="wform-field">
-      <ImageUpload
-        label="Imagine sticlă"
-        value={form.bottleImageUrl}
-        onChange={(url) => set('bottleImageUrl', url || '')}
-        folder="wines/bottles"
-      />
-    </div>
-  </div>
-</div>
+        <div className={`wform-section ${section === 1 ? 'active' : ''}`}>
+          <p className="wform-img-hint">
+            🖼️ Adaugă imagini pentru a personaliza vinul în colecție. Poți încărca eticheta și/sau sticla. Imaginile sunt stocate privat în pivnița ta digitală.
+          </p>
+          <div className="wform-grid">
+            <div className="wform-field">
+              <ImageUpload
+                label="Imagine etichetă"
+                value={form.labelImageUrl}
+                onChange={(url) => set('labelImageUrl', url || '')}
+                folder="wines/labels"
+              />
+            </div>
+            <div className="wform-field">
+              <ImageUpload
+                label="Imagine sticlă"
+                value={form.bottleImageUrl}
+                onChange={(url) => set('bottleImageUrl', url || '')}
+                folder="wines/bottles"
+              />
+            </div>
+          </div>
+        </div>
 
         {/* ── SECTION 2: Detalii ── */}
         <div className={`wform-section ${section === 2 ? 'active' : ''}`}>

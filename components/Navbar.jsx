@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useSession, signOut } from '@/utils/auth-client';
 import { useRouter, usePathname } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
+import AddWineFAB from '@/components/AddWineFAB';
 
 export default function Navbar() {
   const { data: session } = useSession();
@@ -291,6 +292,7 @@ export default function Navbar() {
           </>
         )}
       </div>
+      {session && <AddWineFAB />}
     </>
   );
 }
