@@ -53,16 +53,19 @@ export default function Navbar() {
           height: 100%; display: flex; align-items: center; justify-content: space-between;
         }
 
-        .vn-logo { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; flex-shrink: 0; }
-        .vn-logo-icon {
-          width: 30px; height: 30px;
-          background: linear-gradient(135deg, #8b1a2e, #c44569);
-          border-radius: 7px; display: flex; align-items: center; justify-content: center;
-          font-size: 0.95rem; box-shadow: 0 2px 12px rgba(196,69,105,0.3);
+        .vn-logo {
+          display: flex; align-items: center;
+          text-decoration: none; flex-shrink: 0;
         }
-        .vn-logo-text {
-          font-family: 'Cormorant Garamond', serif; font-size: 1.25rem; font-weight: 600;
-          color: #f5e6e8; letter-spacing: 0.18em; text-transform: uppercase;
+        .vn-logo img {
+          height: 46px; width: auto;
+          object-fit: contain;
+          filter: brightness(1.15) drop-shadow(0 2px 10px rgba(196,69,105,0.35));
+          transition: filter 0.25s, transform 0.25s;
+        }
+        .vn-logo:hover img {
+          filter: brightness(1.3) drop-shadow(0 2px 18px rgba(196,69,105,0.65));
+          transform: scale(1.04);
         }
 
         .vn-links { display: flex; align-items: center; gap: 0.25rem; }
@@ -83,7 +86,6 @@ export default function Navbar() {
 
         .vn-divider { width: 1px; height: 18px; background: rgba(196, 69, 105, 0.2); margin: 0 0.75rem; }
 
-        /* User dropdown */
         .vn-user { display: flex; align-items: center; position: relative; }
         .vn-avatar-btn {
           display: flex; align-items: center; gap: 0.6rem;
@@ -145,7 +147,6 @@ export default function Navbar() {
         .vn-dropdown-divider { height: 1px; background: rgba(196,69,105,0.1); margin: 0.35rem 0; }
         .vn-dropdown-icon { font-size: 0.85rem; width: 16px; text-align: center; flex-shrink: 0; }
 
-        /* Auth */
         .vn-btn-ghost {
           padding: 0.38rem 0.9rem; font-family: 'Jost', sans-serif;
           font-size: 0.72rem; font-weight: 400; letter-spacing: 0.12em; text-transform: uppercase;
@@ -163,14 +164,12 @@ export default function Navbar() {
         }
         .vn-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(196,69,105,0.4); }
 
-        /* Hamburger */
         .vn-hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 4px; background: none; border: none; }
         .vn-hamburger span { display: block; width: 22px; height: 1.5px; background: rgba(245,230,232,0.6); border-radius: 2px; transition: all 0.3s ease; transform-origin: center; }
         .vn-hamburger.open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
         .vn-hamburger.open span:nth-child(2) { opacity: 0; }
         .vn-hamburger.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
 
-        /* Mobile menu */
         .vn-mobile-menu {
           position: fixed; top: 64px; left: 0; right: 0;
           background: rgba(13,6,8,0.97); backdrop-filter: blur(20px);
@@ -209,14 +208,15 @@ export default function Navbar() {
         @media (max-width: 768px) {
           .vn-links, .vn-divider, .vn-auth { display: none !important; }
           .vn-hamburger { display: flex; }
+          .vn-logo img { height: 38px; }
         }
       `}</style>
 
       <nav className="vn-nav">
         <div className="vn-nav-inner">
+
           <Link href="/" className="vn-logo">
-            <div className="vn-logo-icon">🍷</div>
-            <span className="vn-logo-text">Vinerys</span>
+            <img src="/logo.png" alt="Vinerys" />
           </Link>
 
           {session ? (
@@ -292,6 +292,7 @@ export default function Navbar() {
           </>
         )}
       </div>
+
       {session && <AddWineFAB />}
     </>
   );
