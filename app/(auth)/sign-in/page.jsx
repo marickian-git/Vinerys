@@ -140,9 +140,17 @@ export default function SignInPage() {
         }
         .form-container.mounted { opacity: 1; transform: translateY(0); }
 
-        .form-logo { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 3rem; }
-        .logo-icon { width: 36px; height: 36px; background: linear-gradient(135deg, #8b1a2e, #c44569); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
-        .logo-text { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; font-weight: 600; color: #f5e6e8; letter-spacing: 0.15em; text-transform: uppercase; }
+        .form-logo {
+          display: flex;
+          align-items: center;
+          margin-bottom: 2.5rem;
+        }
+        .form-logo img {
+          height: 120px;
+          width: auto;
+          object-fit: contain;
+          filter: brightness(1.1) drop-shadow(0 2px 12px rgba(196,69,105,0.35));
+        }
 
         .form-title { font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; font-weight: 300; color: #f5e6e8; margin-bottom: 0.5rem; line-height: 1.2; }
         .form-subtitle { font-size: 0.82rem; color: rgba(245, 230, 232, 0.4); font-weight: 300; letter-spacing: 0.05em; margin-bottom: 2.5rem; }
@@ -195,19 +203,21 @@ export default function SignInPage() {
           .wine-page { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
           .wine-left { padding: 2rem; min-height: 220px; justify-content: center; }
           .wine-glass-art { display: none; }
-          .wine-tagline { font-size: 2rem; margin-bottom: 0.75rem;  margin-top:5rem}
+          .wine-tagline { font-size: 2rem; margin-bottom: 0.75rem;   }
           .wine-desc { margin-bottom: 1.5rem; font-size: 0.75rem; }
           .wine-stats { gap: 1.5rem; }
           .stat-num { font-size: 1.5rem; }
           .wine-right::before { display: none; }
           .wine-right { padding: 2rem 1.5rem; align-items: flex-start; }
-          .form-logo { margin-bottom: 2rem; }
+          .form-logo { margin-bottom: 1.75rem; }
+          .form-logo img { height: 60px; }
           .form-title { font-size: 1.8rem; }
         }
         @media (max-width: 480px) {
           .wine-left { min-height: 180px; padding: 1.5rem; }
           .wine-tagline { font-size: 1.6rem; }
           .wine-stats { display: none; }
+          .form-logo img { height: 50px; }
         }
       `}</style>
 
@@ -260,8 +270,7 @@ export default function SignInPage() {
         <div className="wine-right">
           <div className={`form-container ${mounted ? "mounted" : ""}`}>
             <div className="form-logo">
-              <div className="logo-icon">🍷</div>
-              <span className="logo-text">Vinerys</span>
+              <img src="/logo.png" alt="Vinerys" />
             </div>
 
             <h2 className="form-title">Bine ai revenit</h2>

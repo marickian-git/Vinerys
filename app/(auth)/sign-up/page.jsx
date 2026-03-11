@@ -80,7 +80,6 @@ export default function SignUpPage() {
           50% { transform: translateY(-25px) scale(1.04); }
         }
 
-        /* Bottles illustration */
         .bottles-art {
           position: relative;
           z-index: 2;
@@ -116,7 +115,6 @@ export default function SignUpPage() {
         .feature-dot { width: 6px; height: 6px; border-radius: 50%; background: #c44569; flex-shrink: 0; box-shadow: 0 0 8px rgba(196,69,105,0.6); }
         .feature-text { font-size: 0.8rem; color: rgba(245, 230, 232, 0.5); letter-spacing: 0.06em; font-weight: 300; }
 
-        /* RIGHT */
         .wine-right {
           display: flex;
           align-items: center;
@@ -144,17 +142,22 @@ export default function SignUpPage() {
         }
         .form-container.mounted { opacity: 1; transform: translateY(0); }
 
-        .form-logo { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 2.5rem; }
-        .logo-icon { width: 36px; height: 36px; background: linear-gradient(135deg, #8b1a2e, #c44569); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
-        .logo-text { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; font-weight: 600; color: #f5e6e8; letter-spacing: 0.15em; text-transform: uppercase; }
+        .form-logo {
+          display: flex;
+          align-items: center;
+          margin-bottom: 2rem;
+        }
+        .form-logo img {
+          height: 120px;
+          width: auto;
+          object-fit: contain;
+          filter: brightness(1.1) drop-shadow(0 2px 12px rgba(196,69,105,0.35));
+        }
 
         .form-title { font-family: 'Cormorant Garamond', serif; font-size: 2rem; font-weight: 300; color: #f5e6e8; margin-bottom: 0.4rem; line-height: 1.2; }
         .form-subtitle { font-size: 0.82rem; color: rgba(245, 230, 232, 0.4); font-weight: 300; letter-spacing: 0.05em; margin-bottom: 2rem; }
 
-        .fields-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-
         .field-group { margin-bottom: 1.1rem; }
-        .field-group.full { grid-column: 1 / -1; }
         .field-label { display: block; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.15em; color: rgba(245, 230, 232, 0.5); margin-bottom: 0.55rem; font-weight: 400; }
         .field-input {
           width: 100%; padding: 0.8rem 1rem;
@@ -168,7 +171,6 @@ export default function SignUpPage() {
         .field-input:focus { border-color: rgba(196, 69, 105, 0.6); background: rgba(196, 69, 105, 0.05); box-shadow: 0 0 0 3px rgba(196, 69, 105, 0.08); }
         .field-input:-webkit-autofill { -webkit-box-shadow: 0 0 0 100px #1a0810 inset; -webkit-text-fill-color: #f5e6e8; }
 
-        /* Password strength */
         .pwd-strength { margin-top: 0.4rem; display: flex; gap: 3px; }
         .pwd-bar { height: 2px; flex: 1; border-radius: 2px; background: rgba(255,255,255,0.08); transition: background 0.3s; }
         .pwd-bar.weak { background: #e05555; }
@@ -207,10 +209,6 @@ export default function SignUpPage() {
 
         .grain { position: fixed; inset: 0; pointer-events: none; z-index: 100; opacity: 0.025; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E"); background-size: 128px; }
 
-        @media (max-width: 900px) {
-          .fields-row { grid-template-columns: 1fr; }
-        }
-
         @media (max-width: 768px) {
           .wine-page { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
           .wine-left { padding: 2rem; min-height: 200px; justify-content: center; }
@@ -221,13 +219,14 @@ export default function SignUpPage() {
           .wine-right::before { display: none; }
           .wine-right { padding: 2rem 1.5rem; align-items: flex-start; }
           .form-logo { margin-bottom: 1.5rem; }
+          .form-logo img { height: 80px; }
           .form-title { font-size: 1.7rem; }
-          .fields-row { grid-template-columns: 1fr; gap: 0; }
         }
         @media (max-width: 480px) {
           .wine-left { min-height: 160px; padding: 1.5rem; }
           .wine-tagline { font-size: 1.5rem; }
           .feature-list { display: none; }
+          .form-logo img { height: 64px; }
         }
       `}</style>
 
@@ -243,9 +242,7 @@ export default function SignUpPage() {
             <div className="orb orb-3" />
           </div>
 
-          {/* Bottles SVG illustration */}
           <svg className="bottles-art" width="220" height="280" viewBox="0 0 220 280" fill="none" xmlns="http://www.w3.org/2000/svg">
-            {/* Bottle 1 - left */}
             <g opacity="0.7">
               <rect x="38" y="80" width="28" height="140" rx="6" fill="rgba(139,26,46,0.4)" stroke="rgba(196,69,105,0.5)" strokeWidth="1"/>
               <rect x="42" y="60" width="20" height="25" rx="3" fill="rgba(139,26,46,0.3)" stroke="rgba(196,69,105,0.4)" strokeWidth="1"/>
@@ -253,7 +250,6 @@ export default function SignUpPage() {
               <rect x="42" y="140" width="20" height="40" rx="0" fill="rgba(196,69,105,0.15)"/>
               <line x1="42" y1="185" x2="62" y2="185" stroke="rgba(196,69,105,0.3)" strokeWidth="0.5"/>
             </g>
-            {/* Bottle 2 - center (taller) */}
             <g opacity="0.9">
               <rect x="88" y="50" width="32" height="170" rx="7" fill="rgba(92,14,28,0.5)" stroke="rgba(196,69,105,0.7)" strokeWidth="1.2"/>
               <rect x="93" y="28" width="22" height="28" rx="4" fill="rgba(92,14,28,0.4)" stroke="rgba(196,69,105,0.5)" strokeWidth="1"/>
@@ -261,14 +257,12 @@ export default function SignUpPage() {
               <rect x="93" y="155" width="22" height="50" rx="0" fill="rgba(139,26,46,0.25)"/>
               <rect x="90" y="100" width="28" height="18" rx="2" fill="rgba(245,230,232,0.08)" stroke="rgba(245,230,232,0.15)" strokeWidth="0.5"/>
             </g>
-            {/* Bottle 3 - right */}
             <g opacity="0.65">
               <rect x="152" y="90" width="26" height="130" rx="6" fill="rgba(139,26,46,0.35)" stroke="rgba(196,69,105,0.45)" strokeWidth="1"/>
               <rect x="156" y="70" width="18" height="24" rx="3" fill="rgba(139,26,46,0.25)" stroke="rgba(196,69,105,0.35)" strokeWidth="1"/>
               <rect x="160" y="60" width="10" height="13" rx="2" fill="rgba(196,69,105,0.45)" stroke="rgba(196,69,105,0.55)" strokeWidth="1"/>
               <rect x="156" y="160" width="18" height="35" rx="0" fill="rgba(196,69,105,0.12)"/>
             </g>
-            {/* Glow under bottles */}
             <ellipse cx="110" cy="225" rx="75" ry="8" fill="rgba(196,69,105,0.12)"/>
           </svg>
 
@@ -293,9 +287,9 @@ export default function SignUpPage() {
         {/* RIGHT */}
         <div className="wine-right">
           <div className={`form-container ${mounted ? "mounted" : ""}`}>
+
             <div className="form-logo">
-              <div className="logo-icon">🍷</div>
-              <span className="logo-text">Vinerys</span>
+              <img src="/logo.png" alt="Vinerys" />
             </div>
 
             <h2 className="form-title">Creează-ți contul</h2>

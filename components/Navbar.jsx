@@ -21,6 +21,8 @@ export default function Navbar() {
   };
 
   const isActive = (href) => pathname === href || pathname.startsWith(href + '/');
+  const isAuthPage = pathname === '/sign-in' || pathname === '/sign-up';
+  if (isAuthPage) return null;
 
   useEffect(() => {
     const handler = (e) => {
@@ -58,14 +60,14 @@ export default function Navbar() {
           text-decoration: none; flex-shrink: 0;
         }
         .vn-logo img {
-          height: 46px; width: auto;
+          height: 52px; width: auto;
           object-fit: contain;
-          filter: brightness(1.15) drop-shadow(0 2px 10px rgba(196,69,105,0.35));
+          filter: brightness(1.1) drop-shadow(0 2px 10px rgba(196,69,105,0.3));
           transition: filter 0.25s, transform 0.25s;
         }
         .vn-logo:hover img {
-          filter: brightness(1.3) drop-shadow(0 2px 18px rgba(196,69,105,0.65));
-          transform: scale(1.04);
+          filter: brightness(1.25) drop-shadow(0 2px 18px rgba(196,69,105,0.6));
+          transform: scale(1.03);
         }
 
         .vn-links { display: flex; align-items: center; gap: 0.25rem; }
@@ -208,13 +210,15 @@ export default function Navbar() {
         @media (max-width: 768px) {
           .vn-links, .vn-divider, .vn-auth { display: none !important; }
           .vn-hamburger { display: flex; }
-          .vn-logo img { height: 38px; }
+          .vn-logo img { height: 42px; }
+        }
+        @media (max-width: 480px) {
+          .vn-logo img { height: 36px; }
         }
       `}</style>
 
       <nav className="vn-nav">
         <div className="vn-nav-inner">
-
           <Link href="/" className="vn-logo">
             <img src="/logo.png" alt="Vinerys" />
           </Link>
