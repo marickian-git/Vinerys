@@ -52,7 +52,7 @@ export default function RootLayout({ children }) {
         <meta name="msapplication-TileColor" content="#8b1a2e" />
         <meta name="msapplication-TileImage" content="/icons/icon-144.png" />
       </head>
-      <body className={inter.className}>
+      <body className={inter.className} style={{background: "#0d0608"}}>
         <Providers>
           <Navbar />
           <main className="pt-16 min-h-screen" style={{ background: '#0d0608' }}>

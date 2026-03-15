@@ -50,16 +50,27 @@ export function DrinkWindowBadge({ drinkFrom, drinkUntil }) {
   const s = getStatus(drinkFrom, drinkUntil);
   if (!s) return null;
 
+  // Dot color only — no icon, no background block
+  const dotColor = s.status === 'optimal' ? '#55c44e' : s.status === 'early' ? '#d4af37' : '#dc5050';
+
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
-      padding: '0.2rem 0.55rem', borderRadius: '20px',
+      padding: '0.12rem 0.5rem', borderRadius: '20px',
       background: s.bg, border: `1px solid ${s.border}`,
-      fontSize: '0.65rem', color: s.color, fontWeight: 400,
-      letterSpacing: '0.04em', whiteSpace: 'nowrap',
+      fontSize: '0.6rem', color: s.color, fontWeight: 400,
+      letterSpacing: '0.02em', whiteSpace: 'nowrap',
       fontFamily: "'Jost', sans-serif",
+      alignSelf: 'flex-start', flexShrink: 0,
+      marginBottom: '0.5rem',
     }}>
-      {s.icon} {s.label}
+      <span style={{ width: 5, height: 5, borderRadius: '50%', background: dotColor, flexShrink: 0, display: 'inline-block' }} />
+      {s.label}
+      {drinkFrom && drinkUntil && (
+        <span style={{ opacity: 0.45, marginLeft: '0.15rem' }}>
+          {drinkFrom}–{drinkUntil}
+        </span>
+      )}
     </span>
   );
 }

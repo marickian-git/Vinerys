@@ -56,29 +56,32 @@ export default function AromaProfile({ aromas = [], compact = false }) {
   if (!aromas || aromas.length === 0) return null;
 
   if (compact) {
+    const visible = aromas.slice(0, 4);
+    const rest = aromas.length - 4;
     return (
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem' }}>
-        {aromas.slice(0, 5).map(aroma => {
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
+        {visible.map(aroma => {
           const cat = getCategory(aroma);
           return (
             <span key={aroma} style={{
-              padding: '0.18rem 0.55rem', borderRadius: '20px',
+              padding: '0.12rem 0.45rem', borderRadius: '20px',
               background: cat.bg, border: `1px solid ${cat.border}`,
-              fontSize: '0.65rem', color: cat.color,
+              fontSize: '0.6rem', color: cat.color,
               fontFamily: "'Jost', sans-serif", fontWeight: 300,
+              letterSpacing: '0.02em',
             }}>
               {aroma}
             </span>
           );
         })}
-        {aromas.length > 5 && (
+        {rest > 0 && (
           <span style={{
-            padding: '0.18rem 0.55rem', borderRadius: '20px',
-            background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-            fontSize: '0.65rem', color: 'rgba(245,230,232,0.3)',
+            padding: '0.12rem 0.45rem', borderRadius: '20px',
+            background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
+            fontSize: '0.6rem', color: 'rgba(245,230,232,0.25)',
             fontFamily: "'Jost', sans-serif",
           }}>
-            +{aromas.length - 5}
+            +{rest}
           </span>
         )}
       </div>

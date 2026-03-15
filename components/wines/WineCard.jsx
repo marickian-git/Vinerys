@@ -41,7 +41,8 @@ export default function WineCard({ wine }) {
           overflow: hidden;
           transition: all 0.3s ease;
           text-decoration: none;
-          display: block;
+          display: flex;
+          flex-direction: column;
           font-family: 'Jost', sans-serif;
         }
         .wc-card:hover {
@@ -76,25 +77,26 @@ export default function WineCard({ wine }) {
           border-radius: 4px; font-family: 'Jost', sans-serif; z-index: 2;
         }
 
-        .wc-body { padding: 1rem 1.1rem 1.1rem; }
+        .wc-body { padding: 0.85rem 1rem 1rem; display: flex; flex-direction: column; flex: 1; }
 
         .wc-name {
-          font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; font-weight: 600;
-          color: #f5e6e8; line-height: 1.25; margin-bottom: 0.2rem;
+          font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 600;
+          color: #f5e6e8; line-height: 1.2; margin-bottom: 0.15rem;
           white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
         .wc-producer {
-          font-size: 0.75rem; color: rgba(245,230,232,0.4); font-weight: 300;
-          letter-spacing: 0.05em; margin-bottom: 0.75rem;
+          font-size: 0.72rem; color: rgba(245,230,232,0.35); font-weight: 300;
+          letter-spacing: 0.04em; margin-bottom: 0.55rem;
           white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
-        .wc-meta { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
-        .wc-meta-item { font-size: 0.7rem; color: rgba(245,230,232,0.35); font-weight: 300; }
-        .wc-meta-sep { width: 3px; height: 3px; border-radius: 50%; background: rgba(196,69,105,0.4); flex-shrink: 0; }
+        .wc-meta { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
+        .wc-meta-item { font-size: 0.68rem; color: rgba(245,230,232,0.3); font-weight: 300; }
+        .wc-meta-sep { width: 2px; height: 2px; border-radius: 50%; background: rgba(196,69,105,0.3); flex-shrink: 0; }
 
-        .wc-extras { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.85rem; }
+        .wc-extras { display: flex; flex-direction: column; gap: 0.3rem; margin-bottom: 0.6rem; }
 
-        .wc-footer { display: flex; align-items: center; justify-content: space-between; }
+        .wc-spacer { flex: 1; }
+        .wc-footer { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: 0.5rem; }
         .wc-stars { display: flex; gap: 2px; }
         .wc-star { font-size: 0.7rem; line-height: 1; color: #d4af37; }
         .wc-star-empty { color: rgba(245,230,232,0.15); }
@@ -134,15 +136,39 @@ export default function WineCard({ wine }) {
             {wine.bottleSize && <span className="wc-meta-item">{wine.bottleSize}</span>}
           </div>
 
-          {/* Arome + Drink Window */}
+     {hasDrinkWindow && (
+                <DrinkWindowBadge drinkFrom={wine.drinkFrom} drinkUntil={wine.drinkUntil} />
+              )}
+          {/* Arome + Drink Window — same row */}
           {(hasAromas || hasDrinkWindow) && (
-            <div className="wc-extras">
-              {hasAromas && <AromaProfile aromas={wine.aromaProfile} compact />}
-              {hasDrinkWindow && <DrinkWindowBadge drinkFrom={wine.drinkFrom} drinkUntil={wine.drinkUntil} />}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', marginBottom: '0.6rem', alignItems: 'center' }}>
+              {hasAromas && wine.aromaProfile.slice(0, 3).map(aroma => {
+                const colors = {
+                  default: { bg: 'rgba(196,69,105,0.08)', border: 'rgba(196,69,105,0.2)', color: 'rgba(196,69,105,0.8)' }
+                };
+                return (
+                  <span key={aroma} style={{
+                    padding: '0.12rem 0.45rem', borderRadius: '20px',
+                    background: 'rgba(196,69,105,0.07)', border: '1px solid rgba(196,69,105,0.15)',
+                    fontSize: '0.6rem', color: 'rgba(245,230,232,0.5)',
+                    fontFamily: "'Jost', sans-serif", fontWeight: 300,
+                  }}>{aroma}</span>
+                );
+              })}
+           
+              {hasAromas && wine.aromaProfile.length > 3 && (
+                <span style={{
+                  padding: '0.12rem 0.4rem', borderRadius: '20px',
+                  background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
+                  fontSize: '0.6rem', color: 'rgba(245,230,232,0.2)',
+                  fontFamily: "'Jost', sans-serif",
+                }}>+{wine.aromaProfile.length - 3}</span>
+              )}
+            
             </div>
           )}
 
-          <div className="wc-footer">
+          <div className="wc-footer" style={{ marginTop: 'auto' }}>
             <div className="wc-stars">
               {wine.rating
                 ? stars.map((filled, i) => (
