@@ -146,7 +146,7 @@ export default function SignInPage() {
           margin-bottom: 2.5rem;
         }
         .form-logo img {
-          height: 120px;
+          height: 80px;
           width: auto;
           object-fit: contain;
           filter: brightness(1.1) drop-shadow(0 2px 12px rgba(196,69,105,0.35));
@@ -203,7 +203,7 @@ export default function SignInPage() {
           .wine-page { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
           .wine-left { padding: 2rem; min-height: 220px; justify-content: center; }
           .wine-glass-art { display: none; }
-          .wine-tagline { font-size: 2rem; margin-bottom: 0.75rem;   }
+          .wine-tagline { font-size: 2rem; margin-bottom: 0.75rem; margin-top: 5rem; }
           .wine-desc { margin-bottom: 1.5rem; font-size: 0.75rem; }
           .wine-stats { gap: 1.5rem; }
           .stat-num { font-size: 1.5rem; }

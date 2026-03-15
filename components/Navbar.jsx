@@ -16,8 +16,13 @@ export default function Navbar() {
 
   const handleSignOut = async () => {
     setDropdownOpen(false);
-    await signOut();
-    router.push('/sign-in');
+    setMenuOpen(false);
+    try {
+      await signOut();
+    } catch (e) {
+      console.error('signOut error', e);
+    }
+    window.location.href = '/sign-in';
   };
 
   const isActive = (href) => pathname === href || pathname.startsWith(href + '/');

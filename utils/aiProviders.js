@@ -2,37 +2,42 @@
 // Sistem de provideri AI interschimbabili pentru analiza etichetelor de vin
 
 const PROMPT = `Ești un expert sommelier și consultant de vinuri cu cunoștințe extinse despre prețurile pieței.
-Analizează cu atenție această imagine de etichetă și extrage TOATE informațiile vizibile.
+Analizează cu atenție această imagine de etichetă și extrage informațiile vizibile, apoi COMPLETEAZĂ cu cunoștințele tale despre acest vin.
 
 Returnează DOAR un obiect JSON valid, fără text adițional, fără markdown, fără backticks.
 
 {
-  "name": "numele vinului (ex: Fetească Neagră, Château Margaux, Barolo) — OBLIGATORIU dacă e vizibil",
-  "producer": "producătorul / crama / domeniul (ex: Cramele Recaș, Antinori)",
+  "name": "numele vinului — OBLIGATORIU dacă e vizibil",
+  "producer": "producătorul / crama / domeniul",
   "country": "țara de origine în română (ex: România, Franța, Italia, Spania, Germania, Argentina, Chile, SUA)",
-  "region": "regiunea viticolă (ex: Dealu Mare, Bordeaux, Toscana, Rioja, Barossa Valley)",
-  "subregion": "subregiunea sau denumirea de origine (ex: Pauillac, Pomerol, Chianti Classico, Valle de Uco)",
-  "vintage": anul recoltei ca număr întreg (ex: 2019) sau null,
-  "type": "tipul vinului — OBLIGATORIU — alege din: RED, WHITE, ROSE, SPARKLING, DESSERT, FORTIFIED. Deduce din culoare, denumire sau indicii vizuale dacă nu e explicit",
-  "alcoholPercentage": procentul de alcool ca număr zecimal (ex: 13.5) sau null,
-  "bottleSize": "mărimea sticlei dacă e menționată (ex: 0.75L, 1.5L, 0.375L) sau null",
-  "grapeVarieties": "soiurile de struguri separate prin virgulă (ex: Cabernet Sauvignon, Merlot, Fetească Neagră) sau null",
-  "agingPotential": "potențialul de maturare dacă e menționat (ex: 5-10 ani, 2025-2030) sau null",
-  "servingTemperature": "temperatura de servire dacă e menționată (ex: 16-18°C, 8-10°C) sau null",
-  "tastingNotes": "notele de degustare, arome sau descriere dacă sunt menționate pe etichetă sau null",
-  "foodPairing": "asocierile gastronomice dacă sunt menționate (ex: carne roșie, pește, brânzeturi) sau null",
-  "estimatedValue": valoarea estimată în EUR ca număr zecimal bazată pe cunoștințele tale despre acest vin (ex: 25.00) sau null
+  "region": "regiunea viticolă (ex: Dealu Mare, Bordeaux, Toscana, Rioja)",
+  "subregion": "subregiunea sau denumirea de origine (ex: Pauillac, Chianti Classico)",
+  "vintage": anul recoltei ca număr întreg sau null,
+  "type": "OBLIGATORIU: RED, WHITE, ROSE, SPARKLING, DESSERT sau FORTIFIED",
+  "alcoholPercentage": procentul de alcool — citit de pe etichetă SAU estimat din cunoștințele tale despre acest tip de vin și regiune (ex: 13.5),
+  "bottleSize": "mărimea sticlei de pe etichetă sau '0.75L' ca default dacă nu e specificat",
+  "grapeVarieties": "soiurile de struguri — citite de pe etichetă SAU deduse din cunoștințele tale despre acest vin/regiune/producător (ex: pentru Barolo → Nebbiolo, pentru Bordeaux roșu → Cabernet Sauvignon, Merlot)",
+  "agingPotential": "potențialul de maturare — de pe etichetă SAU estimat din cunoștințele tale (ex: un Barolo 2019 → 10-20 ani, un vin de masă → 1-2 ani)",
+  "servingTemperature": "temperatura de servire — de pe etichetă SAU din cunoștințele tale (ex: vinuri roșii full-body → 16-18°C, albe seci → 8-10°C, spumante → 6-8°C)",
+  "tastingNotes": "notele de degustare — de pe etichetă SAU din cunoștințele tale despre acest vin (arome tipice, structură, finisaj)",
+  "foodPairing": "asocierile gastronomice — de pe etichetă SAU recomandate de tine pentru acest tip de vin",
+  "estimatedValue": valoarea estimată în EUR bazată pe producător, regiune, vintage și reputație sau null dacă vinul e complet necunoscut
 }
 
 REGULI IMPORTANTE:
-- Câmpul "type" este OBLIGATORIU — dacă nu e explicit pe etichetă, deduce-l: vinurile roșii din soiuri ca Cabernet, Merlot, Pinot Noir, Syrah, Fetească Neagră = RED; Chardonnay, Sauvignon Blanc, Riesling, Fetească Albă = WHITE; Prosecco, Cava, Champagne, Spumant = SPARKLING; Rosé / Roze = ROSE
-- Câmpul "name" este OBLIGATORIU — dacă e o denumire de origine (ex: Barolo, Rioja), folosește-o ca nume
-- Pentru vinuri românești: Dealu Mare, Cotnari, Murfatlar, Recaș, Cramele Recaș, Vinarte, Davino sunt producători/regiuni frecvente
-- Pentru "country": folosește mereu forma în română (Franța nu France, Italia nu Italy, Germania nu Germany)
-- Dacă vezi cuvinte ca "Sec", "Demisec", "Dulce", "Brut", "Extra Brut" — menționează-le în tastingNotes
-- Dacă e o ediție specială, rezervă sau cuvânt de prestigiu (Reserve, Gran Reserva, Riserva, Cru, etc.) — include-l în "name"
-- Pentru "estimatedValue": estimează prețul de retail în EUR pentru o sticlă de 0.75L bazat pe producător, regiune, vintage și reputația vinului. Dacă vinul e necunoscut sau nu poți estima cu încredere, lasă null. Nu inventa prețuri pentru vinuri complet necunoscute.
-- Fii precis și nu inventa informații. Dacă nu ești sigur de un câmp, lasă null.`;
+- Câmpul "type" este OBLIGATORIU — deduce-l dacă nu e explicit
+- Câmpul "name" este OBLIGATORIU — dacă e o denumire de origine (Barolo, Rioja), folosește-o ca nume
+- "bottleSize": dacă nu e menționat pe etichetă, pune "0.75L" ca default
+- "alcoholPercentage": dacă nu e vizibil, estimează bazat pe tipul vinului și regiune (vinuri roșii italiene ~13-14%, burgundy ~12.5-13%, etc.)
+- "grapeVarieties": COMPLETEAZĂ DIN CUNOȘTINȚELE TALE dacă știi ce soiuri sunt folosite în acea regiune/DOC/AOC, chiar dacă nu sunt pe etichetă
+- "agingPotential": ESTIMEAZĂ întotdeauna bazat pe tipul vinului, producătorul și vintage (vinuri premium → potențial mai lung)
+- "servingTemperature": COMPLETEAZĂ întotdeauna bazat pe tipul vinului dacă nu e pe etichetă
+- "tastingNotes": DESCRIE aromele și caracteristicile tipice ale acestui vin din cunoștințele tale dacă nu sunt pe etichetă
+- "foodPairing": RECOMANDĂ asocieri potrivite bazat pe tipul și stilul vinului dacă nu sunt pe etichetă
+- "estimatedValue": estimează prețul de retail în EUR. Lasă null doar dacă vinul e complet necunoscut
+- Pentru vinuri românești: Dealu Mare, Cotnari, Murfatlar, Recaș, Cramele Recaș, Vinarte, Davino sunt frecvente
+- "country": mereu în română (Franța nu France, Italia nu Italy)
+- Nu inventa informații de bază (name, producer, vintage) dacă nu sunt vizibile, dar COMPLETEAZĂ câmpurile de expertiză`;
 
 // ── GEMINI ─────────────────────────────────────────────────────────────────
 async function analyzeWithGemini(imageBase64, mimeType, apiKey) {
