@@ -48,6 +48,9 @@ const WineSchema = z.object({
   servingTemperature: z.string().optional(),
   foodPairing: z.array(z.string()).default([]),
   agingPotential: z.string().optional(),
+  aromaProfile: z.array(z.string()).default([]),
+  drinkFrom: z.coerce.number().min(1900).max(2100).optional().nullable(),
+  drinkUntil: z.coerce.number().min(1900).max(2100).optional().nullable(),
   bottleSize: z.string().default("0.75L"),
   bottleImageUrl: z.string().url().optional().or(z.literal("")),
   labelImageUrl: z.string().url().optional().or(z.literal("")),
@@ -65,12 +68,10 @@ export async function getWines(filters = {}) {
 
   const where = { userId: user.id };
 
-  // Filtre existente
   if (filters.type)    where.type    = filters.type;
   if (filters.status)  where.status  = filters.status;
   if (filters.country) where.country = { equals: filters.country, mode: 'insensitive' };
 
-  // Filtre noi
   if (filters.isFavorite === 'true') where.isFavorite = true;
   if (filters.vintage) where.vintage = parseInt(filters.vintage);
   if (filters.vintageMin || filters.vintageMax) {
@@ -81,7 +82,6 @@ export async function getWines(filters = {}) {
   if (filters.ratingMin) where.rating = { gte: parseInt(filters.ratingMin) };
   if (filters.priceMax)  where.purchasePrice = { lte: parseFloat(filters.priceMax) };
 
-  // Search
   if (filters.search) {
     where.OR = [
       { name:     { contains: filters.search, mode: 'insensitive' } },
@@ -91,7 +91,6 @@ export async function getWines(filters = {}) {
     ];
   }
 
-  // Sortare
   const SORT_MAP = {
     newest:       { createdAt: 'desc' },
     oldest:       { createdAt: 'asc'  },
@@ -106,7 +105,6 @@ export async function getWines(filters = {}) {
   };
   const orderBy = SORT_MAP[filters.sort] ?? { createdAt: 'desc' };
 
-  // Paginare
   const PAGE_SIZE = parseInt(filters.pageSize) || 24;
   const page      = Math.max(1, parseInt(filters.page) || 1);
   const skip      = (page - 1) * PAGE_SIZE;
@@ -152,14 +150,18 @@ export async function createWine(formData) {
 
   const raw = Object.fromEntries(formData.entries());
 
-  const grapeVarieties = raw.grapeVarieties
-    ? JSON.parse(raw.grapeVarieties)
-    : [];
-  const foodPairing = raw.foodPairing
-    ? JSON.parse(raw.foodPairing)
-    : [];
+  const grapeVarieties = raw.grapeVarieties ? JSON.parse(raw.grapeVarieties) : [];
+  const foodPairing    = raw.foodPairing    ? JSON.parse(raw.foodPairing)    : [];
+  const aromaProfile   = raw.aromaProfile   ? JSON.parse(raw.aromaProfile)   : [];
 
-  const parsed = WineSchema.safeParse({ ...raw, grapeVarieties, foodPairing });
+  const parsed = WineSchema.safeParse({
+    ...raw,
+    grapeVarieties,
+    foodPairing,
+    aromaProfile,
+    drinkFrom:  raw.drinkFrom  ? parseInt(raw.drinkFrom)  : undefined,
+    drinkUntil: raw.drinkUntil ? parseInt(raw.drinkUntil) : undefined,
+  });
 
   if (!parsed.success) {
     return { error: parsed.error.flatten().fieldErrors };
@@ -170,7 +172,9 @@ export async function createWine(formData) {
       ...parsed.data,
       userId: user.id,
       bottleImageUrl: parsed.data.bottleImageUrl || null,
-      labelImageUrl: parsed.data.labelImageUrl || null,
+      labelImageUrl:  parsed.data.labelImageUrl  || null,
+      drinkFrom:      parsed.data.drinkFrom  ?? null,
+      drinkUntil:     parsed.data.drinkUntil ?? null,
     },
   });
 
@@ -186,14 +190,19 @@ export async function updateWine(id, formData) {
   if (existing.userId !== user.id) throw new Error("Acces interzis");
 
   const raw = Object.fromEntries(formData.entries());
-  const grapeVarieties = raw.grapeVarieties
-    ? JSON.parse(raw.grapeVarieties)
-    : [];
-  const foodPairing = raw.foodPairing
-    ? JSON.parse(raw.foodPairing)
-    : [];
 
-  const parsed = WineSchema.safeParse({ ...raw, grapeVarieties, foodPairing });
+  const grapeVarieties = raw.grapeVarieties ? JSON.parse(raw.grapeVarieties) : [];
+  const foodPairing    = raw.foodPairing    ? JSON.parse(raw.foodPairing)    : [];
+  const aromaProfile   = raw.aromaProfile   ? JSON.parse(raw.aromaProfile)   : [];
+
+  const parsed = WineSchema.safeParse({
+    ...raw,
+    grapeVarieties,
+    foodPairing,
+    aromaProfile,
+    drinkFrom:  raw.drinkFrom  ? parseInt(raw.drinkFrom)  : undefined,
+    drinkUntil: raw.drinkUntil ? parseInt(raw.drinkUntil) : undefined,
+  });
 
   if (!parsed.success) {
     return { error: parsed.error.flatten().fieldErrors };
@@ -204,7 +213,9 @@ export async function updateWine(id, formData) {
     data: {
       ...parsed.data,
       bottleImageUrl: parsed.data.bottleImageUrl || null,
-      labelImageUrl: parsed.data.labelImageUrl || null,
+      labelImageUrl:  parsed.data.labelImageUrl  || null,
+      drinkFrom:      parsed.data.drinkFrom  ?? null,
+      drinkUntil:     parsed.data.drinkUntil ?? null,
     },
   });
 
@@ -282,9 +293,9 @@ export async function getDashboardStats() {
   };
 }
 
-// Adaugă acestea în utils/actions.js (la sfârșitul fișierului)
-
-// ── Profil ──────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────
+// PROFIL
+// ─────────────────────────────────────────
 
 export async function getProfile() {
   const user = await getCurrentUser();
@@ -293,7 +304,7 @@ export async function getProfile() {
     select: {
       id: true, name: true, email: true,
       image: true, role: true, createdAt: true,
-        cellarName: true,
+      cellarName: true,
       _count: { select: { wines: true } },
     },
   });
@@ -333,7 +344,6 @@ export async function updatePassword(formData) {
     return { error: 'Parolele nu coincid' };
   }
 
-  // Better Auth — schimbare parolă prin API
   try {
     const res = await fetch(`${process.env.BETTER_AUTH_URL}/api/auth/change-password`, {
       method: 'POST',
@@ -354,20 +364,15 @@ export async function updatePassword(formData) {
 export async function deleteAccount() {
   const user = await getCurrentUser();
 
-  // Șterge toate vinurile și pozele asociate
   await prisma.wine.deleteMany({ where: { userId: user.id } });
-
-  // Șterge sesiunile
   await prisma.session.deleteMany({ where: { userId: user.id } });
-
-  // Șterge contul
   await prisma.user.delete({ where: { id: user.id } });
 
   redirect('/sign-in');
 }
 
 // ─────────────────────────────────────────
-// STATISTICI AVANSATE  
+// STATISTICI AVANSATE
 // ─────────────────────────────────────────
 
 export async function getAdvancedStats() {
@@ -388,26 +393,25 @@ export async function getAdvancedStats() {
       purchaseDate: true,
       vintage: true,
       agingPotential: true,
+      drinkFrom: true,
+      drinkUntil: true,
       status: true,
       labelImageUrl: true,
       bottleImageUrl: true,
     },
   });
 
-  // ── Top 5 vinuri după rating ──────────────
   const topWines = wines
     .filter(w => w.rating != null)
     .sort((a, b) => b.rating - a.rating)
     .slice(0, 5);
 
-  // ── Distribuție pe țări ───────────────────
   const byCountry = wines.reduce((acc, w) => {
     if (!w.country) return acc;
     acc[w.country] = (acc[w.country] ?? 0) + 1;
     return acc;
   }, {});
 
-  // ── Evoluție achiziții lunar (12 luni) ────
   const now = new Date();
   const monthlyData = [];
   for (let i = 11; i >= 0; i--) {
@@ -421,30 +425,41 @@ export async function getAdvancedStats() {
     monthlyData.push({ label, count });
   }
 
-  // ── Statistici preț ───────────────────────
   const withPrice = wines.filter(w => w.purchasePrice != null && w.purchasePrice > 0);
   const prices = withPrice.map(w => w.purchasePrice);
   const avgPrice = prices.length > 0 ? prices.reduce((a, b) => a + b, 0) / prices.length : 0;
   const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
   const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
-  const mostExpensive = withPrice.sort((a, b) => b.purchasePrice - a.purchasePrice)[0] ?? null;
+  const mostExpensive = [...withPrice].sort((a, b) => b.purchasePrice - a.purchasePrice)[0] ?? null;
 
-  // ── Vinuri aproape de maturitate ──────────
-  // agingPotential e string ex: "2025-2030" sau "2028"
   const currentYear = now.getFullYear();
+
+  // nearMaturity — folosește drinkFrom dacă există, altfel parsează agingPotential
   const nearMaturity = wines
     .filter(w => {
-      if (!w.agingPotential || w.status !== 'IN_CELLAR') return false;
+      if (w.status !== 'IN_CELLAR') return false;
+      // Folosește drinkUntil dacă există — vinul e relevant dacă nu a trecut de vârf
+      if (w.drinkFrom != null || w.drinkUntil != null) {
+        const until = w.drinkUntil ?? w.drinkFrom;
+        const from  = w.drinkFrom  ?? w.drinkUntil;
+        // Arată dacă: e în fereastră SAU urmează în 3 ani
+        return until >= currentYear && from <= currentYear + 3;
+      }
+      if (!w.agingPotential) return false;
       const match = w.agingPotential.match(/(\d{4})/g);
       if (!match) return false;
-      const years = match.map(Number);
-      const readyYear = Math.min(...years);
+      const readyYear = Math.min(...match.map(Number));
       return readyYear >= currentYear && readyYear <= currentYear + 3;
     })
     .map(w => {
-      const match = w.agingPotential.match(/(\d{4})/g);
-      const years = match.map(Number);
-      return { ...w, readyYear: Math.min(...years) };
+      let readyYear;
+      if (w.drinkFrom != null || w.drinkUntil != null) {
+        readyYear = w.drinkFrom ?? w.drinkUntil;
+      } else {
+        const match = w.agingPotential.match(/(\d{4})/g);
+        readyYear = Math.min(...match.map(Number));
+      }
+      return { ...w, readyYear };
     })
     .sort((a, b) => a.readyYear - b.readyYear)
     .slice(0, 5);

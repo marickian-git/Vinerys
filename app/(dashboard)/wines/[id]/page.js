@@ -2,10 +2,11 @@ import { getWineById } from '@/utils/actions';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import WineActions from '@/components/wines/WineActions';
+import { DrinkWindowCard } from '@/components/wines/DrinkWindowBadge';
+import AromaProfile from '@/components/wines/AromaProfile';
 
 export async function generateMetadata({ params }) {
-const { id } = await params;
-
+  const { id } = await params;
   try {
     const wine = await getWineById(id);
     return { title: `${wine.name} — Vinerys` };
@@ -45,27 +46,24 @@ export default async function WineDetailPage({ params }) {
 
   let wine;
   try {
-
     wine = await getWineById(id);
   } catch {
     notFound();
   }
 
-  const type   = TYPE_CONFIG[wine.type]   ?? TYPE_CONFIG.RED;
+  const type   = TYPE_CONFIG[wine.type]     ?? TYPE_CONFIG.RED;
   const status = STATUS_CONFIG[wine.status] ?? STATUS_CONFIG.IN_CELLAR;
   const stars  = Array.from({ length: 5 }, (_, i) => i < (wine.rating ?? 0));
+
+  const hasDrinkWindow = wine.drinkFrom || wine.drinkUntil;
+  const hasAromas      = wine.aromaProfile?.length > 0;
 
   return (
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap');
 
-        .wd-page {
-          min-height: 100vh;
-          background: #0d0608;
-          padding: 6rem 1.5rem 4rem;
-          font-family: 'Jost', sans-serif;
-        }
+        .wd-page { min-height: 100vh; background: #0d0608; padding: 6rem 1.5rem 4rem; font-family: 'Jost', sans-serif; }
         .wd-inner { max-width: 1000px; margin: 0 auto; }
 
         .wd-back {
@@ -76,183 +74,89 @@ export default async function WineDetailPage({ params }) {
         }
         .wd-back:hover { color: rgba(245,230,232,0.65); }
 
-        /* Hero */
         .wd-hero {
-          display: grid;
-          grid-template-columns: 280px 1fr;
-          gap: 2.5rem;
-          margin-bottom: 3rem;
-          align-items: start;
+          display: grid; grid-template-columns: 280px 1fr;
+          gap: 2.5rem; margin-bottom: 3rem; align-items: start;
         }
-
-        .wd-image-wrap {
-          position: sticky;
-          top: 5rem;
-        }
+        .wd-image-wrap { position: sticky; top: 5rem; }
         .wd-image {
           aspect-ratio: 3/4;
           background: linear-gradient(160deg, rgba(26,8,16,0.95), rgba(13,6,8,0.98));
-          border: 1px solid rgba(196,69,105,0.12);
-          border-radius: 16px;
+          border: 1px solid rgba(196,69,105,0.12); border-radius: 16px;
           display: flex; align-items: center; justify-content: center;
-          overflow: hidden;
-          position: relative;
+          overflow: hidden; position: relative;
         }
-        .wd-image-glow {
-          position: absolute; inset: 0;
-          background: radial-gradient(ellipse at 50% 30%, rgba(139,26,46,0.25), transparent 70%);
-        }
+        .wd-image-glow { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 30%, rgba(139,26,46,0.25), transparent 70%); }
         .wd-image-icon { font-size: 5rem; position: relative; z-index: 1; filter: drop-shadow(0 6px 20px rgba(196,69,105,0.3)); }
         .wd-image img { width: 100%; height: 100%; object-fit: cover; }
 
-        .wd-info {}
-        .wd-badges {
-          display: flex; gap: 0.5rem; flex-wrap: wrap;
-          margin-bottom: 1rem;
-        }
+        .wd-badges { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
         .wd-badge {
           display: flex; align-items: center; gap: 0.4rem;
-          padding: 0.25rem 0.7rem;
-          border-radius: 20px;
-          font-size: 0.65rem; font-weight: 500;
-          letter-spacing: 0.1em; text-transform: uppercase;
+          padding: 0.25rem 0.7rem; border-radius: 20px;
+          font-size: 0.65rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
           color: rgba(245,230,232,0.85);
         }
         .wd-badge-dot { width: 6px; height: 6px; border-radius: 50%; }
 
         .wd-name {
           font-family: 'Cormorant Garamond', serif;
-          font-size: clamp(2rem, 4vw, 3rem);
-          font-weight: 300;
-          color: #f5e6e8;
-          line-height: 1.1;
-          letter-spacing: -0.02em;
-          margin-bottom: 0.4rem;
+          font-size: clamp(2rem, 4vw, 3rem); font-weight: 300; color: #f5e6e8;
+          line-height: 1.1; letter-spacing: -0.02em; margin-bottom: 0.4rem;
         }
         .wd-producer {
-          font-size: 0.88rem;
-          color: rgba(245,230,232,0.4);
-          font-weight: 300;
-          letter-spacing: 0.06em;
-          margin-bottom: 1.25rem;
+          font-size: 0.88rem; color: rgba(245,230,232,0.4); font-weight: 300;
+          letter-spacing: 0.06em; margin-bottom: 1.25rem;
         }
-
         .wd-stars { display: flex; gap: 3px; margin-bottom: 1.5rem; }
         .wd-star { font-size: 1.1rem; }
         .wd-star-fill { color: #d4af37; }
         .wd-star-empty { color: rgba(245,230,232,0.12); }
 
         .wd-quick-stats {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 1px;
-          background: rgba(196,69,105,0.1);
-          border-radius: 12px;
-          overflow: hidden;
-          margin-bottom: 2rem;
+          display: grid; grid-template-columns: repeat(3, 1fr);
+          gap: 1px; background: rgba(196,69,105,0.1);
+          border-radius: 12px; overflow: hidden; margin-bottom: 2rem;
         }
-        .wd-qs-item {
-          background: rgba(255,255,255,0.02);
-          padding: 1rem;
-          text-align: center;
-        }
-        .wd-qs-value {
-          font-family: 'Cormorant Garamond', serif;
-          font-size: 1.5rem;
-          font-weight: 600;
-          color: #f5e6e8;
-          line-height: 1;
-          margin-bottom: 0.3rem;
-        }
-        .wd-qs-label {
-          font-size: 0.65rem;
-          text-transform: uppercase;
-          letter-spacing: 0.12em;
-          color: rgba(245,230,232,0.3);
-          font-weight: 400;
-        }
+        .wd-qs-item { background: rgba(255,255,255,0.02); padding: 1rem; text-align: center; }
+        .wd-qs-value { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; font-weight: 600; color: #f5e6e8; line-height: 1; margin-bottom: 0.3rem; }
+        .wd-qs-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.12em; color: rgba(245,230,232,0.3); font-weight: 400; }
 
-        .wd-actions-row {
-          display: flex; gap: 0.75rem; flex-wrap: wrap;
-        }
+        .wd-actions-row { display: flex; gap: 0.75rem; flex-wrap: wrap; }
 
-        /* Sections */
-        .wd-sections {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 1.25rem;
-        }
+        .wd-sections { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
         .wd-section-full { grid-column: 1 / -1; }
-
         .wd-section {
-          background: rgba(255,255,255,0.02);
-          border: 1px solid rgba(196,69,105,0.08);
-          border-radius: 12px;
-          padding: 1.5rem;
+          background: rgba(255,255,255,0.02); border: 1px solid rgba(196,69,105,0.08);
+          border-radius: 12px; padding: 1.5rem;
         }
         .wd-section-title {
-          font-size: 0.68rem;
-          text-transform: uppercase;
-          letter-spacing: 0.18em;
-          color: #c44569;
-          font-weight: 400;
-          margin-bottom: 1.1rem;
-          padding-bottom: 0.6rem;
-          border-bottom: 1px solid rgba(196,69,105,0.1);
+          font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.18em;
+          color: #c44569; font-weight: 400; margin-bottom: 1.1rem;
+          padding-bottom: 0.6rem; border-bottom: 1px solid rgba(196,69,105,0.1);
         }
 
         .wd-info-row {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          gap: 1rem;
-          padding: 0.5rem 0;
-          border-bottom: 1px solid rgba(255,255,255,0.03);
+          display: flex; justify-content: space-between; align-items: flex-start;
+          gap: 1rem; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.03);
         }
         .wd-info-row:last-child { border-bottom: none; padding-bottom: 0; }
-        .wd-info-label {
-          font-size: 0.75rem;
-          color: rgba(245,230,232,0.35);
-          font-weight: 300;
-          flex-shrink: 0;
-        }
-        .wd-info-value {
-          font-size: 0.82rem;
-          color: rgba(245,230,232,0.75);
-          text-align: right;
-          font-weight: 400;
-        }
+        .wd-info-label { font-size: 0.75rem; color: rgba(245,230,232,0.35); font-weight: 300; flex-shrink: 0; }
+        .wd-info-value { font-size: 0.82rem; color: rgba(245,230,232,0.75); text-align: right; font-weight: 400; }
 
         .wd-tasting-notes {
-          font-size: 0.85rem;
-          color: rgba(245,230,232,0.6);
-          font-weight: 300;
-          line-height: 1.8;
-          font-style: italic;
+          font-size: 1rem; color: rgba(245,230,232,0.6); font-weight: 300;
+          line-height: 1.8; font-style: italic;
           font-family: 'Cormorant Garamond', serif;
-          font-size: 1rem;
         }
 
-        .wd-tags {
-          display: flex; gap: 0.5rem; flex-wrap: wrap;
-        }
+        .wd-tags { display: flex; gap: 0.5rem; flex-wrap: wrap; }
         .wd-tag {
-          padding: 0.25rem 0.65rem;
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(196,69,105,0.15);
-          border-radius: 20px;
-          font-size: 0.72rem;
-          color: rgba(245,230,232,0.55);
-          font-weight: 300;
+          padding: 0.25rem 0.65rem; background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(196,69,105,0.15); border-radius: 20px;
+          font-size: 0.72rem; color: rgba(245,230,232,0.55); font-weight: 300;
         }
-
-        .wd-price-big {
-          font-family: 'Cormorant Garamond', serif;
-          font-size: 2rem;
-          font-weight: 600;
-          color: rgba(212,175,55,0.85);
-          line-height: 1;
-        }
+        .wd-price-big { font-family: 'Cormorant Garamond', serif; font-size: 2rem; font-weight: 600; color: rgba(212,175,55,0.85); line-height: 1; }
 
         @media (max-width: 768px) {
           .wd-hero { grid-template-columns: 1fr; }
@@ -260,7 +164,6 @@ export default async function WineDetailPage({ params }) {
           .wd-image { aspect-ratio: 16/9; max-height: 200px; }
           .wd-sections { grid-template-columns: 1fr; }
           .wd-section-full { grid-column: 1; }
-          .wd-quick-stats { grid-template-columns: repeat(3,1fr); }
         }
         @media (max-width: 480px) {
           .wd-page { padding: 5rem 1rem 3rem; }
@@ -339,6 +242,23 @@ export default async function WineDetailPage({ params }) {
 
           {/* Detail sections */}
           <div className="wd-sections">
+
+            {/* Fereastră de consum */}
+            {hasDrinkWindow && (
+              <div className="wd-section wd-section-full">
+                <div className="wd-section-title">Fereastră optimă de consum</div>
+                <DrinkWindowCard drinkFrom={wine.drinkFrom} drinkUntil={wine.drinkUntil} />
+              </div>
+            )}
+
+            {/* Profil aromatic */}
+            {hasAromas && (
+              <div className="wd-section wd-section-full">
+                <div className="wd-section-title">Profil aromatic</div>
+                <AromaProfile aromas={wine.aromaProfile} />
+              </div>
+            )}
+
             {/* Informații */}
             <div className="wd-section">
               <div className="wd-section-title">Informații</div>
@@ -397,6 +317,7 @@ export default async function WineDetailPage({ params }) {
                 <p className="wd-tasting-notes">"{wine.tastingNotes}"</p>
               </div>
             )}
+
           </div>
         </div>
       </div>

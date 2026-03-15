@@ -17,7 +17,6 @@ const TYPE_LABELS  = { RED: 'Roșu', WHITE: 'Alb', ROSE: 'Roze', SPARKLING: 'Spu
 const TYPE_COLORS  = { RED: '#8b1a2e', WHITE: '#d4af37', ROSE: '#c44569', SPARKLING: '#b4c8dc', DESSERT: '#b47828', FORTIFIED: '#643078' };
 const STATUS_LABELS = { IN_CELLAR: 'În pivniță', CONSUMED: 'Consumat', SOLD: 'Vândut', GIFTED: 'Dăruit' };
 const STATUS_COLORS = { IN_CELLAR: '#55c44e', CONSUMED: 'rgba(245,230,232,0.3)', SOLD: '#d4af37', GIFTED: '#c44569' };
-
 const STAR_LABELS = { 5: 'Excepțional', 4: 'Excelent', 3: 'Bun', 2: 'Decent', 1: 'Slab' };
 
 function Stars({ rating }) {
@@ -56,6 +55,7 @@ export default async function DashboardPage() {
   const maxMonthly = Math.max(...advanced.monthlyData.map(m => m.count), 1);
   const topCountries = Object.entries(advanced.byCountry).sort((a, b) => b[1] - a[1]).slice(0, 6);
   const totalCountryWines = topCountries.reduce((a, [, v]) => a + v, 0) || 1;
+  const currentYear = new Date().getFullYear();
 
   return (
     <>
@@ -71,7 +71,6 @@ export default async function DashboardPage() {
         .db-sub { font-size: 0.82rem; color: rgba(245,230,232,0.35); font-weight: 300; margin-top: 0.4rem; }
         .db-divider { height: 1px; background: linear-gradient(to right, rgba(196,69,105,0.3), transparent); margin-bottom: 2.5rem; }
 
-        /* KPIs */
         .db-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: rgba(196,69,105,0.08); border-radius: 16px; overflow: hidden; margin-bottom: 2rem; border: 1px solid rgba(196,69,105,0.08); }
         .db-kpi { background: rgba(13,6,8,0.95); padding: 1.75rem 1.5rem; position: relative; overflow: hidden; transition: background 0.3s; }
         .db-kpi:hover { background: rgba(255,255,255,0.02); }
@@ -81,7 +80,6 @@ export default async function DashboardPage() {
         .db-kpi-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.15em; color: rgba(245,230,232,0.35); font-weight: 400; }
         .db-kpi-sub { font-size: 0.72rem; color: rgba(196,69,105,0.7); margin-top: 0.4rem; font-weight: 300; }
 
-        /* Cards */
         .db-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.25rem; }
         .db-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.25rem; margin-bottom: 1.25rem; }
         .db-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(196,69,105,0.08); border-radius: 16px; padding: 1.5rem; }
@@ -89,7 +87,6 @@ export default async function DashboardPage() {
         .db-card-link { font-size: 0.68rem; color: rgba(196,69,105,0.6); text-decoration: none; letter-spacing: 0.08em; transition: color 0.2s; }
         .db-card-link:hover { color: #c44569; }
 
-        /* Bar chart tip */
         .db-bars { display: flex; flex-direction: column; gap: 0.75rem; }
         .db-bar-row { display: flex; flex-direction: column; gap: 0.3rem; }
         .db-bar-top { display: flex; justify-content: space-between; align-items: center; }
@@ -98,7 +95,6 @@ export default async function DashboardPage() {
         .db-bar-track { height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; }
         .db-bar-fill { height: 100%; border-radius: 2px; }
 
-        /* Status list */
         .db-status-list { display: flex; flex-direction: column; gap: 0.75rem; }
         .db-status-item { display: flex; align-items: center; gap: 0.75rem; }
         .db-status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
@@ -106,7 +102,6 @@ export default async function DashboardPage() {
         .db-status-num { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 600; color: #f5e6e8; }
         .db-status-pct { font-size: 0.68rem; color: rgba(245,230,232,0.3); margin-left: 0.3rem; }
 
-        /* Line chart lunar */
         .db-line-chart { display: flex; align-items: flex-end; gap: 3px; height: 80px; padding-top: 0.5rem; }
         .db-line-bar { flex: 1; border-radius: 3px 3px 0 0; background: linear-gradient(to top, #8b1a2e, #c44569); min-height: 3px; transition: opacity 0.2s; position: relative; cursor: default; }
         .db-line-bar:hover { opacity: 0.8; }
@@ -115,7 +110,6 @@ export default async function DashboardPage() {
         .db-line-labels { display: flex; gap: 3px; margin-top: 0.4rem; }
         .db-line-label { flex: 1; font-size: 0.52rem; color: rgba(245,230,232,0.25); text-align: center; overflow: hidden; }
 
-        /* Top wines */
         .db-top-list { display: flex; flex-direction: column; gap: 0.75rem; }
         .db-top-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
         .db-top-item:last-child { border-bottom: none; }
@@ -125,7 +119,6 @@ export default async function DashboardPage() {
         .db-top-name { font-size: 0.82rem; color: #f5e6e8; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .db-top-producer { font-size: 0.68rem; color: rgba(245,230,232,0.35); font-weight: 300; }
 
-        /* Preț stats */
         .db-price-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
         .db-price-item { background: rgba(255,255,255,0.02); border-radius: 10px; padding: 0.85rem 1rem; }
         .db-price-val { font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; font-weight: 600; color: #f5e6e8; line-height: 1; }
@@ -135,7 +128,6 @@ export default async function DashboardPage() {
         .db-price-expensive-name { font-size: 0.85rem; color: #f5e6e8; }
         .db-price-expensive-val { font-size: 0.78rem; color: #d4af37; margin-top: 0.1rem; }
 
-        /* Maturitate */
         .db-maturity-list { display: flex; flex-direction: column; gap: 0.75rem; }
         .db-maturity-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
         .db-maturity-item:last-child { border-bottom: none; }
@@ -143,9 +135,8 @@ export default async function DashboardPage() {
         .db-maturity-info { flex: 1; min-width: 0; }
         .db-maturity-name { font-size: 0.82rem; color: #f5e6e8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .db-maturity-sub { font-size: 0.68rem; color: rgba(245,230,232,0.35); }
-        .db-maturity-badge { font-size: 0.62rem; padding: 0.2rem 0.5rem; border-radius: 20px; background: rgba(212,175,55,0.1); color: #d4af37; border: 1px solid rgba(212,175,55,0.2); white-space: nowrap; }
+        .db-maturity-badge { font-size: 0.62rem; padding: 0.2rem 0.5rem; border-radius: 20px; white-space: nowrap; }
 
-        /* Țări donut bars */
         .db-country-list { display: flex; flex-direction: column; gap: 0.65rem; }
         .db-country-item { display: flex; align-items: center; gap: 0.6rem; }
         .db-country-name { font-size: 0.75rem; color: rgba(245,230,232,0.55); width: 80px; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -153,10 +144,8 @@ export default async function DashboardPage() {
         .db-country-bar { height: 100%; border-radius: 3px; background: linear-gradient(to right, #8b1a2e, #c44569); }
         .db-country-num { font-size: 0.72rem; color: rgba(245,230,232,0.4); width: 1.5rem; text-align: right; flex-shrink: 0; }
 
-        /* Recent */
         .db-recent-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
 
-        /* Empty */
         .db-empty { display: flex; flex-direction: column; align-items: center; padding: 2rem; text-align: center; }
         .db-empty-icon { font-size: 2rem; margin-bottom: 0.75rem; opacity: 0.3; }
         .db-empty-text { font-size: 0.78rem; color: rgba(245,230,232,0.25); }
@@ -188,7 +177,7 @@ export default async function DashboardPage() {
           </div>
           <div className="db-divider" />
 
-          {/* ── KPIs ── */}
+          {/* KPIs */}
           <div className="db-kpis">
             <div className="db-kpi">
               <div className="db-kpi-glow" />
@@ -222,7 +211,7 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          {/* ── Row 1: Tip + Status ── */}
+          {/* Row 1: Tip + Status */}
           <div className="db-row">
             <div className="db-card">
               <div className="db-card-title">
@@ -273,7 +262,7 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          {/* ── Row 2: Line chart + Țări ── */}
+          {/* Row 2: Line chart + Țări */}
           <div className="db-row">
             <div className="db-card">
               <div className="db-card-title">Achiziții lunare — ultimele 12 luni</div>
@@ -283,12 +272,8 @@ export default async function DashboardPage() {
                 <>
                   <div className="db-line-chart">
                     {advanced.monthlyData.map((m, i) => (
-                      <div
-                        key={i}
-                        className="db-line-bar"
-                        style={{ height: `${Math.max(4, Math.round((m.count / maxMonthly) * 100))}%` }}
-                        title={`${m.label}: ${m.count} vinuri`}
-                      >
+                      <div key={i} className="db-line-bar"
+                        style={{ height: `${Math.max(4, Math.round((m.count / maxMonthly) * 100))}%` }}>
                         <span className="db-line-tooltip">{m.label}: {m.count}</span>
                       </div>
                     ))}
@@ -325,10 +310,8 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          {/* ── Row 3: Top vinuri + Prețuri + Maturitate ── */}
+          {/* Row 3: Top vinuri + Prețuri + Maturitate */}
           <div className="db-row-3">
-
-            {/* Top 5 după rating */}
             <div className="db-card">
               <div className="db-card-title">Top 5 vinuri</div>
               {advanced.topWines.length === 0 ? (
@@ -358,7 +341,6 @@ export default async function DashboardPage() {
               )}
             </div>
 
-            {/* Statistici preț */}
             <div className="db-card">
               <div className="db-card-title">Statistici preț</div>
               {advanced.priceStats.avg === 0 ? (
@@ -396,7 +378,7 @@ export default async function DashboardPage() {
               )}
             </div>
 
-            {/* Vinuri aproape de maturitate */}
+            {/* Aproape de maturitate */}
             <div className="db-card">
               <div className="db-card-title">
                 Aproape de maturitate
@@ -405,13 +387,13 @@ export default async function DashboardPage() {
               {advanced.nearMaturity.length === 0 ? (
                 <div className="db-empty">
                   <div className="db-empty-icon">⏳</div>
-                  <p className="db-empty-text">Adaugă "Potențial de îmbătrânire" la vinuri (ex: 2026-2030)</p>
+                  <p className="db-empty-text">Adaugă fereastra de consum la vinuri (câmpurile "De la / Până la" din formular)</p>
                 </div>
               ) : (
                 <div className="db-maturity-list">
                   {advanced.nearMaturity.map(wine => {
-                    const currentYear = new Date().getFullYear();
                     const yearsLeft = wine.readyYear - currentYear;
+                    const isNow = yearsLeft <= 0;
                     return (
                       <Link key={wine.id} href={`/wines/${wine.id}`} style={{ textDecoration: 'none' }}>
                         <div className="db-maturity-item">
@@ -420,8 +402,12 @@ export default async function DashboardPage() {
                             <div className="db-maturity-name">{wine.name}</div>
                             <div className="db-maturity-sub">{wine.producer ?? wine.country ?? '—'}</div>
                           </div>
-                          <span className="db-maturity-badge">
-                            {yearsLeft <= 0 ? 'Acum!' : `${yearsLeft}a`}
+                          <span className="db-maturity-badge" style={{
+                            background: isNow ? 'rgba(85,196,78,0.1)' : 'rgba(212,175,55,0.1)',
+                            color: isNow ? 'rgba(85,196,78,0.9)' : '#d4af37',
+                            border: `1px solid ${isNow ? 'rgba(85,196,78,0.2)' : 'rgba(212,175,55,0.2)'}`,
+                          }}>
+                            {isNow ? '🟢 Acum!' : `${yearsLeft}a`}
                           </span>
                         </div>
                       </Link>
@@ -432,7 +418,7 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          {/* ── Vinuri recente ── */}
+          {/* Vinuri recente */}
           <div className="db-card">
             <div className="db-card-title">
               Adăugate recent

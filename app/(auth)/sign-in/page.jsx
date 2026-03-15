@@ -46,7 +46,6 @@ export default function SignInPage() {
           grid-template-columns: 1fr 1fr;
           font-family: 'Jost', sans-serif;
           background: #0d0608;
-          overflow: hidden;
         }
 
         .wine-left {
@@ -203,7 +202,7 @@ export default function SignInPage() {
           .wine-page { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
           .wine-left { padding: 2rem; min-height: 220px; justify-content: center; }
           .wine-glass-art { display: none; }
-          .wine-tagline { font-size: 2rem; margin-bottom: 0.75rem; margin-top: 5rem; }
+          .wine-tagline { font-size: 2rem; margin-bottom: 0.75rem; margin-top: 1rem;}
           .wine-desc { margin-bottom: 1.5rem; font-size: 0.75rem; }
           .wine-stats { gap: 1.5rem; }
           .stat-num { font-size: 1.5rem; }

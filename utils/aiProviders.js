@@ -21,7 +21,10 @@ Returnează DOAR un obiect JSON valid, fără text adițional, fără markdown, 
   "servingTemperature": "temperatura de servire — de pe etichetă SAU din cunoștințele tale (ex: vinuri roșii full-body → 16-18°C, albe seci → 8-10°C, spumante → 6-8°C)",
   "tastingNotes": "notele de degustare — de pe etichetă SAU din cunoștințele tale despre acest vin (arome tipice, structură, finisaj)",
   "foodPairing": "asocierile gastronomice — de pe etichetă SAU recomandate de tine pentru acest tip de vin",
-  "estimatedValue": valoarea estimată în EUR bazată pe producător, regiune, vintage și reputație sau null dacă vinul e complet necunoscut
+  "estimatedValue": valoarea estimată în EUR bazată pe producător, regiune, vintage și reputație sau null dacă vinul e complet necunoscut,
+  "aromaProfile": ["aromă1", "aromă2", ...] — lista de arome principale din cunoștințele tale (ex: ["fructe roșii", "vanilie", "tanini", "piele", "tutun", "cedru"]) — COMPLETEAZĂ ÎNTOTDEAUNA,
+  "drinkFrom": anul de la care vinul e optim de consumat ca număr întreg (ex: 2025) — COMPLETEAZĂ ÎNTOTDEAUNA,
+  "drinkUntil": anul până la care vinul e optim de consumat ca număr întreg (ex: 2032) — COMPLETEAZĂ ÎNTOTDEAUNA
 }
 
 REGULI IMPORTANTE:
@@ -37,7 +40,9 @@ REGULI IMPORTANTE:
 - "estimatedValue": estimează prețul de retail în EUR. Lasă null doar dacă vinul e complet necunoscut
 - Pentru vinuri românești: Dealu Mare, Cotnari, Murfatlar, Recaș, Cramele Recaș, Vinarte, Davino sunt frecvente
 - "country": mereu în română (Franța nu France, Italia nu Italy)
-- Nu inventa informații de bază (name, producer, vintage) dacă nu sunt vizibile, dar COMPLETEAZĂ câmpurile de expertiză`;
+- Nu inventa informații de bază (name, producer, vintage) dacă nu sunt vizibile, dar COMPLETEAZĂ câmpurile de expertiză
+- "aromaProfile": COMPLETEAZĂ ÎNTOTDEAUNA cu 4-8 arome tipice pentru acest vin (fructe, flori, pământ, lemn, condimente, minerale etc.)
+- "drinkFrom" / "drinkUntil": calculează fereastra optimă de consum bazată pe vintage, tip și stil (ex: Barolo 2019 → drinkFrom: 2027, drinkUntil: 2040; vin de masă 2022 → drinkFrom: 2022, drinkUntil: 2025). Dacă nu ai vintage, lasă null`;
 
 // ── GEMINI ─────────────────────────────────────────────────────────────────
 async function analyzeWithGemini(imageBase64, mimeType, apiKey) {
@@ -204,6 +209,9 @@ function parseWineData(rawText) {
       tastingNotes:       parsed.tastingNotes       || '',
       foodPairing:        parsed.foodPairing        || '',
       estimatedValue:     estimatedValue,
+      aromaProfile:       Array.isArray(parsed.aromaProfile) ? parsed.aromaProfile.filter(Boolean) : [],
+      drinkFrom:          parsed.drinkFrom ? parseInt(parsed.drinkFrom) : null,
+      drinkUntil:         parsed.drinkUntil ? parseInt(parsed.drinkUntil) : null,
       quantity:           '1',
       status:             'IN_CELLAR',
       isFavorite:         false,

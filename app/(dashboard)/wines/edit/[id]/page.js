@@ -28,7 +28,7 @@ export default async function EditWinePage({ params }) {
         .edit-sub { font-size: 0.82rem; color: rgba(245,230,232,0.35); font-weight: 300; margin-top: 0.5rem; }
         .edit-divider { height: 1px; background: linear-gradient(to right, rgba(196,69,105,0.3), transparent); margin: 1.5rem 0 2rem; }
         .edit-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(196,69,105,0.1); border-radius: 16px; padding: 2rem; }
-        @media (max-width: 640px) { .edit-page { padding: 5rem 1rem 3rem; } .edit-card { padding: 1.25rem; } }
+        @media (max-width: 640px) { .edit-page { padding: 1rem 1rem 1rem; } .edit-card { padding: 1.25rem; } }
       `}</style>
 
       <div className="edit-page">

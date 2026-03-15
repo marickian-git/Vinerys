@@ -114,6 +114,11 @@ model Wine {
   foodPairing          String[]
   agingPotential       String?
 
+  // Arome & fereastră de consum
+  aromaProfile         String[]
+  drinkFrom            Int?
+  drinkUntil           Int?
+
   // Sticlă
   bottleSize           String?     @default("0.75L")
   bottleImageUrl       String?
