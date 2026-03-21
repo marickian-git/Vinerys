@@ -48,6 +48,7 @@ export default function SignInPage() {
           background: #0d0608;
         }
 
+        /* ── LEFT PANEL ── */
         .wine-left {
           position: relative;
           overflow: hidden;
@@ -114,6 +115,7 @@ export default function SignInPage() {
         .stat-label { font-size: 0.7rem; color: rgba(245, 230, 232, 0.4); text-transform: uppercase; letter-spacing: 0.12em; }
         .divider-vert { width: 1px; background: rgba(196, 69, 105, 0.3); align-self: stretch; }
 
+        /* ── RIGHT PANEL ── */
         .wine-right {
           display: flex;
           align-items: center;
@@ -130,6 +132,7 @@ export default function SignInPage() {
           background: linear-gradient(to bottom, transparent, rgba(196, 69, 105, 0.3), transparent);
         }
 
+        /* ── FORM ── */
         .form-container {
           width: 100%;
           max-width: 400px;
@@ -198,25 +201,61 @@ export default function SignInPage() {
 
         .grain { position: fixed; inset: 0; pointer-events: none; z-index: 100; opacity: 0.025; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E"); background-size: 128px; }
 
+        /* ── MOBILE: single column, same layout as sign-up ── */
         @media (max-width: 768px) {
-          .wine-page { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
-          .wine-left { padding: 2rem; min-height: 220px; justify-content: center; }
+          .wine-page {
+            grid-template-columns: 1fr;
+            grid-template-rows: auto 1fr;
+          }
+
+          /* Compact hero banner — matches sign-up feel */
+          .wine-left {
+            padding: 2rem 1.5rem;
+            min-height: unset;
+            justify-content: center;
+          }
           .wine-glass-art { display: none; }
-          .wine-tagline { font-size: 2rem; margin-bottom: 0.75rem; margin-top: 1rem;}
-          .wine-desc { margin-bottom: 1.5rem; font-size: 0.75rem; }
-          .wine-stats { gap: 1.5rem; }
-          .stat-num { font-size: 1.5rem; }
-          .wine-right::before { display: none; }
-          .wine-right { padding: 2rem 1.5rem; align-items: flex-start; }
-          .form-logo { margin-bottom: 1.75rem; }
-          .form-logo img { height: 60px; }
-          .form-title { font-size: 1.8rem; }
-        }
-        @media (max-width: 480px) {
-          .wine-left { min-height: 180px; padding: 1.5rem; }
-          .wine-tagline { font-size: 1.6rem; }
+
+          .wine-tagline {
+            font-size: 2rem;
+            margin-bottom: 0.6rem;
+          }
+          .wine-desc {
+            font-size: 0.72rem;
+            margin-bottom: 0;
+            letter-spacing: 0.12em;
+          }
+          /* Hide stats on mobile to keep banner tight */
           .wine-stats { display: none; }
-          .form-logo img { height: 50px; }
+
+          /* Divider between panels */
+          .wine-right::before { display: none; }
+
+          /* Form panel: full width, left-aligned, consistent padding */
+          .wine-right {
+            align-items: flex-start;
+            justify-content: center;
+            padding: 2rem 1.5rem 3rem;
+          }
+
+          .form-container {
+            max-width: 100%;
+          }
+
+          .form-logo {
+            margin-bottom: 1.5rem;
+          }
+          .form-logo img { height: 64px; }
+
+          .form-title { font-size: 1.9rem; }
+          .form-subtitle { margin-bottom: 2rem; }
+        }
+
+        @media (max-width: 480px) {
+          .wine-left { padding: 1.75rem 1.25rem; }
+          .wine-tagline { font-size: 1.75rem; }
+          .wine-right { padding: 1.75rem 1.25rem 3rem; }
+          .form-logo img { height: 54px; }
         }
       `}</style>
 

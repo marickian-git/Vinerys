@@ -299,7 +299,7 @@ export default function SignUpPage() {
               construiești<br />
               <em>pivnița perfectă</em>
             </h1>
-            <p className="wine-desc">Înregistrare gratuită · Fără card</p>
+            <p className="wine-desc">Înregistrare gratuită</p>
             <div className="feature-list">
               {["Cataloghează orice vin", "Notițe de degustare", "Statistici colecție", "Acces de pe orice dispozitiv"].map((f) => (
                 <div className="feature-item" key={f}>
