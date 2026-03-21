@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionCookie } from 'better-auth/cookies';
 
+
 const PROTECTED_ROUTES = ['/dashboard', '/wines', '/settings', '/profile'];
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
 
   const isProtected = PROTECTED_ROUTES.some((route) =>
     pathname.startsWith(route)
