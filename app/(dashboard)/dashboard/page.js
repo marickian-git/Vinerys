@@ -378,7 +378,7 @@ export default async function DashboardPage() {
           .db-row-3       { grid-template-columns:1fr 1fr; }
         }
         @media (max-width:768px) {
-          .db-page  { padding:5rem 1rem 3rem; }
+          .db-page  { padding:1rem 1rem 3rem; }
           .db-row   { grid-template-columns:1fr; }
           .db-row-3 { grid-template-columns:1fr; }
           .db-recent-grid { grid-template-columns:repeat(2,1fr); }

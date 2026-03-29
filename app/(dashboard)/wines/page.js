@@ -97,7 +97,7 @@ export default async function WinesPage({ searchParams }) {
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;600&family=Jost:wght@300;400;500&display=swap');
-        .wl-page { min-height: 100vh; background: #0d0608; padding: 6rem 1.5rem 4rem; font-family: 'Jost', sans-serif; }
+        .wl-page { min-height: 100vh; background: #0d0608; padding: 5rem 1.5rem 4rem; font-family: 'Jost', sans-serif; }
         .wl-inner { max-width: 1200px; margin: 0 auto; }
         .wl-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
         .wl-eyebrow { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.2em; color: #c44569; margin-bottom: 0.3rem; }
@@ -118,7 +118,7 @@ export default async function WinesPage({ searchParams }) {
         .wl-empty-sub { font-size: 0.82rem; color: rgba(245,230,232,0.25); font-weight: 300; margin-bottom: 2rem; }
         .wl-btn-empty { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.7rem 1.35rem; background: linear-gradient(135deg, #8b1a2e, #c44569); color: #f5e6e8; text-decoration: none; border-radius: 10px; font-size: 0.8rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; }
         .wl-error { padding: 1.25rem 1.5rem; border-radius: 10px; background: rgba(220,80,80,0.08); border: 1px solid rgba(220,80,80,0.2); color: rgba(220,80,80,0.8); font-size: 0.85rem; font-weight: 300; }
-        @media (max-width: 640px) { .wl-page { padding: 5rem 1rem 3rem; } .wl-actions { width: 100%; justify-content: flex-end; } }
+        @media (max-width: 640px) { .wl-page { padding: 1rem 1rem 3rem; } .wl-actions { width: 100%; justify-content: flex-end; } }
       `}</style>
 
       <div className="wl-page">
