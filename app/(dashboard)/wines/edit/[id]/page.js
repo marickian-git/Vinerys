@@ -39,6 +39,7 @@ export default async function EditWinePage({ params }) {
           <p className="edit-sub">Modifică detaliile vinului din pivnița ta</p>
           <div className="edit-divider" />
           <div className="edit-card">
+            {/* Asigură-te că WineForm include un câmp pentru "quantity" */}
             <WineForm wine={wine} />
           </div>
         </div>

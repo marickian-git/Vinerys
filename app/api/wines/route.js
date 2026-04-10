@@ -15,7 +15,6 @@ export async function GET(request) {
     const country = searchParams.get('country');
     const search = searchParams.get('search');
 
-    // Construim where clause dinamic
     const where = { userId };
     
     if (type) where.type = type;
@@ -115,6 +114,14 @@ export async function POST(request) {
       data: wineData,
     });
 
+     await prisma.wineLog.create({
+      data: {
+        wineId: wine.id,
+        userId: user.id,
+        action: 'ADDED',
+        details: { price: wine.price, quantity: wine.quantity },
+      },
+    });
     return NextResponse.json(wine, { status: 201 });
   } catch (error) {
     console.error('Error creating wine:', error);

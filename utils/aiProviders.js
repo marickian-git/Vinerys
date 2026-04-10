@@ -2,12 +2,12 @@
 // Sistem de provideri AI interschimbabili pentru analiza etichetelor de vin
 
 // ── PROMPT ─────────────────────────────────────────────────────────────────
-const PROMPT = `Ești un expert sommelier și consultant de vinuri cu cunoștințe extinse despre prețurile pieței.
+const PROMPT = `Ești un expert sommelier și consultant de vinuri cu cunoștințe extinse despre prețurile pieței și perioadele de maturare.
 Analizează cu atenție această imagine de etichetă și extrage informațiile vizibile, apoi COMPLETEAZĂ cu cunoștințele tale despre acest vin.
 
 Returnează DOAR un obiect JSON valid. Niciun text înainte sau după. Niciun "Iată răspunsul:". Nicio explicație. Niciun markdown. Niciun backtick.
 
-Structura JSON obligatorie:
+Structura JSON obligatorie (toate câmpurile trebuie să existe, chiar dacă unele sunt null):
 {
   "name": "numele vinului — OBLIGATORIU dacă e vizibil",
   "producer": "producătorul / crama / domeniul",
@@ -19,7 +19,7 @@ Structura JSON obligatorie:
   "alcoholPercentage": procentul de alcool — citit de pe etichetă SAU estimat (ex: 13.5),
   "bottleSize": "mărimea sticlei de pe etichetă sau '0.75L' ca default dacă nu e specificat",
   "grapeVarieties": "soiurile de struguri — citite de pe etichetă SAU deduse din cunoștințele tale",
-  "agingPotential": "potențialul de maturare — de pe etichetă SAU estimat (ex: 10-20 ani)",
+  "agingPotential": "potențialul de maturare — de pe etichetă SAU estimat (ex: '10-20 ani')",
   "servingTemperature": "temperatura de servire (ex: 16-18°C)",
   "tastingNotes": "notele de degustare — de pe etichetă SAU din cunoștințele tale",
   "foodPairing": "asocierile gastronomice recomandate",
@@ -29,17 +29,11 @@ Structura JSON obligatorie:
   "drinkUntil": anul optim de sfârșit ca număr întreg sau null
 }
 
-REGULI:
-- "type" este OBLIGATORIU — deduce-l dacă nu e explicit
-- "name" este OBLIGATORIU — dacă e o denumire de origine (Barolo, Rioja), folosește-o ca nume
-- "bottleSize": default "0.75L" dacă nu e menționat
-- "alcoholPercentage": estimează dacă nu e vizibil (roșii italiene ~13-14%, burgundy ~12.5-13%)
-- "grapeVarieties": completează din cunoștințe (Barolo → Nebbiolo, Bordeaux roșu → Cabernet Sauvignon, Merlot)
-- "country": mereu în română (Franța nu France, Italia nu Italy)
-- "aromaProfile": ÎNTOTDEAUNA 4-8 arome tipice
-- "drinkFrom" / "drinkUntil": fereastră optimă de consum (Barolo 2019 → 2027-2040, vin de masă 2022 → 2022-2025)
-- "estimatedValue": preț retail EUR; null doar dacă vinul e complet necunoscut
-- Nu inventa name/producer/vintage dacă nu sunt vizibile
+REGULI DE ESTIMARE (obligatorii):
+- "estimatedValue": estimează un preț corect pentru piața din Europa. Dacă nu știi, folosește euristici: vin de masă 5-10€, DOC/DOCG 10-30€, cru-uri clasate peste 50€. Nu lăsa null decât dacă e imposibil.
+- "agingPotential": oferă un interval în ani (ex: '8-12 ani'). Pentru vinuri de zi cu zi, '1-3 ani'.
+- "drinkFrom" și "drinkUntil": calculează pe baza vintage-ului și tipului. De exemplu, un Barolo 2019: drinkFrom = 2027, drinkUntil = 2040. Un alb sec 2023: drinkFrom = 2023, drinkUntil = 2026.
+- Dacă vintage-ul lipsește, lasă drinkFrom/drinkUntil null.
 
 Exemplu de output corect:
 {"name":"Barolo","producer":"Giacomo Conterno","country":"Italia","region":"Piemont","subregion":"Barolo","vintage":2019,"type":"RED","alcoholPercentage":14,"bottleSize":"0.75L","grapeVarieties":"Nebbiolo","agingPotential":"15-25 ani","servingTemperature":"16-18°C","tastingNotes":"Tanini fermi, aciditate înaltă, arome de trandafir uscat, gudron și fructe roșii","foodPairing":"Brasato, trufe, vânat, brânzeturi maturate","estimatedValue":65,"aromaProfile":["trandafir uscat","gudron","cireaș","piele","tutun","pămant"],"drinkFrom":2027,"drinkUntil":2042}`;
@@ -95,26 +89,108 @@ function normalizeYear(raw, { min = 1800, max = CURRENT_YEAR + 30 } = {}) {
   return !isNaN(y) && y >= min && y <= max ? y : null;
 }
 
-/** Normalizează valoarea estimată în EUR */
+/** Normalizează valoarea estimată în EUR (returnează număr sau null) */
 function normalizeValue(raw) {
   if (raw === null || raw === undefined) return null;
   const val = parseFloat(raw);
   if (isNaN(val) || val <= 0) return null;
-  return val.toFixed(2);
+  return parseFloat(val.toFixed(2)); // număr, nu string
 }
 
-// ── PARSER ─────────────────────────────────────────────────────────────────
+// ── FUNCȚII DE FALLBACK PENTRU CÂMPURILE LIPSE ─────────────────────────────
+
+/** Estimează valoarea pe baza tipului, vintage-ului și regiunii */
+function estimateValue(vintage, type, country, region) {
+  if (vintage && type === 'RED' && vintage < CURRENT_YEAR - 10) return 25;
+  if (type === 'SPARKLING' || type === 'FORTIFIED') return 15;
+  if (type === 'DESSERT') return 20;
+  if (type === 'RED') {
+    if (vintage && vintage >= 2015) return 12;
+    if (vintage && vintage >= 2010) return 18;
+    return 10;
+  }
+  if (type === 'WHITE' || type === 'ROSE') {
+    if (vintage && vintage >= 2015) return 10;
+    if (vintage && vintage >= 2010) return 14;
+    return 8;
+  }
+  return 10;
+}
+
+/** Generează potențial de îmbătrânire pe baza tipului și vintage-ului */
+function generateAgingPotential(vintage, type) {
+  if (!vintage) return '1-3 ani';
+  if (type === 'RED' && vintage >= 2010) return '8-15 ani';
+  if (type === 'RED') return '3-8 ani';
+  if (type === 'WHITE' && vintage >= 2015) return '2-5 ani';
+  if (type === 'WHITE') return '1-3 ani';
+  if (type === 'ROSE' || type === 'SPARKLING') return '1-2 ani';
+  if (type === 'DESSERT' || type === 'FORTIFIED') return '10-20 ani';
+  return '1-3 ani';
+}
+
+/** Calculează fereastra optimă de consum pe baza vintage-ului și tipului */
+function calculateDrinkWindow(vintage, type) {
+  if (!vintage) return { drinkFrom: null, drinkUntil: null };
+  const vyear = parseInt(vintage);
+  if (isNaN(vyear)) return { drinkFrom: null, drinkUntil: null };
+
+  let drinkFrom = vyear, drinkUntil = vyear;
+  if (type === 'RED') {
+    if (vyear >= 2015) { drinkFrom = vyear + 5; drinkUntil = vyear + 20; }
+    else if (vyear >= 2010) { drinkFrom = vyear + 3; drinkUntil = vyear + 15; }
+    else { drinkFrom = vyear + 2; drinkUntil = vyear + 10; }
+  } else if (type === 'WHITE' || type === 'ROSE') {
+    drinkFrom = vyear;
+    drinkUntil = vyear + 5;
+  } else if (type === 'SPARKLING') {
+    drinkFrom = vyear;
+    drinkUntil = vyear + 3;
+  } else if (type === 'DESSERT' || type === 'FORTIFIED') {
+    drinkFrom = vyear + 5;
+    drinkUntil = vyear + 25;
+  }
+  return { drinkFrom, drinkUntil };
+}
+
+// ── PARSER CU FALLBACK ─────────────────────────────────────────────────────
 function parseWineData(rawText) {
   try {
     const parsed = extractJSON(rawText);
 
+    // Normalizări de bază
     const vintage = normalizeYear(parsed.vintage, { min: 1800, max: CURRENT_YEAR });
-    const drinkFrom = normalizeYear(parsed.drinkFrom, { min: 1900, max: 2100 });
-    const drinkUntil = normalizeYear(parsed.drinkUntil, { min: 1900, max: 2100 });
+    const type = VALID_TYPES.includes(parsed.type) ? parsed.type : 'RED';
 
-    // drinkUntil trebuie să fie >= drinkFrom dacă ambele există
-    const validDrinkWindow =
-      drinkFrom && drinkUntil && drinkUntil >= drinkFrom;
+    // Preluăm valorile furnizate de AI (pot fi null)
+    let estimatedValue = normalizeValue(parsed.estimatedValue);
+    let agingPotential = parsed.agingPotential?.trim() || '';
+    let drinkFrom = normalizeYear(parsed.drinkFrom, { min: 1900, max: 2100 });
+    let drinkUntil = normalizeYear(parsed.drinkUntil, { min: 1900, max: 2100 });
+
+    // --- FALLBACK pentru estimatedValue ---
+    if (estimatedValue === null && vintage) {
+      estimatedValue = estimateValue(vintage, type, parsed.country, parsed.region);
+    }
+
+    // --- FALLBACK pentru agingPotential ---
+    if (!agingPotential && vintage) {
+      agingPotential = generateAgingPotential(vintage, type);
+    } else if (!agingPotential && !vintage) {
+      agingPotential = '1-3 ani';
+    }
+
+    // --- FALLBACK pentru drinkFrom/drinkUntil ---
+    if ((drinkFrom === null || drinkUntil === null) && vintage) {
+      const window = calculateDrinkWindow(vintage, type);
+      if (drinkFrom === null) drinkFrom = window.drinkFrom;
+      if (drinkUntil === null) drinkUntil = window.drinkUntil;
+    }
+
+    // Validare suplimentară: drinkUntil >= drinkFrom
+    if (drinkFrom && drinkUntil && drinkUntil < drinkFrom) {
+      drinkUntil = drinkFrom + 1;
+    }
 
     return {
       name:               parsed.name               || '',
@@ -123,20 +199,20 @@ function parseWineData(rawText) {
       region:             parsed.region             || '',
       subregion:          parsed.subregion          || '',
       vintage:            vintage ? vintage.toString() : '',
-      type:               VALID_TYPES.includes(parsed.type) ? parsed.type : 'RED',
+      type,
       alcoholPercentage:  normalizeAlcohol(parsed.alcoholPercentage),
       bottleSize:         normalizeBottleSize(parsed.bottleSize),
       grapeVarieties:     parsed.grapeVarieties     || '',
-      agingPotential:     parsed.agingPotential     || '',
+      agingPotential,
       servingTemperature: parsed.servingTemperature || '',
       tastingNotes:       parsed.tastingNotes       || '',
       foodPairing:        parsed.foodPairing        || '',
-      estimatedValue:     normalizeValue(parsed.estimatedValue),
+      estimatedValue:     estimatedValue, // număr sau null
       aromaProfile:       Array.isArray(parsed.aromaProfile)
                             ? parsed.aromaProfile.filter(Boolean)
                             : [],
-      drinkFrom:          validDrinkWindow ? drinkFrom  : (drinkFrom || null),
-      drinkUntil:         validDrinkWindow ? drinkUntil : (drinkUntil || null),
+      drinkFrom,
+      drinkUntil,
       quantity:           '1',
       status:             'IN_CELLAR',
       isFavorite:         false,
@@ -251,28 +327,21 @@ const PROVIDER_FN = {
 
 // ── RETRY LOGIC ────────────────────────────────────────────────────────────
 
-/**
- * Apelează fn de maxRetries ori cu exponential backoff.
- * @param {Function} fn        - funcție async care returnează text brut
- * @param {number}   maxRetries - număr maxim de reîncercări (default 2)
- */
 async function withRetry(fn, maxRetries = 2) {
   let lastError;
-
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       const rawText = await fn();
-      return parseWineData(rawText); // parsează imediat — dacă eșuează, reîncercăm
+      return parseWineData(rawText);
     } catch (e) {
       lastError = e;
       if (attempt < maxRetries) {
-        const delay = 1000 * Math.pow(2, attempt); // 1s, 2s, 4s...
+        const delay = 1000 * Math.pow(2, attempt);
         console.warn(`[aiProviders] Attempt ${attempt + 1} failed: ${e.message}. Retrying in ${delay}ms…`);
         await sleep(delay);
       }
     }
   }
-
   throw lastError;
 }
 
@@ -301,16 +370,6 @@ export const AI_PROVIDERS = {
 
 /**
  * Analizează o etichetă de vin folosind provider-ul ales, cu retry automat.
- *
- * @param {string}   imageBase64       - imaginea encodată în base64
- * @param {string}   mimeType          - ex: 'image/jpeg'
- * @param {string}   provider          - 'gemini' | 'claude' | 'openai' | 'groq'
- * @param {string}   apiKey            - cheia API pentru provider
- * @param {Object}   [options]
- * @param {number}   [options.maxRetries=2]          - număr maxim de reîncercări per provider
- * @param {Array}    [options.fallbackProviders=[]]  - [{provider, apiKey}, ...] provideri de rezervă
- *
- * @returns {Promise<Object>} datele vinului parsate și normalizate
  */
 export async function analyzeWineLabel(
   imageBase64,
@@ -319,10 +378,8 @@ export async function analyzeWineLabel(
   apiKey,
   { maxRetries = 2, fallbackProviders = [] } = {}
 ) {
-  // 1. Validare input
   validateInput(imageBase64, mimeType, provider, apiKey);
 
-  // 2. Lista completă de provideri de încercat (principal + fallback)
   const queue = [
     { provider, apiKey },
     ...fallbackProviders.filter(
@@ -331,11 +388,9 @@ export async function analyzeWineLabel(
   ];
 
   let lastError;
-
   for (const { provider: p, apiKey: k } of queue) {
     const fn = PROVIDER_FN[p];
     if (!fn) continue;
-
     try {
       console.info(`[aiProviders] Using provider: ${p}`);
       return await withRetry(() => fn(imageBase64, mimeType, k), maxRetries);
@@ -344,8 +399,5 @@ export async function analyzeWineLabel(
       console.warn(`[aiProviders] Provider "${p}" a eșuat definitiv: ${e.message}`);
     }
   }
-
-  throw new Error(
-    `Analiza etichetei a eșuat pe toți providerii. Ultima eroare: ${lastError?.message}`
-  );
+  throw new Error(`Analiza etichetei a eșuat pe toți providerii. Ultima eroare: ${lastError?.message}`);
 }

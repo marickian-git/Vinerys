@@ -27,6 +27,8 @@ model User {
   sessions      Session[]
   accounts      Account[]
   wines         Wine[]
+  wineLogs      WineLog[]
+
 
   @@map("user")
 }
@@ -132,11 +134,30 @@ model Wine {
   createdAt            DateTime    @default(now())
   updatedAt            DateTime    @updatedAt
 
+  wineLogs             WineLog[]
+
   @@index([userId])
   @@index([type])
   @@index([country])
   @@index([vintage])
   @@index([status])
+}
+
+
+model WineLog {
+  id        String   @id @default(cuid())
+  wineId    String?   
+  wine      Wine?     @relation(fields: [wineId], references: [id], onDelete: SetNull)
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action    LogAction
+  details   Json?     
+  createdAt DateTime @default(now())
+
+  @@index([wineId])
+  @@index([userId])
+  @@index([action])
+  @@map("wine_log")
 }
 
 // ─────────────────────────────────────────
@@ -169,4 +190,14 @@ enum WineStatus {
   CONSUMED
   SOLD
   GIFTED
+}
+
+enum LogAction {
+  ADDED
+  UPDATED
+  CONSUMED
+  SOLD
+  GIFTED
+  SCAN_AI
+  DELETE
 }

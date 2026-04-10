@@ -54,7 +54,6 @@ export async function PUT(request, { params }) {
 
     fields.forEach(field => {
       if (body[field] !== undefined) {
-        // Conversii pentru tipuri numerice
         if (field === 'vintage' || field === 'quantity' || field === 'rating') {
           updateData[field] = body[field] ? parseInt(body[field]) : null;
         } else if (field === 'alcoholPercentage' || field === 'price' || 
@@ -80,6 +79,21 @@ export async function PUT(request, { params }) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
 
+     const changes = {};
+    for (const key of Object.keys(updateData)) {
+      if (oldWine[key] !== updateData[key]) {
+        changes[key] = { from: oldWine[key], to: updateData[key] };
+      }
+    }
+    await prisma.wineLog.create({
+      data: {
+        wineId: params.id,
+        userId: oldWine.userId,
+        action: 'UPDATED',
+        details: { changes },
+      },
+    });
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error updating wine:', error);
@@ -97,6 +111,15 @@ export async function DELETE(request, { params }) {
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    await prisma.wineLog.create({
+      data: {
+        wineId: params.id,
+        userId: wine.userId,
+        action: 'DELETE',
+        details: { name: wine.name, producer: wine.producer },
+      },
+    });
 
     const wine = await prisma.wine.deleteMany({
       where: {

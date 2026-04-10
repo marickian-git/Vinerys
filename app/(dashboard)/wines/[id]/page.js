@@ -2,6 +2,7 @@ import { getWineById } from '@/utils/actions';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import WineActions from '@/components/wines/WineActions';
+import ConsumeButton from '@/components/wines/ConsumeButton';
 import { DrinkWindowCard } from '@/components/wines/DrinkWindowBadge';
 import AromaProfile from '@/components/wines/AromaProfile';
 
@@ -59,7 +60,7 @@ export default async function WineDetailPage({ params }) {
   const hasAromas      = wine.aromaProfile?.length > 0;
 
   return (
-    <>
+    <div>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap');
 
@@ -122,7 +123,7 @@ export default async function WineDetailPage({ params }) {
         .wd-qs-value { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; font-weight: 600; color: #f5e6e8; line-height: 1; margin-bottom: 0.3rem; }
         .wd-qs-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.12em; color: rgba(245,230,232,0.3); font-weight: 400; }
 
-        .wd-actions-row { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+        .wd-actions-row { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.5rem; }
 
         .wd-sections { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
         .wd-section-full { grid-column: 1 / -1; }
@@ -236,30 +237,25 @@ export default async function WineDetailPage({ params }) {
 
               <div className="wd-actions-row">
                 <WineActions wineId={wine.id} isFavorite={wine.isFavorite} />
+                {wine.quantity > 0 && <ConsumeButton wineId={wine.id} currentQuantity={wine.quantity} />}
               </div>
             </div>
           </div>
 
           {/* Detail sections */}
           <div className="wd-sections">
-
-            {/* Fereastră de consum */}
             {hasDrinkWindow && (
               <div className="wd-section wd-section-full">
                 <div className="wd-section-title">Fereastră optimă de consum</div>
                 <DrinkWindowCard drinkFrom={wine.drinkFrom} drinkUntil={wine.drinkUntil} />
               </div>
             )}
-
-            {/* Profil aromatic */}
             {hasAromas && (
               <div className="wd-section wd-section-full">
                 <div className="wd-section-title">Profil aromatic</div>
                 <AromaProfile aromas={wine.aromaProfile} />
               </div>
             )}
-
-            {/* Informații */}
             <div className="wd-section">
               <div className="wd-section-title">Informații</div>
               <InfoRow label="Producător" value={wine.producer} />
@@ -271,8 +267,6 @@ export default async function WineDetailPage({ params }) {
               <InfoRow label="Temperatură servire" value={wine.servingTemperature} />
               <InfoRow label="Potențial maturare" value={wine.agingPotential} />
             </div>
-
-            {/* Preț & Stocare */}
             <div className="wd-section">
               <div className="wd-section-title">Preț & Stocare</div>
               {wine.purchasePrice && (
@@ -286,8 +280,6 @@ export default async function WineDetailPage({ params }) {
               <InfoRow label="Locație pivniță" value={wine.cellarLocation} />
               <InfoRow label="Cantitate" value={`${wine.quantity} ${wine.quantity === 1 ? 'sticlă' : 'sticle'}`} />
             </div>
-
-            {/* Soiuri & Gastronomie */}
             {(wine.grapeVarieties?.length > 0 || wine.foodPairing?.length > 0) && (
               <div className="wd-section">
                 <div className="wd-section-title">Soiuri & Gastronomie</div>
@@ -309,18 +301,15 @@ export default async function WineDetailPage({ params }) {
                 )}
               </div>
             )}
-
-            {/* Notițe degustare */}
             {wine.tastingNotes && (
               <div className="wd-section">
                 <div className="wd-section-title">Notițe de degustare</div>
                 <p className="wd-tasting-notes">"{wine.tastingNotes}"</p>
               </div>
             )}
-
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
