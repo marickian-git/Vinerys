@@ -377,7 +377,6 @@ export async function deleteAccount() {
 
 export async function getAdvancedStats() {
   const user = await getCurrentUser();
-
   const wines = await prisma.wine.findMany({
     where: { userId: user.id },
     select: {
@@ -400,19 +399,21 @@ export async function getAdvancedStats() {
       bottleImageUrl: true,
     },
   });
-
+ 
   const topWines = wines
     .filter(w => w.rating != null)
     .sort((a, b) => b.rating - a.rating)
     .slice(0, 5);
-
+ 
   const byCountry = wines.reduce((acc, w) => {
     if (!w.country) return acc;
     acc[w.country] = (acc[w.country] ?? 0) + 1;
     return acc;
   }, {});
-
+ 
   const now = new Date();
+  const currentYear = now.getFullYear();
+ 
   const monthlyData = [];
   for (let i = 11; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -424,25 +425,44 @@ export async function getAdvancedStats() {
     }).length;
     monthlyData.push({ label, count });
   }
-
+ 
   const withPrice = wines.filter(w => w.purchasePrice != null && w.purchasePrice > 0);
   const prices = withPrice.map(w => w.purchasePrice);
   const avgPrice = prices.length > 0 ? prices.reduce((a, b) => a + b, 0) / prices.length : 0;
   const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
   const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
   const mostExpensive = [...withPrice].sort((a, b) => b.purchasePrice - a.purchasePrice)[0] ?? null;
-
-  const currentYear = now.getFullYear();
-
-  // nearMaturity — folosește drinkFrom dacă există, altfel parsează agingPotential
+ 
+  // ── VINURI DEPĂȘITE (trecut de vârf) — drinkUntil < currentYear ──
+  const overdueWines = wines
+    .filter(w => {
+      if (w.status !== 'IN_CELLAR') return false;
+      if (w.drinkUntil != null) return w.drinkUntil < currentYear;
+      // fallback: agingPotential cu an maxim în trecut
+      if (w.agingPotential) {
+        const match = w.agingPotential.match(/(\d{4})/g);
+        if (match) {
+          const maxYear = Math.max(...match.map(Number));
+          return maxYear < currentYear;
+        }
+      }
+      return false;
+    })
+    .map(w => {
+      const drinkFrom = w.drinkFrom ?? null;
+      const drinkUntil = w.drinkUntil ?? null;
+      return { ...w, drinkFrom, drinkUntil };
+    })
+    .sort((a, b) => (a.drinkUntil ?? 0) - (b.drinkUntil ?? 0)); // cele mai vechi primele
+ 
+  // ── VINURI ÎN FEREASTRĂ sau aproape (nearMaturity) ──
   const nearMaturity = wines
     .filter(w => {
       if (w.status !== 'IN_CELLAR') return false;
-      // Folosește drinkUntil dacă există — vinul e relevant dacă nu a trecut de vârf
       if (w.drinkFrom != null || w.drinkUntil != null) {
         const until = w.drinkUntil ?? w.drinkFrom;
         const from  = w.drinkFrom  ?? w.drinkUntil;
-        // Arată dacă: e în fereastră SAU urmează în 3 ani
+        // În fereastră SAU urmează în 3 ani (și nu e depășit)
         return until >= currentYear && from <= currentYear + 3;
       }
       if (!w.agingPotential) return false;
@@ -463,15 +483,17 @@ export async function getAdvancedStats() {
     })
     .sort((a, b) => a.readyYear - b.readyYear)
     .slice(0, 5);
-
+ 
   return {
     topWines,
     byCountry,
     monthlyData,
     priceStats: { avg: avgPrice, max: maxPrice, min: minPrice, mostExpensive },
     nearMaturity,
+    overdueWines, // ← NOU
   };
 }
+ 
 
 export async function updateCellarName(name) {
   const user = await getCurrentUser();

@@ -6,12 +6,53 @@ import {
   Wine,
   TrendingUp,
   Globe,
-  Layers,
   BarChart2,
   CalendarClock,
   Star,
   ArrowRight,
+  AlertTriangle,
 } from 'lucide-react';
+
+/* ─── Custom KPI icons (SVG inline) ─────────────────────────────────────── */
+function IconBottles({ color }) {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M9 2h2v2.5c0 .28.1.54.27.74L13 7.5V18a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V7.5l1.73-2.26A1 1 0 0 0 9 4.5V2Z" stroke={color} strokeWidth="1.3" strokeLinejoin="round"/>
+      <path d="M7 10.5h6" stroke={color} strokeWidth="1.3" strokeLinecap="round"/>
+      <path d="M15 4h1.5a1 1 0 0 1 1 1v1a1 1 0 0 0 1 1H19v11a1 1 0 0 1-1 1h-1.5" stroke={color} strokeWidth="1.3" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+function IconCellar({ color }) {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="12" cy="11" rx="7" ry="4" stroke={color} strokeWidth="1.3"/>
+      <path d="M5 11v5c0 2.21 3.13 4 7 4s7-1.79 7-4v-5" stroke={color} strokeWidth="1.3"/>
+      <path d="M5 14c0 2.21 3.13 4 7 4s7-1.79 7-4" stroke={color} strokeWidth="1.3" strokeDasharray="2 2"/>
+      <circle cx="12" cy="11" r="1.5" fill={color} opacity=".4"/>
+    </svg>
+  );
+}
+
+function IconValue({ color }) {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 3l2.5 5.5L21 9.5l-4.5 4.5 1 6.5L12 17.5 6.5 20.5l1-6.5L3 9.5l6.5-1L12 3Z" stroke={color} strokeWidth="1.3" strokeLinejoin="round"/>
+      <path d="M12 8v5M10 11h4" stroke={color} strokeWidth="1.2" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+function IconGlobe({ color }) {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.3"/>
+      <path d="M12 3c-2.5 3-4 5.5-4 9s1.5 6 4 9M12 3c2.5 3 4 5.5 4 9s-1.5 6-4 9" stroke={color} strokeWidth="1.2"/>
+      <path d="M3.5 9h17M3.5 15h17" stroke={color} strokeWidth="1.2" strokeLinecap="round"/>
+    </svg>
+  );
+}
 
 export async function generateMetadata() {
   try {
@@ -37,43 +78,39 @@ function Stars({ rating }) {
   );
 }
 
-/* ─── KPI Card ─────────────────────────────────────────────────────────── */
-function KpiCard({ icon: Icon, value, label, sub, accentColor, iconBg }) {
+/* ─── KPI Card — icon top-right, value large bottom-left ─── */
+function KpiCard({ iconEl, value, label, sub, accentColor, iconBg }) {
   return (
     <div className="db-kpi">
-      {/* left accent bar */}
       <div className="db-kpi-bar" style={{
         background: `linear-gradient(to bottom, ${accentColor} 0%, transparent 75%)`
       }} />
-
-      {/* contained radial glow — small, bottom-left only */}
       <div className="db-kpi-glow" style={{
-        background: `radial-gradient(ellipse 55% 45% at 0% 100%, ${accentColor}22 0%, transparent 100%)`
+        background: `radial-gradient(ellipse 60% 50% at 0% 100%, ${accentColor}1a 0%, transparent 100%)`
       }} />
-
-      {/* dot-grid — bottom-right corner */}
       <div className="db-kpi-pattern" />
 
-      {/* icon */}
-      <div className="db-kpi-icon-wrap" style={{
-        background: iconBg,
-        boxShadow: `0 0 0 1px ${accentColor}20`
-      }}>
-        <Icon size={15} strokeWidth={1.5} color={accentColor} />
+      {/* TOP ROW: label left + icon right */}
+      <div className="db-kpi-top-row">
+        <div className="db-kpi-label">{label}</div>
+        <div className="db-kpi-icon-wrap" style={{
+          background: iconBg,
+          boxShadow: `0 0 0 1px ${accentColor}30, 0 6px 16px ${accentColor}18`
+        }}>
+          {iconEl}
+        </div>
       </div>
 
-      {/* number + label */}
+      {/* BOTTOM: big number */}
       <div className="db-kpi-body">
         <div className="db-kpi-value">{value}</div>
-        <div className="db-kpi-label">{label}</div>
       </div>
 
-      {/* badge */}
       {sub && (
         <div className="db-kpi-badge" style={{
-          background: `${accentColor}12`,
+          background: `${accentColor}0f`,
           color: accentColor,
-          border: `1px solid ${accentColor}28`,
+          border: `1px solid ${accentColor}22`,
         }}>
           <span className="db-kpi-dot" style={{ background: accentColor }} />
           {sub}
@@ -116,6 +153,7 @@ export default async function DashboardPage() {
     topWines: [], byCountry: {}, monthlyData: [],
     priceStats: { avg: 0, max: 0, min: 0, mostExpensive: null },
     nearMaturity: [],
+    overdueWines: [],
   };
   let cellarName = 'Dashboard';
 
@@ -139,6 +177,22 @@ export default async function DashboardPage() {
   const totalCountryWines = topCountries.reduce((a, [, v]) => a + v, 0) || 1;
   const currentYear       = new Date().getFullYear();
 
+  // Vinuri depășite — vin direct din backend (drinkUntil < currentYear)
+  const overdueWines = advanced.overdueWines ?? [];
+
+  // Wines ready now (în fereastră)
+  const readyNowWines = (advanced.nearMaturity || []).filter(w => {
+    const ready = w.readyYear <= currentYear;
+    const notOver = !w.drinkUntil || w.drinkUntil >= currentYear;
+    return ready && notOver;
+  });
+
+  // Wines near maturity (urmează în 3 ani)
+  const nearMaturityWines = (advanced.nearMaturity || []).filter(w => {
+    const yearsLeft = w.readyYear - currentYear;
+    return yearsLeft > 0 && yearsLeft <= 3;
+  });
+
   return (
     <>
       <style>{`
@@ -159,7 +213,6 @@ export default async function DashboardPage() {
         .db-kpis {
           display:grid;
           grid-template-columns:repeat(4,1fr);
-          grid-auto-rows:1fr;        /* ← forces equal row height */
           gap:1px;
           background:rgba(196,69,105,.07);
           border-radius:16px;
@@ -170,12 +223,14 @@ export default async function DashboardPage() {
 
         .db-kpi {
           background:#0d0608;
-          padding:1.5rem 1.4rem;
+          padding:1.4rem 1.4rem 1.2rem;
           position:relative;
           overflow:hidden;
           display:flex;
           flex-direction:column;
+          gap:.1rem;
           transition:background .25s;
+          min-height:150px;
         }
         .db-kpi:hover { background:rgba(255,255,255,.018); }
 
@@ -186,55 +241,71 @@ export default async function DashboardPage() {
           width:3px;
         }
 
-        /* glow — contained, doesn't bleed */
+        /* glow */
         .db-kpi-glow {
           position:absolute;
           inset:0;
           pointer-events:none;
         }
 
-        /* dot pattern — bottom-right only */
+        /* dot pattern */
         .db-kpi-pattern {
           position:absolute;
           inset:0;
           pointer-events:none;
-          opacity:.05;
-          background-image:radial-gradient(circle, rgba(245,230,232,.8) 1px, transparent 1px);
+          opacity:.045;
+          background-image:radial-gradient(circle, rgba(245,230,232,.9) 1px, transparent 1px);
           background-size:16px 16px;
           mask-image:linear-gradient(225deg, rgba(0,0,0,.9) 0%, transparent 55%);
           -webkit-mask-image:linear-gradient(225deg, rgba(0,0,0,.9) 0%, transparent 55%);
         }
 
-        /* icon */
+        /* ── TOP ROW: label + icon ── */
+        .db-kpi-top-row {
+          display:flex;
+          justify-content:space-between;
+          align-items:flex-start;
+          position:relative; z-index:1;
+        }
+
+        .db-kpi-label {
+          font-size:.62rem;
+          text-transform:uppercase;
+          letter-spacing:.18em;
+          color:rgba(245,230,232,.3);
+          font-weight:400;
+          line-height:1.3;
+          max-width:70%;
+        }
+
+        /* icon — now top-right, larger */
         .db-kpi-icon-wrap {
-          width:32px; height:32px;
-          border-radius:8px;
+          width:44px; height:44px;
+          border-radius:13px;
           display:flex; align-items:center; justify-content:center;
           flex-shrink:0;
           position:relative; z-index:1;
+          transition:transform .25s, box-shadow .25s;
+        }
+        .db-kpi:hover .db-kpi-icon-wrap {
+          transform:translateY(-2px) scale(1.04);
         }
 
         /* value + label */
         .db-kpi-body {
-          margin-top:.9rem;
           flex:1;
+          display:flex;
+          align-items:flex-end;
           position:relative; z-index:1;
+          margin-top:.3rem;
         }
         .db-kpi-value {
           font-family:'Cormorant Garamond',serif;
-          font-size:3.2rem;
+          font-size:3.4rem;
           font-weight:600;
           color:#f5e6e8;
           line-height:1;
           letter-spacing:-.03em;
-          margin-bottom:.4rem;
-        }
-        .db-kpi-label {
-          font-size:.62rem;
-          text-transform:uppercase;
-          letter-spacing:.2em;
-          color:rgba(245,230,232,.28);
-          font-weight:400;
         }
 
         /* badge */
@@ -242,12 +313,12 @@ export default async function DashboardPage() {
           display:inline-flex;
           align-items:center;
           gap:5px;
-          font-size:.68rem;
+          font-size:.67rem;
           font-weight:400;
-          padding:.22rem .6rem;
+          padding:.2rem .55rem;
           border-radius:20px;
           line-height:1.5;
-          margin-top:1rem;
+          margin-top:.8rem;
           align-self:flex-start;
           position:relative; z-index:1;
         }
@@ -255,14 +326,13 @@ export default async function DashboardPage() {
           width:5px; height:5px;
           border-radius:50%;
           flex-shrink:0;
-          opacity:.85;
+          opacity:.8;
         }
 
         /* ── Shared card ── */
         .db-row   { display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; margin-bottom:1.25rem; }
         .db-row-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1.25rem; margin-bottom:1.25rem; }
 
-        /* same visual language as KPI cards */
         .db-card {
           background:#0d0608;
           border:1px solid rgba(196,69,105,.1);
@@ -296,6 +366,123 @@ export default async function DashboardPage() {
           font-size:.65rem;
           color:rgba(245,230,232,.2);
           letter-spacing:.05em;
+        }
+
+        /* ── URGENT / OVERDUE SECTION ── */
+        .db-urgent-card {
+          background: linear-gradient(135deg, rgba(180,40,30,.12) 0%, rgba(13,6,8,1) 60%);
+          border:1px solid rgba(220,60,40,.25);
+          border-radius:16px;
+          padding:1.5rem;
+          margin-bottom:1.25rem;
+          position:relative;
+          overflow:hidden;
+        }
+        .db-urgent-card::before {
+          content:'';
+          position:absolute;
+          top:0; left:0; right:0;
+          height:2px;
+          background: linear-gradient(to right, #dc3c28, #ff6b4a, transparent);
+        }
+        .db-urgent-glow {
+          position:absolute;
+          top:-40px; left:-40px;
+          width:200px; height:200px;
+          background:radial-gradient(circle, rgba(220,60,40,.12) 0%, transparent 70%);
+          pointer-events:none;
+        }
+        .db-urgent-title {
+          font-size:.65rem;
+          text-transform:uppercase;
+          letter-spacing:.18em;
+          color:#ff6b4a;
+          font-weight:400;
+          margin-bottom:1.25rem;
+          padding-bottom:.75rem;
+          border-bottom:1px solid rgba(220,60,40,.15);
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+        }
+        .db-urgent-title-icon {
+          display:flex;
+          align-items:center;
+          gap:.5rem;
+        }
+        .db-urgent-pulse {
+          width:8px; height:8px;
+          border-radius:50%;
+          background:#ff4444;
+          box-shadow:0 0 0 0 rgba(255,68,68,.5);
+          animation:pulse-ring 1.8s ease-out infinite;
+          flex-shrink:0;
+        }
+        @keyframes pulse-ring {
+          0%   { box-shadow:0 0 0 0 rgba(255,68,68,.6); }
+          70%  { box-shadow:0 0 0 8px rgba(255,68,68,0); }
+          100% { box-shadow:0 0 0 0 rgba(255,68,68,0); }
+        }
+        .db-urgent-count {
+          font-size:.65rem;
+          background:rgba(255,68,68,.15);
+          color:#ff6b4a;
+          border:1px solid rgba(255,68,68,.25);
+          border-radius:20px;
+          padding:.15rem .6rem;
+          font-weight:500;
+          letter-spacing:.05em;
+        }
+
+        .db-urgent-list { display:flex; flex-direction:column; gap:.5rem; }
+        .db-urgent-item {
+          display:flex;
+          align-items:center;
+          gap:.75rem;
+          padding:.7rem .9rem;
+          background:rgba(220,60,40,.06);
+          border:1px solid rgba(220,60,40,.1);
+          border-radius:10px;
+          text-decoration:none;
+          transition:background .2s, border-color .2s;
+        }
+        .db-urgent-item:hover {
+          background:rgba(220,60,40,.1);
+          border-color:rgba(220,60,40,.2);
+        }
+        .db-urgent-year {
+          font-family:'Cormorant Garamond',serif;
+          font-size:1.15rem;
+          font-weight:600;
+          color:#ff8870;
+          width:2.8rem;
+          flex-shrink:0;
+        }
+        .db-urgent-info { flex:1; min-width:0; }
+        .db-urgent-name {
+          font-size:.82rem;
+          color:#f5e6e8;
+          white-space:nowrap;
+          overflow:hidden;
+          text-overflow:ellipsis;
+        }
+        .db-urgent-sub {
+          font-size:.68rem;
+          color:rgba(245,230,232,.3);
+          margin-top:.1rem;
+        }
+        .db-urgent-badge {
+          font-size:.63rem;
+          padding:.2rem .55rem;
+          border-radius:20px;
+          background:rgba(255,68,68,.12);
+          color:#ff6b6b;
+          border:1px solid rgba(255,68,68,.2);
+          white-space:nowrap;
+          flex-shrink:0;
+        }
+        .db-urgent-overdue-num {
+          font-weight:600;
         }
 
         /* ── Bar charts ── */
@@ -404,7 +591,7 @@ export default async function DashboardPage() {
           {/* ── KPIs ── */}
           <div className="db-kpis">
             <KpiCard
-              icon={Wine}
+              iconEl={<IconBottles color="#c44569" />}
               value={stats.totalBottles}
               label="Sticle totale"
               sub={`${inCellar} în pivniță`}
@@ -412,23 +599,23 @@ export default async function DashboardPage() {
               iconBg="rgba(196,69,105,0.1)"
             />
             <KpiCard
-              icon={Layers}
+              iconEl={<IconCellar color="#c9695a" />}
               value={stats.totalWines}
               label="Vinuri unice"
               sub={topType ? `Majoritar ${TYPE_LABELS[topType[0]]}` : null}
-              accentColor="#8b1a2e"
-              iconBg="rgba(139,26,46,0.14)"
+              accentColor="#c9695a"
+              iconBg="rgba(201,105,90,0.12)"
             />
             <KpiCard
-              icon={TrendingUp}
+              iconEl={<IconValue color="#c9a84c" />}
               value={stats.totalValue > 0 ? `${Math.round(stats.totalValue)}€` : '—'}
               label="Valoare colecție"
-              sub={advanced.priceStats.avg > 0 ? `Media ${Math.round(advanced.priceStats.avg)}€/sticlă` : null}
+              sub={advanced.priceStats.avg > 0 ? `Media ${Math.round(advanced.priceStats.avg)}€` : null}
               accentColor="#c9a84c"
               iconBg="rgba(201,168,76,0.1)"
             />
             <KpiCard
-              icon={Globe}
+              iconEl={<IconGlobe color="#4a8fa8" />}
               value={Object.keys(advanced.byCountry).length}
               label="Țări reprezentate"
               sub={`${Object.keys(stats.byType).length} tipuri de vin`}
@@ -436,6 +623,42 @@ export default async function DashboardPage() {
               iconBg="rgba(74,143,168,0.1)"
             />
           </div>
+
+          {/* ── URGENT: Vinuri depășite — trebuie băute ACUM ── */}
+          {overdueWines.length > 0 && (
+            <div className="db-urgent-card">
+              <div className="db-urgent-glow" />
+              <div className="db-urgent-title">
+                <div className="db-urgent-title-icon">
+                  <div className="db-urgent-pulse" />
+                  <AlertTriangle size={13} strokeWidth={1.5} color="#ff6b4a" />
+                  <span>Vinuri depășite — bea urgent!</span>
+                </div>
+                <span className="db-urgent-count">{overdueWines.length} {overdueWines.length === 1 ? 'vin' : 'vinuri'}</span>
+              </div>
+              <div className="db-urgent-list">
+                {overdueWines.map(wine => {
+                  const until = wine.drinkUntil ?? wine.readyYear;
+                  const yearsOver = currentYear - until;
+                  const overdueLabel = yearsOver <= 0
+                    ? 'trecut de vârf'
+                    : yearsOver === 1
+                      ? 'trecut de vârf cu 1 an'
+                      : `trecut de vârf cu ${yearsOver} ani`;
+                  return (
+                    <Link key={wine.id} href={`/wines/${wine.id}`} className="db-urgent-item">
+                      <span className="db-urgent-year">{wine.drinkUntil ?? wine.readyYear ?? '—'}</span>
+                      <div className="db-urgent-info">
+                        <div className="db-urgent-name">{wine.name}</div>
+                        <div className="db-urgent-sub">{wine.producer ?? wine.country ?? '—'}</div>
+                      </div>
+                      <span className="db-urgent-badge">{overdueLabel}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* ── Row 1: Tip + Status ── */}
           <div className="db-row">
@@ -605,16 +828,31 @@ export default async function DashboardPage() {
               )}
             </div>
 
-            {/* Maturitate */}
+            {/* Maturitate — acum + aproape */}
             <div className="db-card">
               <CardTitle aside="3 ani">Aproape de maturitate</CardTitle>
-              {advanced.nearMaturity.length === 0 ? (
+              {nearMaturityWines.length === 0 && readyNowWines.length === 0 ? (
                 <Empty icon={CalendarClock} text="Adaugă fereastra de consum la vinuri" />
               ) : (
                 <div className="db-mat-list">
-                  {advanced.nearMaturity.map(wine => {
+                  {/* Ready NOW */}
+                  {readyNowWines.map(wine => (
+                    <Link key={wine.id} href={`/wines/${wine.id}`} className="db-mat-item">
+                      <span className="db-mat-year" style={{ color: '#55c44e' }}>{wine.readyYear}</span>
+                      <div className="db-mat-info">
+                        <div className="db-mat-name">{wine.name}</div>
+                        <div className="db-mat-sub">{wine.producer ?? wine.country ?? '—'}</div>
+                      </div>
+                      <span className="db-mat-badge" style={{
+                        background: 'rgba(85,196,78,.1)',
+                        color: 'rgba(85,196,78,.9)',
+                        border: '1px solid rgba(85,196,78,.2)',
+                      }}>● Acum!</span>
+                    </Link>
+                  ))}
+                  {/* Near maturity */}
+                  {nearMaturityWines.map(wine => {
                     const yearsLeft = wine.readyYear - currentYear;
-                    const isNow     = yearsLeft <= 0;
                     return (
                       <Link key={wine.id} href={`/wines/${wine.id}`} className="db-mat-item">
                         <span className="db-mat-year">{wine.readyYear}</span>
@@ -623,12 +861,10 @@ export default async function DashboardPage() {
                           <div className="db-mat-sub">{wine.producer ?? wine.country ?? '—'}</div>
                         </div>
                         <span className="db-mat-badge" style={{
-                          background: isNow ? 'rgba(85,196,78,.1)'   : 'rgba(212,175,55,.1)',
-                          color:      isNow ? 'rgba(85,196,78,.9)'   : '#d4af37',
-                          border:     `1px solid ${isNow ? 'rgba(85,196,78,.2)' : 'rgba(212,175,55,.2)'}`,
-                        }}>
-                          {isNow ? '● Acum!' : `${yearsLeft}a`}
-                        </span>
+                          background: 'rgba(212,175,55,.1)',
+                          color: '#d4af37',
+                          border: '1px solid rgba(212,175,55,.2)',
+                        }}>{yearsLeft}a</span>
                       </Link>
                     );
                   })}
