@@ -1,16 +1,15 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs';
 import prisma from '@/utils/db';
 
 export async function POST(request, { params }) {
   try {
-    const { userId } = auth();
+     
+ const { userId } = auth();
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
     const body = await request.json();
-    const quantityToConsume = body.quantity || 1; // câte sticle se consumă
+    const quantityToConsume = body.quantity || 1; 
 
     const wine = await prisma.wine.findFirst({
       where: { id: params.id, user: { clerkId: userId } },
