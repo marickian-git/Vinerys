@@ -1,20 +1,23 @@
-'use client';
+"use client";
 
-import { useState, useRef } from 'react';
-import toast from 'react-hot-toast';
+import { useState, useRef } from "react";
+import toast from "react-hot-toast";
+import { appPath } from "@/utils/appPath";
 
 export default function ScanLabelButton({ onScan }) {
   const [scanning, setScanning] = useState(false);
-  const [preview, setPreview]   = useState(null);
+  const [preview, setPreview] = useState(null);
   const inputRef = useRef(null);
 
   const handleFile = async (file) => {
     if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      toast.error('Selectează o imagine'); return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Selectează o imagine");
+      return;
     }
     if (file.size > 10 * 1024 * 1024) {
-      toast.error('Imaginea e prea mare (max 10MB)'); return;
+      toast.error("Imaginea e prea mare (max 10MB)");
+      return;
     }
 
     // Preview
@@ -23,41 +26,44 @@ export default function ScanLabelButton({ onScan }) {
     reader.readAsDataURL(file);
 
     setScanning(true);
-    const toastId = toast.loading('🔍 Analizez eticheta...');
+    const toastId = toast.loading("🔍 Analizez eticheta...");
 
     try {
       // Convertește la base64
       const base64 = await new Promise((res, rej) => {
         const r = new FileReader();
-        r.onload = () => res(r.result.split(',')[1]);
+        r.onload = () => res(r.result.split(",")[1]);
         r.onerror = rej;
         r.readAsDataURL(file);
       });
 
-      const response = await fetch('/api/ai-scan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageBase64: base64, mimeType: file.type }),
+      const response = await fetch(appPath("/api/ai-scan"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          imageBase64: base64,
+          mimeType: file.type,
+          createWine: false,
+        }),
       });
 
       const result = await response.json();
 
       if (!response.ok || result.error) {
-        throw new Error(result.error || 'Eroare la analiză');
+        throw new Error(result.error || "Eroare la analiză");
       }
 
       toast.dismiss(toastId);
-      toast.success('✨ Etichetă analizată! Verifică și corectează câmpurile.');
+      toast.success("✨ Etichetă analizată! Verifică și corectează câmpurile.");
       onScan(result.data);
       setPreview(null);
-
     } catch (err) {
       toast.dismiss(toastId);
-      toast.error(err.message || 'Eroare la analizarea etichetei');
+      toast.error(err.message || "Eroare la analizarea etichetei");
       setPreview(null);
     } finally {
       setScanning(false);
-      if (inputRef.current) inputRef.current.value = '';
+      if (inputRef.current) inputRef.current.value = "";
     }
   };
 
@@ -127,18 +133,23 @@ export default function ScanLabelButton({ onScan }) {
           type="file"
           accept="image/*"
           capture="environment"
-          style={{ display: 'none' }}
-          onChange={e => handleFile(e.target.files?.[0])}
+          style={{ display: "none" }}
+          onChange={(e) => handleFile(e.target.files?.[0])}
         />
 
         <button
           type="button"
           className="scan-btn"
           onClick={() => inputRef.current?.click()}
-          disabled={scanning}
-        >
+          disabled={scanning}>
           {scanning ? (
-            <><span className="scan-spinner" style={{ width: 14, height: 14, borderWidth: 2 }} /> Analizez...</>
+            <>
+              <span
+                className="scan-spinner"
+                style={{ width: 14, height: 14, borderWidth: 2 }}
+              />{" "}
+              Analizez...
+            </>
           ) : (
             <>📸 Scanează eticheta cu AI</>
           )}

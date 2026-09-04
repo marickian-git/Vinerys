@@ -1,12 +1,13 @@
-'use client';
+"use client";
 
-import { useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import toast from 'react-hot-toast';
+import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
+import { appPath } from "@/utils/appPath";
 
 export default function AddWineFAB() {
   const router = useRouter();
-  const [open, setOpen]       = useState(false);
+  const [open, setOpen] = useState(false);
   const [scanning, setScanning] = useState(false);
   const cameraRef = useRef(null);
   const galleryRef = useRef(null);
@@ -15,52 +16,59 @@ export default function AddWineFAB() {
     if (!file) return;
     setOpen(false);
 
-    if (!file.type.startsWith('image/')) {
-      toast.error('Selectează o imagine'); return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Selectează o imagine");
+      return;
     }
     if (file.size > 10 * 1024 * 1024) {
-      toast.error('Imaginea e prea mare (max 10MB)'); return;
+      toast.error("Imaginea e prea mare (max 10MB)");
+      return;
     }
 
     setScanning(true);
-    const toastId = toast.loading('📸 Analizez eticheta...');
+    const toastId = toast.loading("📸 Analizez eticheta...");
 
     try {
       const base64 = await new Promise((res, rej) => {
         const r = new FileReader();
-        r.onload = () => res(r.result.split(',')[1]);
+        r.onload = () => res(r.result.split(",")[1]);
         r.onerror = rej;
         r.readAsDataURL(file);
       });
 
-      const response = await fetch('/api/ai-scan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageBase64: base64, mimeType: file.type }),
+      const response = await fetch(appPath("/api/ai-scan"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          imageBase64: base64,
+          mimeType: file.type,
+          createWine: false,
+        }),
       });
 
       const result = await response.json();
 
       if (!response.ok || result.error) {
-        throw new Error(result.error || 'Eroare la analiză');
+        throw new Error(result.error || "Eroare la analiză");
       }
 
       toast.dismiss(toastId);
-      toast.success('✨ Etichetă analizată! Verifică câmpurile.');
+      toast.success("✨ Etichetă analizată! Verifică câmpurile.");
 
       // Serializează datele și navighează la /wines/add cu query params
       const params = new URLSearchParams();
       const data = result.data;
-      Object.entries(data).forEach(([k, v]) => { if (v) params.set(k, v); });
+      Object.entries(data).forEach(([k, v]) => {
+        if (v) params.set(k, v);
+      });
       router.push(`/wines/add?${params.toString()}&fromScan=1`);
-
     } catch (err) {
       toast.dismiss(toastId);
-      toast.error(err.message || 'Eroare la analizarea etichetei');
+      toast.error(err.message || "Eroare la analizarea etichetei");
     } finally {
       setScanning(false);
-      if (cameraRef.current) cameraRef.current.value = '';
-      if (galleryRef.current) galleryRef.current.value = '';
+      if (cameraRef.current) cameraRef.current.value = "";
+      if (galleryRef.current) galleryRef.current.value = "";
     }
   };
 
@@ -163,31 +171,41 @@ export default function AddWineFAB() {
       {/* Hidden file inputs */}
       <input
         ref={cameraRef}
-        type="file" accept="image/*" capture="environment"
-        style={{ display: 'none' }}
-        onChange={e => handleImage(e.target.files?.[0])}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        style={{ display: "none" }}
+        onChange={(e) => handleImage(e.target.files?.[0])}
       />
       <input
         ref={galleryRef}
-        type="file" accept="image/*"
-        style={{ display: 'none' }}
-        onChange={e => handleImage(e.target.files?.[0])}
+        type="file"
+        accept="image/*"
+        style={{ display: "none" }}
+        onChange={(e) => handleImage(e.target.files?.[0])}
       />
 
       {/* Backdrop */}
-      <div className={`fab-backdrop ${open ? 'open' : ''}`} onClick={() => setOpen(false)} />
+      <div
+        className={`fab-backdrop ${open ? "open" : ""}`}
+        onClick={() => setOpen(false)}
+      />
 
       {/* FAB */}
       <div className="fab-wrap">
-        <div className={`fab-options ${open ? 'open' : ''}`}>
+        <div className={`fab-options ${open ? "open" : ""}`}>
           {/* Camera */}
           <div className="fab-option">
             <span className="fab-option-label">Fotografiază eticheta</span>
             <button
               className="fab-option-btn camera"
-              onClick={() => { setOpen(false); cameraRef.current?.click(); }}
-              title="Deschide camera"
-            >📸</button>
+              onClick={() => {
+                setOpen(false);
+                cameraRef.current?.click();
+              }}
+              title="Deschide camera">
+              📸
+            </button>
           </div>
 
           {/* Gallery */}
@@ -195,9 +213,13 @@ export default function AddWineFAB() {
             <span className="fab-option-label">Alege din galerie</span>
             <button
               className="fab-option-btn gallery"
-              onClick={() => { setOpen(false); galleryRef.current?.click(); }}
-              title="Alege din galerie"
-            >🖼️</button>
+              onClick={() => {
+                setOpen(false);
+                galleryRef.current?.click();
+              }}
+              title="Alege din galerie">
+              🖼️
+            </button>
           </div>
 
           {/* Manual */}
@@ -205,21 +227,36 @@ export default function AddWineFAB() {
             <span className="fab-option-label">Adaugă manual</span>
             <button
               className="fab-option-btn manual"
-              onClick={() => { setOpen(false); router.push('/wines/add'); }}
-              title="Adaugă manual"
-            >✍️</button>
+              onClick={() => {
+                setOpen(false);
+                router.push("/wines/add");
+              }}
+              title="Adaugă manual">
+              ✍️
+            </button>
           </div>
         </div>
 
         <button
-          className={`fab-main ${open ? 'open' : ''} ${scanning ? 'scanning' : ''}`}
-          onClick={() => !scanning && setOpen(o => !o)}
+          className={`fab-main ${open ? "open" : ""} ${scanning ? "scanning" : ""}`}
+          onClick={() => !scanning && setOpen((o) => !o)}
           title="Adaugă vin"
-          disabled={scanning}
-        >
+          disabled={scanning}>
           {scanning ? (
-            <span style={{ width: 22, height: 22, border: '2.5px solid rgba(245,230,232,0.3)', borderTopColor: '#f5e6e8', borderRadius: '50%', display: 'block', animation: 'fab-spin 0.7s linear infinite' }} />
-          ) : '+'}
+            <span
+              style={{
+                width: 22,
+                height: 22,
+                border: "2.5px solid rgba(245,230,232,0.3)",
+                borderTopColor: "#f5e6e8",
+                borderRadius: "50%",
+                display: "block",
+                animation: "fab-spin 0.7s linear infinite",
+              }}
+            />
+          ) : (
+            "+"
+          )}
         </button>
       </div>
 

@@ -1,26 +1,35 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { signOut } from '@/utils/auth-client';
-import { updatePassword, deleteAccount } from '@/utils/actions';
-import toast from 'react-hot-toast';
-import ShareLinkSection from '@/components/ShareLinkSection';
-import AISettingsSection from '@/components/AISettingsSection';
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { signOut } from "@/utils/auth-client";
+import { updatePassword, deleteAccount } from "@/utils/actions";
+import toast from "react-hot-toast";
+import ShareLinkSection from "@/components/ShareLinkSection";
+import AISettingsSection from "@/components/AISettingsSection";
 
-export default function SettingsClient({ shareUrl, aiProvider, aiHasKey }) {
+export default function SettingsClient({
+  shareUrl,
+  aiProvider,
+  aiHasKey,
+  aiAgents,
+}) {
   const router = useRouter();
-  const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
-  const [loadingPw, setLoadingPw]       = useState(false);
-  const [loadingOut, setLoadingOut]     = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState('');
-  const [showDelete, setShowDelete]     = useState(false);
-  const [pwStrength, setPwStrength]     = useState(0);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [loadingPw, setLoadingPw] = useState(false);
+  const [loadingOut, setLoadingOut] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [showDelete, setShowDelete] = useState(false);
+  const [pwStrength, setPwStrength] = useState(0);
 
   const setField = (k, v) => {
-    setPasswordForm(f => ({ ...f, [k]: v }));
-    if (k === 'newPassword') {
+    setPasswordForm((f) => ({ ...f, [k]: v }));
+    if (k === "newPassword") {
       let s = 0;
       if (v.length >= 8) s++;
       if (/[A-Z]/.test(v)) s++;
@@ -33,42 +42,54 @@ export default function SettingsClient({ shareUrl, aiProvider, aiHasKey }) {
   const handlePassword = async (e) => {
     e.preventDefault();
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      toast.error('Parolele nu coincid'); return;
+      toast.error("Parolele nu coincid");
+      return;
     }
     if (passwordForm.newPassword.length < 8) {
-      toast.error('Parola trebuie să aibă minim 8 caractere'); return;
+      toast.error("Parola trebuie să aibă minim 8 caractere");
+      return;
     }
     setLoadingPw(true);
     try {
       const fd = new FormData();
       Object.entries(passwordForm).forEach(([k, v]) => fd.append(k, v));
       const result = await updatePassword(fd);
-      if (result?.error) { toast.error(result.error); }
-      else {
-        toast.success('Parolă schimbată cu succes!');
-        setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      if (result?.error) {
+        toast.error(result.error);
+      } else {
+        toast.success("Parolă schimbată cu succes!");
+        setPasswordForm({
+          currentPassword: "",
+          newPassword: "",
+          confirmPassword: "",
+        });
         setPwStrength(0);
       }
-    } catch { toast.error('Eroare la schimbarea parolei'); }
-    finally { setLoadingPw(false); }
+    } catch {
+      toast.error("Eroare la schimbarea parolei");
+    } finally {
+      setLoadingPw(false);
+    }
   };
 
   const handleLogout = async () => {
     setLoadingOut(true);
     await signOut();
-    router.push('/sign-in');
+    router.push("/sign-in");
   };
 
   const handleDeleteAccount = async () => {
     try {
       await deleteAccount();
     } catch {
-      toast.error('Eroare la ștergerea contului');
+      toast.error("Eroare la ștergerea contului");
     }
   };
 
-  const strengthLabel = ['', 'Slabă', 'Medie', 'Bună', 'Excelentă'][pwStrength];
-  const strengthColor = ['', '#dc5050', '#d4af37', '#7db87a', '#55c44e'][pwStrength];
+  const strengthLabel = ["", "Slabă", "Medie", "Bună", "Excelentă"][pwStrength];
+  const strengthColor = ["", "#dc5050", "#d4af37", "#7db87a", "#55c44e"][
+    pwStrength
+  ];
 
   return (
     <>
@@ -150,7 +171,9 @@ export default function SettingsClient({ shareUrl, aiProvider, aiHasKey }) {
 
       <div className="set-page">
         <div className="set-inner">
-          <Link href="/profile" className="set-back">← Înapoi la profil</Link>
+          <Link href="/profile" className="set-back">
+            ← Înapoi la profil
+          </Link>
 
           <div className="set-header">
             <p className="set-eyebrow">Cont</p>
@@ -161,7 +184,11 @@ export default function SettingsClient({ shareUrl, aiProvider, aiHasKey }) {
           {/* AI Scan */}
           <div className="set-card">
             <div className="set-card-title">🤖 AI — Scanare etichetă</div>
-            <AISettingsSection initialProvider={aiProvider} initialHasKey={aiHasKey} />
+            <AISettingsSection
+              initialProvider={aiProvider}
+              initialHasKey={aiHasKey}
+              initialAgents={aiAgents}
+            />
           </div>
 
           {/* Partajare colecție */}
@@ -179,51 +206,77 @@ export default function SettingsClient({ shareUrl, aiProvider, aiHasKey }) {
               <div className="set-field">
                 <label className="set-label">Parola curentă</label>
                 <input
-                  type="password" className="set-input"
+                  type="password"
+                  className="set-input"
                   placeholder="••••••••"
                   value={passwordForm.currentPassword}
-                  onChange={e => setField('currentPassword', e.target.value)}
+                  onChange={(e) => setField("currentPassword", e.target.value)}
                   required
                 />
               </div>
               <div className="set-field">
                 <label className="set-label">Parolă nouă</label>
                 <input
-                  type="password" className="set-input"
+                  type="password"
+                  className="set-input"
                   placeholder="••••••••"
                   value={passwordForm.newPassword}
-                  onChange={e => setField('newPassword', e.target.value)}
-                  required minLength={8}
+                  onChange={(e) => setField("newPassword", e.target.value)}
+                  required
+                  minLength={8}
                 />
                 {passwordForm.newPassword && (
                   <div className="set-strength">
-                    {[1,2,3,4].map(i => (
-                      <div key={i} className="set-strength-bar"
-                        style={{ background: i <= pwStrength ? strengthColor : undefined }} />
+                    {[1, 2, 3, 4].map((i) => (
+                      <div
+                        key={i}
+                        className="set-strength-bar"
+                        style={{
+                          background:
+                            i <= pwStrength ? strengthColor : undefined,
+                        }}
+                      />
                     ))}
-                    <span className="set-strength-label" style={{ color: strengthColor || undefined }}>
+                    <span
+                      className="set-strength-label"
+                      style={{ color: strengthColor || undefined }}>
                       {strengthLabel}
                     </span>
                   </div>
                 )}
               </div>
-              <div className="set-field" style={{ marginBottom: '1.25rem' }}>
+              <div className="set-field" style={{ marginBottom: "1.25rem" }}>
                 <label className="set-label">Confirmă parola nouă</label>
                 <input
-                  type="password" className="set-input"
+                  type="password"
+                  className="set-input"
                   placeholder="••••••••"
                   value={passwordForm.confirmPassword}
-                  onChange={e => setField('confirmPassword', e.target.value)}
-                  required minLength={8}
+                  onChange={(e) => setField("confirmPassword", e.target.value)}
+                  required
+                  minLength={8}
                 />
-                {passwordForm.confirmPassword && passwordForm.newPassword !== passwordForm.confirmPassword && (
-                  <p style={{ fontSize: '0.68rem', color: 'rgba(220,80,80,0.8)', marginTop: '0.35rem' }}>
-                    Parolele nu coincid
-                  </p>
-                )}
+                {passwordForm.confirmPassword &&
+                  passwordForm.newPassword !== passwordForm.confirmPassword && (
+                    <p
+                      style={{
+                        fontSize: "0.68rem",
+                        color: "rgba(220,80,80,0.8)",
+                        marginTop: "0.35rem",
+                      }}>
+                      Parolele nu coincid
+                    </p>
+                  )}
               </div>
               <button type="submit" className="set-btn" disabled={loadingPw}>
-                {loadingPw ? <><span className="set-spinner" />Se schimbă...</> : '🔑 Schimbă parola'}
+                {loadingPw ? (
+                  <>
+                    <span className="set-spinner" />
+                    Se schimbă...
+                  </>
+                ) : (
+                  "🔑 Schimbă parola"
+                )}
               </button>
             </form>
           </div>
@@ -231,11 +284,29 @@ export default function SettingsClient({ shareUrl, aiProvider, aiHasKey }) {
           {/* Sesiune */}
           <div className="set-card">
             <div className="set-card-title">🚪 Sesiune</div>
-            <p style={{ fontSize: '0.8rem', color: 'rgba(245,230,232,0.35)', marginBottom: '1.25rem', fontWeight: 300, lineHeight: 1.7 }}>
-              Deconectează-te de pe acest dispozitiv. Sesiunea ta va expira imediat.
+            <p
+              style={{
+                fontSize: "0.8rem",
+                color: "rgba(245,230,232,0.35)",
+                marginBottom: "1.25rem",
+                fontWeight: 300,
+                lineHeight: 1.7,
+              }}>
+              Deconectează-te de pe acest dispozitiv. Sesiunea ta va expira
+              imediat.
             </p>
-            <button className="set-btn-ghost" onClick={handleLogout} disabled={loadingOut}>
-              {loadingOut ? <><span className="set-spinner" />Se deconectează...</> : '← Deconectare'}
+            <button
+              className="set-btn-ghost"
+              onClick={handleLogout}
+              disabled={loadingOut}>
+              {loadingOut ? (
+                <>
+                  <span className="set-spinner" />
+                  Se deconectează...
+                </>
+              ) : (
+                "← Deconectare"
+              )}
             </button>
           </div>
 
@@ -243,46 +314,50 @@ export default function SettingsClient({ shareUrl, aiProvider, aiHasKey }) {
           <div className="set-card set-card-danger">
             <div className="set-card-title">⚠️ Zonă periculoasă</div>
             <p className="set-danger-text">
-              Ștergerea contului este permanentă și irevocabilă. Toate vinurile, imaginile și datele tale vor fi șterse definitiv.
+              Ștergerea contului este permanentă și irevocabilă. Toate vinurile,
+              imaginile și datele tale vor fi șterse definitiv.
             </p>
             {!showDelete ? (
-              <button className="set-btn-danger" onClick={() => setShowDelete(true)}>
+              <button
+                className="set-btn-danger"
+                onClick={() => setShowDelete(true)}>
                 🗑️ Șterge contul permanent
               </button>
             ) : (
               <>
-                <div style={{ marginBottom: '1rem' }}>
+                <div style={{ marginBottom: "1rem" }}>
                   <p className="set-delete-hint">
                     Scrie <strong>ȘTERGE CONTUL</strong> pentru a confirma:
                   </p>
                   <input
-                    type="text" className="set-input"
+                    type="text"
+                    className="set-input"
                     placeholder="ȘTERGE CONTUL"
                     value={deleteConfirm}
-                    onChange={e => setDeleteConfirm(e.target.value)}
+                    onChange={(e) => setDeleteConfirm(e.target.value)}
                   />
                 </div>
-                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <div style={{ display: "flex", gap: "0.75rem" }}>
                   <button
                     className="set-btn-ghost"
                     style={{ flex: 1 }}
-                    onClick={() => { setShowDelete(false); setDeleteConfirm(''); }}
-                  >
+                    onClick={() => {
+                      setShowDelete(false);
+                      setDeleteConfirm("");
+                    }}>
                     Anulează
                   </button>
                   <button
                     className="set-btn-danger"
                     style={{ flex: 1 }}
-                    disabled={deleteConfirm !== 'ȘTERGE CONTUL'}
-                    onClick={handleDeleteAccount}
-                  >
+                    disabled={deleteConfirm !== "ȘTERGE CONTUL"}
+                    onClick={handleDeleteAccount}>
                     Confirmă ștergerea
                   </button>
                 </div>
               </>
             )}
           </div>
-
         </div>
       </div>
     </>

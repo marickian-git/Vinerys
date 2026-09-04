@@ -1,4 +1,47 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Vinerys
+
+Vinerys este o aplicație Next.js pentru gestionarea unei colecții de vinuri.
+
+## Configurare
+
+Variabilele server necesare sunt `DATABASE_URL`, `BETTER_AUTH_SECRET` și `AI_CREDENTIALS_SECRET`. Ultima este cheia de criptare pentru API keys salvate în agenții AI și trebuie păstrată stabilă între deploy-uri. Pentru fallback legacy sunt acceptate `GEMINI_API_KEY`, `GROQ_API_KEY` și `OPENROUTER_API_KEY`.
+
+`BASE_URL` configurează subpath-ul la build-time. Normalizarea se face într-un singur loc:
+
+```env
+BASE_URL=/
+# sau
+BASE_URL=/crama
+AI_CREDENTIALS_SECRET=un-secret-lung-si-stabil
+```
+
+Regulile sunt: valoare nedefinită sau goală -> `basePath: ""`, `/` -> `basePath: ""`, iar `crama`, `/crama` și `/crama/` -> `basePath: "/crama"`. `NEXT_PUBLIC_BASE_URL` este generat automat din valoarea normalizată și nu trebuie setat manual.
+
+Next.js servește aplicația la `/crama`, inclusiv asset-urile și rutele interne. Reverse proxy-ul trebuie să transmită prefixul către container și să păstreze trailing path-ul, de exemplu `https://example.com/crama/` către `http://127.0.0.1:3989/crama/`. Pentru o schimbare de `BASE_URL` este necesar un rebuild.
+
+## AI ensemble
+
+Din Settings se pot adăuga mai mulți agenți Gemini, Groq, OpenRouter sau Claude. Cheile sunt criptate server-side și nu sunt trimise clientului. Agenții activi rulează în paralel; timeout-ul, retry-urile și greutatea sunt configurabile. Rezultatele sunt normalizate, votate ponderat per câmp și returnate ca precompletare. Un scan nu creează vin: salvarea se face o singură dată prin formularul de adăugare sau update.
+
+Gemini, Groq și OpenRouter sunt opțiunile free-tier recomandate pentru cost redus, dar limitele și modelele disponibile se pot schimba. Verifică documentația providerului înainte de production. Claude este adaptor paid și poate fi folosit ca agent suplimentar.
+
+## Rulare și migrații
+
+```bash
+npm install
+npx prisma migrate dev
+npm run dev
+```
+
+Pentru production:
+
+```bash
+npx prisma migrate deploy
+npm run build
+npm start
+```
+
+Nu schimba `AI_CREDENTIALS_SECRET` după salvarea agenților fără o migrare controlată a credentialelor.
 
 ## Getting Started
 
@@ -36,29 +79,37 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
 
 # Rulează backup manual oricând
+
 /opt/vinerys/scripts/backup.sh
 
 # Vezi backup-urile existente
+
 ls -lh /opt/vinerys/backups/postgres/
 
 # Citește logul
+
 tail -30 /opt/vinerys/backups/backup.log
 
 # Restaurează cel mai recent backup
+
 /opt/vinerys/scripts/restore.sh
 
 # Restaurează un backup specific
+
 /opt/vinerys/scripts/restore.sh 2026-03-06
 
-
 # Instalează sharp (doar dev)
+
 npm install sharp --save-dev
 
 # Rulează scriptul de generare
+
 node scripts/generate-icons.mjs
 
 # Migrații Prisma
+
 docker exec vinerys-app npx prisma migrate deploy
 
 # Restart aplicație
+
 docker restart vinerys-app

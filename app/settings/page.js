@@ -1,6 +1,7 @@
 import { headers } from 'next/headers';
 import { auth } from '@/utils/auth';
 import prisma from '@/utils/db';
+import { getAIAgents } from '@/utils/actions';
 import SettingsClient from '@/components/SettingsClient';
 
 export const metadata = { title: 'Setări — Vinerys' };
@@ -16,6 +17,7 @@ export default async function SettingsPage() {
   const shareUrl = user?.shareId ? `${appUrl}/crama/${user.shareId}` : null;
   const aiProvider = user?.aiProvider || 'gemini';
   const aiHasKey = !!user?.aiApiKey;
+  const aiAgents = await getAIAgents();
 
-  return <SettingsClient shareUrl={shareUrl} aiProvider={aiProvider} aiHasKey={aiHasKey} />;
+  return <SettingsClient shareUrl={shareUrl} aiProvider={aiProvider} aiHasKey={aiHasKey} aiAgents={aiAgents} />;
 }

@@ -1,57 +1,81 @@
-'use client';
+"use client";
 
-import { useState, useCallback } from 'react';
-import { useDropzone } from 'react-dropzone';
-import { motion, AnimatePresence } from 'motion/react';
-import toast from 'react-hot-toast';
+import { useState, useCallback } from "react";
+import { useDropzone } from "react-dropzone";
+import { motion, AnimatePresence } from "motion/react";
+import toast from "react-hot-toast";
+import { appPath } from "@/utils/appPath";
 
-const ALLOWED = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const ALLOWED = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const MAX_MB = 5;
 
 function WineGridPattern() {
   const columns = 20;
   const rows = 6;
   return (
-    <div style={{
-      position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: '10px',
-      maskImage: 'radial-gradient(ellipse at center, black 20%, transparent 75%)',
-      WebkitMaskImage: 'radial-gradient(ellipse at center, black 20%, transparent 75%)',
-      opacity: 0.4,
-    }}>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2px', padding: '8px' }}>
+    <div
+      style={{
+        position: "absolute",
+        inset: 0,
+        overflow: "hidden",
+        borderRadius: "10px",
+        maskImage:
+          "radial-gradient(ellipse at center, black 20%, transparent 75%)",
+        WebkitMaskImage:
+          "radial-gradient(ellipse at center, black 20%, transparent 75%)",
+        opacity: 0.4,
+      }}>
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "2px",
+          padding: "8px",
+        }}>
         {Array.from({ length: rows }).map((_, row) =>
           Array.from({ length: columns }).map((_, col) => {
             const index = row * columns + col;
             return (
-              <div key={`${col}-${row}`} style={{
-                width: '18px', height: '18px',
-                borderRadius: '3px',
-                flexShrink: 0,
-                background: index % 3 === 0
-                  ? 'rgba(139,26,46,0.3)'
-                  : index % 3 === 1
-                  ? 'rgba(196,69,105,0.15)'
-                  : 'rgba(245,230,232,0.04)',
-                boxShadow: index % 5 === 0
-                  ? 'inset 0 0 0 1px rgba(196,69,105,0.2)'
-                  : 'none',
-              }} />
+              <div
+                key={`${col}-${row}`}
+                style={{
+                  width: "18px",
+                  height: "18px",
+                  borderRadius: "3px",
+                  flexShrink: 0,
+                  background:
+                    index % 3 === 0
+                      ? "rgba(139,26,46,0.3)"
+                      : index % 3 === 1
+                        ? "rgba(196,69,105,0.15)"
+                        : "rgba(245,230,232,0.04)",
+                  boxShadow:
+                    index % 5 === 0
+                      ? "inset 0 0 0 1px rgba(196,69,105,0.2)"
+                      : "none",
+                }}
+              />
             );
-          })
+          }),
         )}
       </div>
     </div>
   );
 }
 
-export default function ImageUpload({ label = 'Imagine', value, onChange, folder = 'wines' }) {
+export default function ImageUpload({
+  label = "Imagine",
+  value,
+  onChange,
+  folder = "wines",
+}) {
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState(value || null);
   const [progress, setProgress] = useState(0);
 
   const uploadFile = async (file) => {
     if (!ALLOWED.includes(file.type)) {
-      toast.error('Tip nepermis. Acceptăm: JPG, PNG, WebP, GIF');
+      toast.error("Tip nepermis. Acceptăm: JPG, PNG, WebP, GIF");
       return;
     }
     if (file.size > MAX_MB * 1024 * 1024) {
@@ -66,21 +90,24 @@ export default function ImageUpload({ label = 'Imagine', value, onChange, folder
     setPreview(localUrl);
 
     const interval = setInterval(() => {
-      setProgress(p => Math.min(p + 12, 85));
+      setProgress((p) => Math.min(p + 12, 85));
     }, 150);
 
     try {
       const fd = new FormData();
-      fd.append('file', file);
-      fd.append('folder', folder);
+      fd.append("file", file);
+      fd.append("folder", folder);
 
-      const res = await fetch('/api/upload', { method: 'POST', body: fd });
+      const res = await fetch(appPath("/api/upload"), {
+        method: "POST",
+        body: fd,
+      });
       const data = await res.json();
 
       clearInterval(interval);
 
       if (!res.ok || !data.success) {
-        toast.error(data.error || 'Eroare la upload');
+        toast.error(data.error || "Eroare la upload");
         setPreview(value || null);
         return;
       }
@@ -88,10 +115,10 @@ export default function ImageUpload({ label = 'Imagine', value, onChange, folder
       setProgress(100);
       setPreview(data.url);
       onChange?.(data.url);
-      toast.success('Imagine încărcată!');
+      toast.success("Imagine încărcată!");
     } catch (err) {
       clearInterval(interval);
-      toast.error('Eroare de rețea');
+      toast.error("Eroare de rețea");
       setPreview(value || null);
     } finally {
       setUploading(false);
@@ -106,7 +133,7 @@ export default function ImageUpload({ label = 'Imagine', value, onChange, folder
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     multiple: false,
-    accept: { 'image/*': ['.jpg', '.jpeg', '.png', '.webp', '.gif'] },
+    accept: { "image/*": [".jpg", ".jpeg", ".png", ".webp", ".gif"] },
   });
 
   const handleRemove = (e) => {
@@ -274,8 +301,7 @@ export default function ImageUpload({ label = 'Imagine', value, onChange, folder
         <motion.div
           {...getRootProps()}
           whileHover="animate"
-          className={`iu-dropzone ${isDragActive ? 'drag' : ''} ${preview ? 'has-image' : ''}`}
-        >
+          className={`iu-dropzone ${isDragActive ? "drag" : ""} ${preview ? "has-image" : ""}`}>
           <input {...getInputProps()} />
 
           {preview ? (
@@ -283,12 +309,20 @@ export default function ImageUpload({ label = 'Imagine', value, onChange, folder
               <img src={preview} alt="Preview" className="iu-preview-img" />
               <div className="iu-overlay">
                 <div className="iu-overlay-text">
-                  🖼️ Schimbă imaginea<br />
-                  <span style={{ fontSize: '0.62rem', opacity: 0.65 }}>click sau trage o imagine nouă</span>
+                  🖼️ Schimbă imaginea
+                  <br />
+                  <span style={{ fontSize: "0.62rem", opacity: 0.65 }}>
+                    click sau trage o imagine nouă
+                  </span>
                 </div>
               </div>
               {!uploading && (
-                <button className="iu-remove" onClick={handleRemove} title="Elimină">✕</button>
+                <button
+                  className="iu-remove"
+                  onClick={handleRemove}
+                  title="Elimină">
+                  ✕
+                </button>
               )}
             </>
           ) : (
@@ -304,9 +338,16 @@ export default function ImageUpload({ label = 'Imagine', value, onChange, folder
                     className="iu-card-front"
                     variants={{
                       initial: { x: 0, y: 0 },
-                      animate: { x: 6, y: -6, transition: { type: 'spring', stiffness: 300, damping: 20 } },
-                    }}
-                  >
+                      animate: {
+                        x: 6,
+                        y: -6,
+                        transition: {
+                          type: "spring",
+                          stiffness: 300,
+                          damping: 20,
+                        },
+                      },
+                    }}>
                     🍷
                   </motion.div>
                 </div>
@@ -318,8 +359,7 @@ export default function ImageUpload({ label = 'Imagine', value, onChange, folder
                       initial={{ opacity: 0, y: 4 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -4 }}
-                      className="iu-drag-text"
-                    >
+                      className="iu-drag-text">
                       Lasă imaginea aici...
                     </motion.p>
                   ) : (
@@ -327,10 +367,13 @@ export default function ImageUpload({ label = 'Imagine', value, onChange, folder
                       key="idle"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                    >
-                      <p className="iu-empty-title">Trage o imagine sau click</p>
-                      <p className="iu-empty-sub">JPG · PNG · WebP · max {MAX_MB}MB</p>
+                      exit={{ opacity: 0 }}>
+                      <p className="iu-empty-title">
+                        Trage o imagine sau click
+                      </p>
+                      <p className="iu-empty-sub">
+                        JPG · PNG · WebP · max {MAX_MB}MB
+                      </p>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -340,9 +383,14 @@ export default function ImageUpload({ label = 'Imagine', value, onChange, folder
 
           {uploading && (
             <>
-              <div className="iu-spinner"><div className="iu-spin" /></div>
+              <div className="iu-spinner">
+                <div className="iu-spin" />
+              </div>
               <div className="iu-progress">
-                <div className="iu-progress-fill" style={{ width: `${progress}%` }} />
+                <div
+                  className="iu-progress-fill"
+                  style={{ width: `${progress}%` }}
+                />
               </div>
             </>
           )}

@@ -28,9 +28,33 @@ model User {
   accounts      Account[]
   wines         Wine[]
   wineLogs      WineLog[]
+  aiAgents      AIAgent[]
 
 
   @@map("user")
+}
+
+model AIAgent {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name            String
+  provider        String
+  model           String?
+  encryptedApiKey String
+  enabled         Boolean  @default(true)
+  priority        Int      @default(0)
+  timeoutMs       Int      @default(20000)
+  maxRetries      Int      @default(1)
+  weight          Float    @default(1)
+  lastStatus      String?
+  lastError       String?
+  lastCheckedAt   DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId, enabled, priority])
+  @@map("ai_agent")
 }
 
 model Session {

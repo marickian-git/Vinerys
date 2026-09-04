@@ -6,6 +6,7 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import prisma from "./db";
 import { auth } from "./auth";
+import { encryptSecret } from "./aiSecrets";
 
 // ─────────────────────────────────────────
 // HELPER - obține userul curent
@@ -68,8 +69,8 @@ export async function getWines(filters = {}) {
 
   const where = { userId: user.id };
 
-  if (filters.type)    where.type    = filters.type;
-  if (filters.status)  where.status  = filters.status;
+  if (filters.type) where.type = filters.type;
+  if (filters.status) where.status = filters.status;
   if (filters.country) where.country = { equals: filters.country, mode: 'insensitive' };
 
   if (filters.isFavorite === 'true') where.isFavorite = true;
@@ -80,34 +81,34 @@ export async function getWines(filters = {}) {
     if (filters.vintageMax) where.vintage.lte = parseInt(filters.vintageMax);
   }
   if (filters.ratingMin) where.rating = { gte: parseInt(filters.ratingMin) };
-  if (filters.priceMax)  where.purchasePrice = { lte: parseFloat(filters.priceMax) };
+  if (filters.priceMax) where.purchasePrice = { lte: parseFloat(filters.priceMax) };
 
   if (filters.search) {
     where.OR = [
-      { name:     { contains: filters.search, mode: 'insensitive' } },
+      { name: { contains: filters.search, mode: 'insensitive' } },
       { producer: { contains: filters.search, mode: 'insensitive' } },
-      { region:   { contains: filters.search, mode: 'insensitive' } },
-      { country:  { contains: filters.search, mode: 'insensitive' } },
+      { region: { contains: filters.search, mode: 'insensitive' } },
+      { country: { contains: filters.search, mode: 'insensitive' } },
     ];
   }
 
   const SORT_MAP = {
-    newest:       { createdAt: 'desc' },
-    oldest:       { createdAt: 'asc'  },
-    name_asc:     { name: 'asc'       },
-    name_desc:    { name: 'desc'      },
-    vintage_desc: { vintage: 'desc'   },
-    vintage_asc:  { vintage: 'asc'    },
-    price_desc:   { purchasePrice: 'desc' },
-    price_asc:    { purchasePrice: 'asc'  },
-    rating_desc:  { rating: 'desc'    },
-    rating_asc:   { rating: 'asc'     },
+    newest: { createdAt: 'desc' },
+    oldest: { createdAt: 'asc' },
+    name_asc: { name: 'asc' },
+    name_desc: { name: 'desc' },
+    vintage_desc: { vintage: 'desc' },
+    vintage_asc: { vintage: 'asc' },
+    price_desc: { purchasePrice: 'desc' },
+    price_asc: { purchasePrice: 'asc' },
+    rating_desc: { rating: 'desc' },
+    rating_asc: { rating: 'asc' },
   };
   const orderBy = SORT_MAP[filters.sort] ?? { createdAt: 'desc' };
 
   const PAGE_SIZE = parseInt(filters.pageSize) || 24;
-  const page      = Math.max(1, parseInt(filters.page) || 1);
-  const skip      = (page - 1) * PAGE_SIZE;
+  const page = Math.max(1, parseInt(filters.page) || 1);
+  const skip = (page - 1) * PAGE_SIZE;
 
   const [wines, total] = await Promise.all([
     prisma.wine.findMany({ where, orderBy, skip, take: PAGE_SIZE }),
@@ -126,8 +127,8 @@ export async function getWines(filters = {}) {
 export async function getWineCountries() {
   const user = await getCurrentUser();
   const results = await prisma.wine.findMany({
-    where:   { userId: user.id, country: { not: null } },
-    select:  { country: true },
+    where: { userId: user.id, country: { not: null } },
+    select: { country: true },
     distinct: ['country'],
     orderBy: { country: 'asc' },
   });
@@ -151,15 +152,15 @@ export async function createWine(formData) {
   const raw = Object.fromEntries(formData.entries());
 
   const grapeVarieties = raw.grapeVarieties ? JSON.parse(raw.grapeVarieties) : [];
-  const foodPairing    = raw.foodPairing    ? JSON.parse(raw.foodPairing)    : [];
-  const aromaProfile   = raw.aromaProfile   ? JSON.parse(raw.aromaProfile)   : [];
+  const foodPairing = raw.foodPairing ? JSON.parse(raw.foodPairing) : [];
+  const aromaProfile = raw.aromaProfile ? JSON.parse(raw.aromaProfile) : [];
 
   const parsed = WineSchema.safeParse({
     ...raw,
     grapeVarieties,
     foodPairing,
     aromaProfile,
-    drinkFrom:  raw.drinkFrom  ? parseInt(raw.drinkFrom)  : undefined,
+    drinkFrom: raw.drinkFrom ? parseInt(raw.drinkFrom) : undefined,
     drinkUntil: raw.drinkUntil ? parseInt(raw.drinkUntil) : undefined,
   });
 
@@ -172,9 +173,9 @@ export async function createWine(formData) {
       ...parsed.data,
       userId: user.id,
       bottleImageUrl: parsed.data.bottleImageUrl || null,
-      labelImageUrl:  parsed.data.labelImageUrl  || null,
-      drinkFrom:      parsed.data.drinkFrom  ?? null,
-      drinkUntil:     parsed.data.drinkUntil ?? null,
+      labelImageUrl: parsed.data.labelImageUrl || null,
+      drinkFrom: parsed.data.drinkFrom ?? null,
+      drinkUntil: parsed.data.drinkUntil ?? null,
     },
   });
 
@@ -192,15 +193,15 @@ export async function updateWine(id, formData) {
   const raw = Object.fromEntries(formData.entries());
 
   const grapeVarieties = raw.grapeVarieties ? JSON.parse(raw.grapeVarieties) : [];
-  const foodPairing    = raw.foodPairing    ? JSON.parse(raw.foodPairing)    : [];
-  const aromaProfile   = raw.aromaProfile   ? JSON.parse(raw.aromaProfile)   : [];
+  const foodPairing = raw.foodPairing ? JSON.parse(raw.foodPairing) : [];
+  const aromaProfile = raw.aromaProfile ? JSON.parse(raw.aromaProfile) : [];
 
   const parsed = WineSchema.safeParse({
     ...raw,
     grapeVarieties,
     foodPairing,
     aromaProfile,
-    drinkFrom:  raw.drinkFrom  ? parseInt(raw.drinkFrom)  : undefined,
+    drinkFrom: raw.drinkFrom ? parseInt(raw.drinkFrom) : undefined,
     drinkUntil: raw.drinkUntil ? parseInt(raw.drinkUntil) : undefined,
   });
 
@@ -213,9 +214,9 @@ export async function updateWine(id, formData) {
     data: {
       ...parsed.data,
       bottleImageUrl: parsed.data.bottleImageUrl || null,
-      labelImageUrl:  parsed.data.labelImageUrl  || null,
-      drinkFrom:      parsed.data.drinkFrom  ?? null,
-      drinkUntil:     parsed.data.drinkUntil ?? null,
+      labelImageUrl: parsed.data.labelImageUrl || null,
+      drinkFrom: parsed.data.drinkFrom ?? null,
+      drinkUntil: parsed.data.drinkUntil ?? null,
     },
   });
 
@@ -312,7 +313,7 @@ export async function getProfile() {
 
 export async function updateProfile(formData) {
   const user = await getCurrentUser();
-  const name  = formData.get('name')?.toString().trim();
+  const name = formData.get('name')?.toString().trim();
   const image = formData.get('image')?.toString().trim() || null;
 
   if (!name || name.length < 2) {
@@ -331,7 +332,7 @@ export async function updateProfile(formData) {
 export async function updatePassword(formData) {
   const user = await getCurrentUser();
   const currentPassword = formData.get('currentPassword')?.toString();
-  const newPassword     = formData.get('newPassword')?.toString();
+  const newPassword = formData.get('newPassword')?.toString();
   const confirmPassword = formData.get('confirmPassword')?.toString();
 
   if (!currentPassword || !newPassword || !confirmPassword) {
@@ -399,21 +400,21 @@ export async function getAdvancedStats() {
       bottleImageUrl: true,
     },
   });
- 
+
   const topWines = wines
     .filter(w => w.rating != null)
     .sort((a, b) => b.rating - a.rating)
     .slice(0, 5);
- 
+
   const byCountry = wines.reduce((acc, w) => {
     if (!w.country) return acc;
     acc[w.country] = (acc[w.country] ?? 0) + 1;
     return acc;
   }, {});
- 
+
   const now = new Date();
   const currentYear = now.getFullYear();
- 
+
   const monthlyData = [];
   for (let i = 11; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -425,14 +426,14 @@ export async function getAdvancedStats() {
     }).length;
     monthlyData.push({ label, count });
   }
- 
+
   const withPrice = wines.filter(w => w.purchasePrice != null && w.purchasePrice > 0);
   const prices = withPrice.map(w => w.purchasePrice);
   const avgPrice = prices.length > 0 ? prices.reduce((a, b) => a + b, 0) / prices.length : 0;
   const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
   const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
   const mostExpensive = [...withPrice].sort((a, b) => b.purchasePrice - a.purchasePrice)[0] ?? null;
- 
+
   // ── VINURI DEPĂȘITE (trecut de vârf) — drinkUntil < currentYear ──
   const overdueWines = wines
     .filter(w => {
@@ -454,14 +455,14 @@ export async function getAdvancedStats() {
       return { ...w, drinkFrom, drinkUntil };
     })
     .sort((a, b) => (a.drinkUntil ?? 0) - (b.drinkUntil ?? 0)); // cele mai vechi primele
- 
+
   // ── VINURI ÎN FEREASTRĂ sau aproape (nearMaturity) ──
   const nearMaturity = wines
     .filter(w => {
       if (w.status !== 'IN_CELLAR') return false;
       if (w.drinkFrom != null || w.drinkUntil != null) {
         const until = w.drinkUntil ?? w.drinkFrom;
-        const from  = w.drinkFrom  ?? w.drinkUntil;
+        const from = w.drinkFrom ?? w.drinkUntil;
         // În fereastră SAU urmează în 3 ani (și nu e depășit)
         return until >= currentYear && from <= currentYear + 3;
       }
@@ -483,7 +484,7 @@ export async function getAdvancedStats() {
     })
     .sort((a, b) => a.readyYear - b.readyYear)
     .slice(0, 5);
- 
+
   return {
     topWines,
     byCountry,
@@ -493,7 +494,7 @@ export async function getAdvancedStats() {
     overdueWines, // ← NOU
   };
 }
- 
+
 
 export async function updateCellarName(name) {
   const user = await getCurrentUser();
@@ -518,7 +519,7 @@ export async function updateCellarName(name) {
 export async function updateAISettings(provider, apiKey) {
   const user = await getCurrentUser();
 
-  const validProviders = ['gemini', 'claude', 'openai', 'groq'];
+  const validProviders = ['gemini', 'claude', 'groq', 'openrouter'];
   if (!validProviders.includes(provider)) {
     return { error: 'Provider invalid' };
   }
@@ -533,6 +534,62 @@ export async function updateAISettings(provider, apiKey) {
     data,
   });
 
+  revalidatePath('/settings');
+  return { success: true };
+}
+
+const AI_AGENT_PROVIDERS = ['gemini', 'claude', 'groq', 'openrouter'];
+
+export async function getAIAgents() {
+  const user = await getCurrentUser();
+  return prisma.aIAgent.findMany({
+    where: { userId: user.id },
+    orderBy: [{ priority: 'asc' }, { createdAt: 'asc' }],
+    select: {
+      id: true, name: true, provider: true, model: true, enabled: true,
+      priority: true, timeoutMs: true, maxRetries: true, weight: true,
+      lastStatus: true, lastError: true, lastCheckedAt: true,
+    },
+  });
+}
+
+export async function saveAIAgent(input) {
+  const user = await getCurrentUser();
+  const name = input?.name?.toString().trim();
+  const provider = input?.provider?.toString();
+  if (!name || name.length > 80) return { error: 'Numele agentului este obligatoriu și are maximum 80 de caractere' };
+  if (!AI_AGENT_PROVIDERS.includes(provider)) return { error: 'Provider AI invalid' };
+
+  const values = {
+    name,
+    provider,
+    model: input.model?.toString().trim() || null,
+    enabled: input.enabled !== false,
+    priority: Math.max(0, Number(input.priority) || 0),
+    timeoutMs: Math.min(60000, Math.max(3000, Number(input.timeoutMs) || 20000)),
+    maxRetries: Math.min(3, Math.max(0, Number(input.maxRetries) || 1)),
+    weight: Math.min(10, Math.max(0.1, Number(input.weight) || 1)),
+  };
+  const apiKey = input.apiKey?.toString().trim();
+
+  if (input.id) {
+    const existing = await prisma.aIAgent.findFirst({ where: { id: input.id, userId: user.id } });
+    if (!existing) return { error: 'Agentul nu a fost găsit' };
+    if (apiKey) values.encryptedApiKey = encryptSecret(apiKey);
+    await prisma.aIAgent.update({ where: { id: existing.id }, data: values });
+  } else {
+    if (!apiKey) return { error: 'Cheia API este obligatorie pentru un agent nou' };
+    await prisma.aIAgent.create({
+      data: { ...values, encryptedApiKey: encryptSecret(apiKey), userId: user.id },
+    });
+  }
+  revalidatePath('/settings');
+  return { success: true };
+}
+
+export async function deleteAIAgent(id) {
+  const user = await getCurrentUser();
+  await prisma.aIAgent.deleteMany({ where: { id, userId: user.id } });
   revalidatePath('/settings');
   return { success: true };
 }

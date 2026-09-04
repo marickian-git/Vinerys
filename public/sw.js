@@ -1,14 +1,16 @@
 const CACHE = 'vinerys-v1';
-const OFFLINE_URL = '/offline';
+const BASE_PATH = new URL(self.registration.scope).pathname.replace(/\/$/, '');
+const withBase = (path) => `${BASE_PATH}${path}` || '/';
+const OFFLINE_URL = withBase('/offline');
 
 const STATIC_ASSETS = [
-  '/',
-  '/dashboard',
-  '/wines',
-  '/offline',
-  '/manifest.json',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
+  withBase('/'),
+  withBase('/dashboard'),
+  withBase('/wines'),
+  withBase('/offline'),
+  withBase('/manifest.json'),
+  withBase('/icons/icon-192.png'),
+  withBase('/icons/icon-512.png'),
 ];
 
 // Install — cache static assets
@@ -36,7 +38,7 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
 
   // API requests — network only, no cache
-  if (url.pathname.startsWith('/api/')) return;
+  if (url.pathname.startsWith(`${BASE_PATH}/api/`)) return;
 
   // Navigation requests — network first, fallback offline page
   if (e.request.mode === 'navigate') {
@@ -50,8 +52,8 @@ self.addEventListener('fetch', (e) => {
 
   // Static assets — cache first
   if (
-    url.pathname.startsWith('/icons/') ||
-    url.pathname.startsWith('/_next/static/')
+    url.pathname.startsWith(`${BASE_PATH}/icons/`) ||
+    url.pathname.startsWith(`${BASE_PATH}/_next/static/`)
   ) {
     e.respondWith(
       caches.match(e.request).then(cached => cached ||
