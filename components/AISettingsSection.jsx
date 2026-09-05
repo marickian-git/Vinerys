@@ -2,7 +2,13 @@
 
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { deleteAIAgent, saveAIAgent, testAIAgent } from "@/utils/actions";
+import {
+  deleteAIAgent,
+  discoverAIModels,
+  saveAIAgent,
+  testAIModelConfiguration,
+  testAIAgent,
+} from "@/utils/actions";
 
 const statusCopy = {
   Healthy: { label: "Healthy", icon: "●", tone: "healthy" },
@@ -27,6 +33,11 @@ const statusCopy = {
     label: "Invalid result",
     icon: "!",
     tone: "danger",
+  },
+  "Model availability unknown": {
+    label: "Model availability unknown",
+    icon: "?",
+    tone: "attention",
   },
   Disabled: { label: "Disabled", icon: "●", tone: "muted" },
   Configured: { label: "Not tested", icon: "○", tone: "muted" },
@@ -104,6 +115,9 @@ export default function AISettingsSection({
     free: false,
   });
   const [models, setModels] = useState([]);
+  const [discoveryState, setDiscoveryState] = useState("idle");
+  const [discoveryMessage, setDiscoveryMessage] = useState("");
+  const [manualModel, setManualModel] = useState(false);
   const [testingId, setTestingId] = useState(null);
   const [testingForm, setTestingForm] = useState(false);
   const [showKey, setShowKey] = useState(false);
@@ -172,6 +186,9 @@ export default function AISettingsSection({
     }));
     setModels([]);
     setModelSearch("");
+    setDiscoveryState("idle");
+    setDiscoveryMessage("");
+    setManualModel(false);
   };
   const openAdd = () => {
     setForm(getEmptyAgent());
@@ -179,6 +196,10 @@ export default function AISettingsSection({
     setAdvancedOpen(false);
     setProviderSearch("");
     setShowKey(false);
+    setModels([]);
+    setDiscoveryState("idle");
+    setDiscoveryMessage("");
+    setManualModel(false);
     setModalOpen(true);
   };
   const edit = (agent) => {
@@ -187,7 +208,37 @@ export default function AISettingsSection({
     setAdvancedOpen(false);
     setProviderSearch("");
     setShowKey(false);
+    setModels([]);
+    setDiscoveryState("idle");
+    setDiscoveryMessage("");
+    setManualModel(false);
     setModalOpen(true);
+  };
+
+  const refreshModels = async () => {
+    setDiscoveryState("loading");
+    setDiscoveryMessage("");
+    const result = await discoverAIModels({
+      id: editingId,
+      provider: form.provider,
+      providerType: form.providerType,
+      baseUrl: form.baseUrl,
+      apiKey: form.apiKey,
+      capabilities: form.capabilities,
+    });
+    if (result.status === "SUCCESS" && result.models?.length) {
+      setModels(result.models || []);
+      setDiscoveryState("success");
+      setDiscoveryMessage(`${result.models?.length || 0} models available`);
+      toast.success(`${result.models?.length || 0} models available`);
+    } else {
+      setModels([]);
+      setDiscoveryState("error");
+      setDiscoveryMessage(
+        result.error ||
+          "Nu am putut încărca automat modelele acestui provider.",
+      );
+    }
   };
 
   const saveForm = async (event) => {
@@ -261,7 +312,14 @@ export default function AISettingsSection({
 
   const testForm = async () => {
     if (!editingId) {
-      toast.error("Save the agent first, then test the connection.");
+      setTestingForm(true);
+      const result = await testAIModelConfiguration({ ...form });
+      setTestingForm(false);
+      if (result.status === "SUCCESS")
+        toast.success("Model available · Image supported");
+      else if (result.status === "IMAGE_UNKNOWN")
+        toast("Model available · Image support unknown");
+      else toast.error(result.error || "We could not verify this model");
       return;
     }
     setTestingForm(true);
@@ -572,36 +630,78 @@ export default function AISettingsSection({
               <fieldset className="ai-form-section">
                 <legend>Model</legend>
                 <label className="ai-field">
-                  <span>Choose a model</span>
-                  <input
-                    className="ai-search"
-                    value={modelSearch}
-                    onChange={(event) => setModelSearch(event.target.value)}
-                    placeholder="Search models..."
-                    list="ai-model-options"
-                  />
-                  <select
-                    required
-                    value={form.model}
-                    onChange={(event) => update("model", event.target.value)}
-                    aria-label="Choose a model">
-                    <option value="">Select a model</option>
-                    {visibleModels.map((model) => (
-                      <option key={model.id} value={model.id}>
-                        {model.name || model.id}
-                        {model.imageInput === false
-                          ? " · Text only"
-                          : " · Image ✓"}
-                      </option>
-                    ))}
-                  </select>
-                  <datalist id="ai-model-options">
-                    {models.map((model) => (
-                      <option key={model.id} value={model.id}>
-                        {model.name}
-                      </option>
-                    ))}
-                  </datalist>
+                  <span>Model</span>
+                  {!manualModel && models.length > 0 && (
+                    <>
+                      <input
+                        className="ai-search"
+                        value={modelSearch}
+                        onChange={(event) => setModelSearch(event.target.value)}
+                        placeholder="Search models..."
+                        list="ai-model-options"
+                        aria-label="Search models"
+                      />
+                      <select
+                        value={form.model}
+                        onChange={(event) =>
+                          update("model", event.target.value)
+                        }
+                        aria-label="Choose a model">
+                        <option value="">Select a model</option>
+                        {visibleModels.map((model) => (
+                          <option key={model.id} value={model.id}>
+                            {model.name || model.id}
+                            {model.imageInput === false
+                              ? " · Text only"
+                              : model.imageInput === true
+                                ? " · Image ✓"
+                                : " · Image unknown"}
+                          </option>
+                        ))}
+                        {form.model &&
+                          !models.some((model) => model.id === form.model) && (
+                            <option value={form.model}>
+                              Current model: {form.model}
+                            </option>
+                          )}
+                      </select>
+                      <datalist id="ai-model-options">
+                        {models.map((model) => (
+                          <option key={model.id} value={model.id}>
+                            {model.name || model.id}
+                          </option>
+                        ))}
+                      </datalist>
+                    </>
+                  )}
+                  {(manualModel || models.length === 0) && (
+                    <input
+                      required
+                      value={form.model}
+                      onChange={(event) => update("model", event.target.value)}
+                      placeholder="Enter model ID, e.g. meta-llama/..."
+                      aria-label="Model ID"
+                    />
+                  )}
+                  <div className="ai-model-controls">
+                    <button
+                      type="button"
+                      className="ai-ghost ai-small-button"
+                      onClick={refreshModels}
+                      disabled={discoveryState === "loading"}>
+                      {discoveryState === "loading"
+                        ? "Loading models..."
+                        : "Refresh models"}
+                    </button>
+                    <button
+                      type="button"
+                      className="ai-show-all"
+                      onClick={() => setManualModel((current) => !current)}>
+                      {manualModel
+                        ? "Select from available models"
+                        : "Enter model manually"}
+                    </button>
+                  </div>
                 </label>
                 <div className="ai-filter-row">
                   {Object.entries({
@@ -626,9 +726,13 @@ export default function AISettingsSection({
                 </div>
                 {models.length === 0 && (
                   <p className="ai-help">
-                    Save the agent, then use Test connection to discover models
-                    from this provider.
+                    {discoveryMessage ||
+                      "No models available. Nu am putut încărca automat modelele acestui provider."}{" "}
+                    Poți introduce manual model ID-ul.
                   </p>
+                )}
+                {models.length > 0 && discoveryMessage && (
+                  <p className="ai-help">{discoveryMessage}</p>
                 )}
                 {form.model &&
                   models.find((model) => model.id === form.model)
@@ -791,12 +895,7 @@ export default function AISettingsSection({
                 <button
                   type="button"
                   className="ai-ghost"
-                  onClick={
-                    editingId
-                      ? testForm
-                      : () =>
-                          toast("Save the agent first to test its connection.")
-                  }
+                  onClick={testForm}
                   disabled={testingForm}>
                   {testingForm ? "Testing..." : "Test connection"}
                 </button>
@@ -804,7 +903,10 @@ export default function AISettingsSection({
                   type="submit"
                   className="ai-primary"
                   disabled={
-                    saving || !form.name || (!editingId && !form.apiKey)
+                    saving ||
+                    !form.name ||
+                    !form.model ||
+                    (!editingId && !form.apiKey)
                   }>
                   {saving ? "Saving..." : "Save agent"}
                 </button>

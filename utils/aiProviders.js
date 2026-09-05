@@ -117,6 +117,8 @@ export async function listProviderModels(agent) {
             name: model.displayName || model.name,
             imageInput: model.supportedGenerationMethods?.includes('generateContent') && /flash|pro|vision/i.test(model.name || ''),
             structuredOutput: true,
+            textInput: true,
+            availability: 'AVAILABLE',
         })).filter((model) => model.id);
     }
 
@@ -124,15 +126,23 @@ export async function listProviderModels(agent) {
     const baseUrl = agent.baseUrl || definition.baseUrl;
     if (agent.provider === 'openai-compatible' || agent.providerType === 'custom') await validateProviderBaseUrl(baseUrl);
     const url = `${baseUrl.replace(/\/$/, '')}/models`;
-    const data = await requestJson(url, { ...headers, Authorization: `Bearer ${agent.apiKey}` }, null, agent.timeoutMs || 20000, 'GET');
-    return (data.data || []).map((model) => {
+    const requestHeaders = agent.provider === 'claude'
+        ? { ...headers, 'x-api-key': agent.apiKey, 'anthropic-version': '2023-06-01' }
+        : { ...headers, Authorization: `Bearer ${agent.apiKey}` };
+    const data = await requestJson(url, requestHeaders, null, agent.timeoutMs || 20000, 'GET');
+    const catalog = Array.isArray(data) ? data : data.data || data.models || data.results || [];
+    return catalog.map((model) => {
         const modalities = model.architecture?.input_modalities || model.input_modalities || [];
+        const inputModalities = Array.isArray(modalities) ? modalities : [];
+        const imageInput = inputModalities.includes('image') || model.capabilities?.vision === true || (agent.capabilities?.imageInput !== false && /vision|scout|pixtral|gemma-3|llama-4|qwen.*vl|maverick/i.test(model.id || ''));
         return {
-            id: model.id,
-            name: model.name || model.id,
-            imageInput: modalities.includes('image') || (agent.capabilities?.imageInput !== false && /vision|scout|pixtral|gemma-3|llama-4|qwen.*vl/i.test(model.id || '')),
-            structuredOutput: true,
-            billingType: model.pricing ? 'PAID' : 'UNKNOWN',
+            id: model.id || model.model || model.name,
+            name: model.name || model.display_name || model.id || model.model,
+            imageInput,
+            structuredOutput: model.capabilities?.structured_output ?? model.supports_structured_output ?? true,
+            textInput: inputModalities.includes('text') ? true : undefined,
+            billingType: model.pricing ? 'PAID' : model.pricing === null ? 'FREE_TIER' : 'UNKNOWN',
+            availability: model.active === false ? 'UNAVAILABLE' : 'AVAILABLE',
         };
     }).filter((model) => model.id);
 }

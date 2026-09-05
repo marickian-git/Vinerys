@@ -559,8 +559,10 @@ export async function saveAIAgent(input) {
   const user = await getCurrentUser();
   const name = input?.name?.toString().trim();
   const provider = input?.provider?.toString();
+  const model = input?.model?.toString().trim();
   if (!name || name.length > 80) return { error: 'Numele agentului este obligatoriu și are maximum 80 de caractere' };
   if (!isKnownProvider(provider)) return { error: 'Provider AI invalid' };
+  if (!model) return { error: 'Model ID este obligatoriu. Poți introduce manual modelul.' };
 
   const definition = getProviderDefinition(provider);
   let baseUrl = input.baseUrl?.toString().trim() || definition.baseUrl || null;
@@ -578,7 +580,7 @@ export async function saveAIAgent(input) {
     provider,
     providerType: input.providerType?.toString() || definition.type,
     baseUrl,
-    model: input.model?.toString().trim() || null,
+    model,
     billingType: input.billingType?.toString() || definition.billingType || 'UNKNOWN',
     capabilities: input.capabilities || definition.capabilities || {},
     metadata: input.metadata || null,
@@ -609,6 +611,52 @@ export async function getAIProviderCatalog() {
   return listProviderDefinitions();
 }
 
+export async function discoverAIModels(input) {
+  const user = await getCurrentUser();
+  const provider = input?.provider?.toString();
+  let apiKey = input?.apiKey?.toString().trim();
+  if (!apiKey && input?.id) {
+    const existing = await prisma.aIAgent.findFirst({ where: { id: input.id, userId: user.id } });
+    if (existing) apiKey = decryptSecret(existing.encryptedApiKey);
+  }
+  if (!provider || !apiKey) return { status: 'ERROR', error: 'Providerul și cheia API sunt obligatorii' };
+  try {
+    const models = await listProviderModels({
+      provider,
+      providerType: input.providerType,
+      baseUrl: input.baseUrl,
+      apiKey,
+      timeoutMs: 20000,
+      capabilities: input.capabilities,
+    });
+    return models.length
+      ? { status: 'SUCCESS', models: models.slice(0, 500) }
+      : { status: 'UNSUPPORTED', models: [], error: 'Nu am putut încărca automat modelele acestui provider.' };
+  } catch (error) {
+    return {
+      status: error.providerStatus || (error.status === 401 || error.status === 403 ? 'AUTH_ERROR' : error.status === 429 ? 'RATE_LIMITED' : 'ERROR'),
+      error: 'Nu am putut încărca lista de modele.',
+    };
+  }
+}
+
+export async function testAIModelConfiguration(input) {
+  await getCurrentUser();
+  const provider = input?.provider?.toString();
+  const model = input?.model?.toString().trim();
+  const apiKey = input?.apiKey?.toString().trim();
+  if (!provider || !model || !apiKey) return { status: 'ERROR', error: 'Providerul, modelul și cheia API sunt obligatorii' };
+  try {
+    const models = await listProviderModels({ provider, providerType: input.providerType, baseUrl: input.baseUrl, apiKey, timeoutMs: 20000, capabilities: input.capabilities });
+    const selected = models.find((item) => item.id === model);
+    if (!selected && models.length) return { status: 'MODEL_UNAVAILABLE', error: 'Modelul nu apare în catalogul providerului.' };
+    if (selected?.imageInput === false) return { status: 'IMAGE_UNSUPPORTED', error: 'Modelul nu poate analiza imagini.' };
+    return { status: selected?.imageInput === true ? 'SUCCESS' : 'IMAGE_UNKNOWN', model: selected || { id: model, name: model } };
+  } catch (error) {
+    return { status: error.providerStatus || 'ERROR', error: 'Nu am putut verifica modelul. Poți salva și testa ulterior.' };
+  }
+}
+
 export async function testAIAgent(id) {
   const user = await getCurrentUser();
   const agent = await prisma.aIAgent.findFirst({ where: { id, userId: user.id } });
@@ -622,10 +670,14 @@ export async function testAIAgent(id) {
     const selected = models.find((model) => model.id === agent.model);
     const status = selected && (agent.capabilities?.imageInput === false || selected.imageInput === false)
       ? 'Needs attention'
-      : selected || !models.length ? 'Healthy' : 'Model unavailable';
+      : selected
+        ? 'Healthy'
+        : models.length
+          ? 'Model unavailable'
+          : 'Model availability unknown';
     await prisma.aIAgent.update({
       where: { id: agent.id },
-      data: { lastStatus: status, lastError: status === 'Healthy' ? null : 'Modelul nu este disponibil sau nu acceptă imagini', lastCheckedAt: new Date(), suggestedModel: models.find((model) => model.imageInput)?.id || null },
+      data: { lastStatus: status, lastError: status === 'Healthy' ? null : 'Nu s-a putut confirma disponibilitatea sau suportul de imagini', lastCheckedAt: new Date(), suggestedModel: models.find((model) => model.imageInput)?.id || null },
     });
     return { success: true, status, models: models.slice(0, 200) };
   } catch (error) {
