@@ -1,7 +1,7 @@
 import { headers } from 'next/headers';
 import { auth } from '@/utils/auth';
 import prisma from '@/utils/db';
-import { getAIAgents } from '@/utils/actions';
+import { getAIAgents, getAIProviderCatalog } from '@/utils/actions';
 import SettingsClient from '@/components/SettingsClient';
 
 export const metadata = { title: 'Setări — Vinerys' };
@@ -18,6 +18,7 @@ export default async function SettingsPage() {
   const aiProvider = user?.aiProvider || 'gemini';
   const aiHasKey = !!user?.aiApiKey;
   const aiAgents = await getAIAgents();
+  const aiProviders = await getAIProviderCatalog();
 
-  return <SettingsClient shareUrl={shareUrl} aiProvider={aiProvider} aiHasKey={aiHasKey} aiAgents={aiAgents} />;
+  return <SettingsClient shareUrl={shareUrl} aiProvider={aiProvider} aiHasKey={aiHasKey} aiAgents={aiAgents} aiProviders={aiProviders} />;
 }

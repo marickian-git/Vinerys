@@ -14,6 +14,7 @@ export default function SettingsClient({
   aiProvider,
   aiHasKey,
   aiAgents,
+  aiProviders,
 }) {
   const router = useRouter();
   const [passwordForm, setPasswordForm] = useState({
@@ -188,6 +189,7 @@ export default function SettingsClient({
               initialProvider={aiProvider}
               initialHasKey={aiHasKey}
               initialAgents={aiAgents}
+              providers={aiProviders}
             />
           </div>
 

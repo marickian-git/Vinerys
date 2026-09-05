@@ -40,8 +40,13 @@ model AIAgent {
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   name            String
   provider        String
+  providerType    String   @default("preset")
+  baseUrl         String?
   model           String?
   encryptedApiKey String
+  billingType     String   @default("UNKNOWN")
+  capabilities    Json?
+  metadata        Json?
   enabled         Boolean  @default(true)
   priority        Int      @default(0)
   timeoutMs       Int      @default(20000)
@@ -49,6 +54,7 @@ model AIAgent {
   weight          Float    @default(1)
   lastStatus      String?
   lastError       String?
+  suggestedModel  String?
   lastCheckedAt   DateTime?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt

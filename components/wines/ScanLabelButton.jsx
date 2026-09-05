@@ -50,7 +50,13 @@ export default function ScanLabelButton({ onScan }) {
       const result = await response.json();
 
       if (!response.ok || result.error) {
-        throw new Error(result.error || "Eroare la analiză");
+        const providerDetails = (result.providerErrors || [])
+          .map(
+            (item) =>
+              `${item.provider}${item.model ? ` (${item.model})` : ""}: ${item.error}`,
+          )
+          .join(" | ");
+        throw new Error(providerDetails || result.error || "Eroare la analiză");
       }
 
       toast.dismiss(toastId);

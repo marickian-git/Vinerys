@@ -25,6 +25,16 @@ Din Settings se pot adăuga mai mulți agenți Gemini, Groq, OpenRouter sau Clau
 
 Gemini, Groq și OpenRouter sunt opțiunile free-tier recomandate pentru cost redus, dar limitele și modelele disponibile se pot schimba. Verifică documentația providerului înainte de production. Claude este adaptor paid și poate fi folosit ca agent suplimentar.
 
+### Provider registry și agenți custom
+
+Catalogul server-side din `utils/aiProviderRegistry.js` include Gemini, Groq, OpenRouter, Anthropic, DeepSeek, Z.ai/GLM, OpenAI, Mistral, Cerebras, Together și Fireworks. Providerii cu API OpenAI-compatible folosesc același adaptor; pentru un serviciu nou se poate selecta `OpenAI-compatible`, cu un `Base URL` HTTPS și modelul furnizat de serviciu.
+
+Modelele sunt descoperite live când providerul oferă endpoint de listare. Pentru scanarea etichetelor sunt folosiți numai agenții activați care declară suport `imageInput`; providerii text-only nu intră în ensemble. Un `Test agent` actualizează starea agentului: `Healthy`, `Model unavailable`, `Invalid credentials`, `Rate limited`, `Provider unavailable` sau `Needs attention`.
+
+Cheile sunt criptate cu `AI_CREDENTIALS_SECRET`. Endpointurile custom sunt validate server-side: numai HTTPS, fără credentiale în URL și fără localhost, rețele private, link-local sau endpointuri de metadata. Redirecturile providerilor custom nu sunt urmate automat. Nu configura endpointuri interne.
+
+`FREE`, `FREE-TIER`, `PAID` și `UNKNOWN` sunt etichete informative, nu garanții de preț. OpenRouter și modelele gratuite pot avea limite, disponibilitate și costuri schimbătoare. Agenții legacy bazați pe `GEMINI_API_KEY`, `GROQ_API_KEY` și `OPENROUTER_API_KEY` rămân fallback după agenții configurați în Settings.
+
 ## Rulare și migrații
 
 ```bash

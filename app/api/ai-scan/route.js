@@ -65,9 +65,33 @@ export async function POST(request) {
   try {
     console.info(`[scan:${operationId}] starting ${agents.length} agents`);
     scanResult = await analyzeWineLabelEnsemble(imageBase64, mimeType, agents, { providers: [] });
+    await Promise.all(scanResult.successfulAgentIds.map((id) => prisma.aIAgent.updateMany({
+      where: { id, userId: user.id },
+      data: { lastStatus: 'Healthy', lastError: null, lastCheckedAt: new Date() },
+    })));
+    await Promise.all(scanResult.errors.filter((item) => item.agentId).map((item) => prisma.aIAgent.updateMany({
+      where: { id: item.agentId, userId: user.id },
+      data: {
+        lastStatus: item.error.startsWith('401:') || item.error.startsWith('403:') ? 'Invalid credentials' : item.error.startsWith('404:') ? 'Model unavailable' : item.error.startsWith('429:') ? 'Rate limited' : 'Provider unavailable',
+        lastError: item.error.slice(0, 500),
+        lastCheckedAt: new Date(),
+      },
+    })));
   } catch (err) {
-    console.error(`[scan:${operationId}] AI error:`, err.message);
-    return NextResponse.json({ error: 'Scanarea nu a putut fi finalizată. Verifică agenții AI configurați.', operationId }, { status: 502 });
+    await Promise.all((err.providerErrors || []).filter((item) => item.agentId).map((item) => prisma.aIAgent.updateMany({
+      where: { id: item.agentId, userId: user.id },
+      data: {
+        lastStatus: item.error.startsWith('401:') || item.error.startsWith('403:') ? 'Invalid credentials' : item.error.startsWith('404:') ? 'Model unavailable' : item.error.startsWith('429:') ? 'Rate limited' : 'Provider unavailable',
+        lastError: item.error.slice(0, 500),
+        lastCheckedAt: new Date(),
+      },
+    })));
+    console.error(`[scan:${operationId}] AI error:`, err.message, err.providerErrors || '');
+    return NextResponse.json({
+      error: 'Scanarea nu a putut fi finalizată. Verifică agenții AI configurați.',
+      operationId,
+      providerErrors: err.providerErrors || [],
+    }, { status: 502 });
   }
 
   try {

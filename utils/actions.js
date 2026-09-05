@@ -6,7 +6,10 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import prisma from "./db";
 import { auth } from "./auth";
-import { encryptSecret } from "./aiSecrets";
+import { decryptSecret, encryptSecret } from "./aiSecrets";
+import { getProviderDefinition, isKnownProvider, listProviderDefinitions } from "./aiProviderRegistry";
+import { validateProviderBaseUrl } from "./aiUrlSecurity";
+import { listProviderModels } from "./aiProviders";
 
 // ─────────────────────────────────────────
 // HELPER - obține userul curent
@@ -538,17 +541,16 @@ export async function updateAISettings(provider, apiKey) {
   return { success: true };
 }
 
-const AI_AGENT_PROVIDERS = ['gemini', 'claude', 'groq', 'openrouter'];
-
 export async function getAIAgents() {
   const user = await getCurrentUser();
   return prisma.aIAgent.findMany({
     where: { userId: user.id },
     orderBy: [{ priority: 'asc' }, { createdAt: 'asc' }],
     select: {
-      id: true, name: true, provider: true, model: true, enabled: true,
+      id: true, name: true, provider: true, providerType: true, baseUrl: true, model: true,
+      billingType: true, capabilities: true,
       priority: true, timeoutMs: true, maxRetries: true, weight: true,
-      lastStatus: true, lastError: true, lastCheckedAt: true,
+      lastStatus: true, lastError: true, suggestedModel: true, lastCheckedAt: true,
     },
   });
 }
@@ -558,12 +560,28 @@ export async function saveAIAgent(input) {
   const name = input?.name?.toString().trim();
   const provider = input?.provider?.toString();
   if (!name || name.length > 80) return { error: 'Numele agentului este obligatoriu și are maximum 80 de caractere' };
-  if (!AI_AGENT_PROVIDERS.includes(provider)) return { error: 'Provider AI invalid' };
+  if (!isKnownProvider(provider)) return { error: 'Provider AI invalid' };
+
+  const definition = getProviderDefinition(provider);
+  let baseUrl = input.baseUrl?.toString().trim() || definition.baseUrl || null;
+  if (provider === 'openai-compatible' && !baseUrl) return { error: 'Base URL este obligatoriu pentru providerul custom' };
+  if (baseUrl && (provider === 'openai-compatible' || input.providerType === 'custom')) {
+    try {
+      baseUrl = await validateProviderBaseUrl(baseUrl);
+    } catch (error) {
+      return { error: error.message };
+    }
+  }
 
   const values = {
     name,
     provider,
+    providerType: input.providerType?.toString() || definition.type,
+    baseUrl,
     model: input.model?.toString().trim() || null,
+    billingType: input.billingType?.toString() || definition.billingType || 'UNKNOWN',
+    capabilities: input.capabilities || definition.capabilities || {},
+    metadata: input.metadata || null,
     enabled: input.enabled !== false,
     priority: Math.max(0, Number(input.priority) || 0),
     timeoutMs: Math.min(60000, Math.max(3000, Number(input.timeoutMs) || 20000)),
@@ -585,6 +603,37 @@ export async function saveAIAgent(input) {
   }
   revalidatePath('/settings');
   return { success: true };
+}
+
+export async function getAIProviderCatalog() {
+  return listProviderDefinitions();
+}
+
+export async function testAIAgent(id) {
+  const user = await getCurrentUser();
+  const agent = await prisma.aIAgent.findFirst({ where: { id, userId: user.id } });
+  if (!agent) return { error: 'Agentul nu a fost găsit' };
+
+  try {
+    const models = await listProviderModels({
+      ...agent,
+      apiKey: decryptSecret(agent.encryptedApiKey),
+    });
+    const selected = models.find((model) => model.id === agent.model);
+    const status = selected && (agent.capabilities?.imageInput === false || selected.imageInput === false)
+      ? 'Needs attention'
+      : selected || !models.length ? 'Healthy' : 'Model unavailable';
+    await prisma.aIAgent.update({
+      where: { id: agent.id },
+      data: { lastStatus: status, lastError: status === 'Healthy' ? null : 'Modelul nu este disponibil sau nu acceptă imagini', lastCheckedAt: new Date(), suggestedModel: models.find((model) => model.imageInput)?.id || null },
+    });
+    return { success: true, status, models: models.slice(0, 200) };
+  } catch (error) {
+    const message = error.message || 'Provider unavailable';
+    const status = error.status === 401 || error.status === 403 ? 'Invalid credentials' : error.status === 404 ? 'Model unavailable' : error.status === 429 ? 'Rate limited' : 'Provider unavailable';
+    await prisma.aIAgent.update({ where: { id: agent.id }, data: { lastStatus: status, lastError: message.slice(0, 500), lastCheckedAt: new Date() } });
+    return { error: message, status };
+  }
 }
 
 export async function deleteAIAgent(id) {
