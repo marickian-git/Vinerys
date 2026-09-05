@@ -53,10 +53,13 @@ export default function ScanLabelButton({ onScan }) {
         const providerDetails = (result.providerErrors || [])
           .map(
             (item) =>
-              `${item.provider}${item.model ? ` (${item.model})` : ""}: ${item.error}`,
+              `${item.provider}${item.model ? ` (${item.model})` : ""}: ${item.error || item.resultStatus || item.providerStatus || "failed"}`,
           )
           .join(" | ");
-        throw new Error(providerDetails || result.error || "Eroare la analiză");
+        const message = result.error?.includes("IDENTIFICATION_FAILED")
+          ? "Nu am putut identifica suficient vinul din această fotografie. Încearcă o fotografie mai clară sau completează manual."
+          : providerDetails || result.error || "Eroare la analiză";
+        throw new Error(message);
       }
 
       toast.dismiss(toastId);

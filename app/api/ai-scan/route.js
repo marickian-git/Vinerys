@@ -6,6 +6,18 @@ import prisma from '@/utils/db';
 import { analyzeWineLabelEnsemble, AI_PROVIDERS } from '@/utils/aiProviders';
 import { decryptSecret } from '@/utils/aiSecrets';
 
+function publicProviderErrors(items = []) {
+  return items.map(({ raw, parsed, normalized, ...item }) => item);
+}
+
+function providerStatusFor(item) {
+  if (item.providerStatus === 'RATE_LIMITED') return 'Rate limited';
+  if (item.providerStatus === 'MODEL_UNAVAILABLE') return 'Model unavailable';
+  if (item.resultStatus === 'EMPTY') return 'Invalid result';
+  if (item.providerStatus === 'TIMEOUT') return 'Provider unavailable';
+  return item.error?.startsWith('401:') || item.error?.startsWith('403:') ? 'Invalid credentials' : item.error?.startsWith('404:') ? 'Model unavailable' : item.error?.startsWith('429:') ? 'Rate limited' : 'Provider unavailable';
+}
+
 
 export async function POST(request) {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -14,6 +26,7 @@ export async function POST(request) {
   }
 
   const operationId = randomUUID();
+  const startedAt = Date.now();
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: {
@@ -72,7 +85,7 @@ export async function POST(request) {
     await Promise.all(scanResult.errors.filter((item) => item.agentId).map((item) => prisma.aIAgent.updateMany({
       where: { id: item.agentId, userId: user.id },
       data: {
-        lastStatus: item.error.startsWith('401:') || item.error.startsWith('403:') ? 'Invalid credentials' : item.error.startsWith('404:') ? 'Model unavailable' : item.error.startsWith('429:') ? 'Rate limited' : 'Provider unavailable',
+        lastStatus: providerStatusFor(item),
         lastError: item.error.slice(0, 500),
         lastCheckedAt: new Date(),
       },
@@ -81,7 +94,7 @@ export async function POST(request) {
     await Promise.all((err.providerErrors || []).filter((item) => item.agentId).map((item) => prisma.aIAgent.updateMany({
       where: { id: item.agentId, userId: user.id },
       data: {
-        lastStatus: item.error.startsWith('401:') || item.error.startsWith('403:') ? 'Invalid credentials' : item.error.startsWith('404:') ? 'Model unavailable' : item.error.startsWith('429:') ? 'Rate limited' : 'Provider unavailable',
+        lastStatus: providerStatusFor(item),
         lastError: item.error.slice(0, 500),
         lastCheckedAt: new Date(),
       },
@@ -90,7 +103,7 @@ export async function POST(request) {
     return NextResponse.json({
       error: 'Scanarea nu a putut fi finalizată. Verifică agenții AI configurați.',
       operationId,
-      providerErrors: err.providerErrors || [],
+      providerErrors: publicProviderErrors(err.providerErrors || []),
     }, { status: 502 });
   }
 
@@ -104,6 +117,16 @@ export async function POST(request) {
           operationId,
           providers: scanResult.sources,
           providerErrors: scanResult.errors,
+          enrichmentErrors: scanResult.enrichmentErrors || [],
+          identificationConfidence: scanResult.result.identification?.confidence ?? scanResult.result.confidence?.identity ?? null,
+          enrichmentConfidence: scanResult.result.enrichment?.confidence ?? null,
+          drinkingWindow: {
+            from: scanResult.result.drinkFrom ?? null,
+            until: scanResult.result.drinkUntil ?? null,
+            confidence: scanResult.result.confidence?.drinkWindow ?? null,
+            basis: scanResult.result.drinkWindowBasis ?? null,
+          },
+          durationMs: Date.now() - startedAt,
           imageMimeType: mimeType,
           aiResult: scanResult.result,
           wineCreated: false,
@@ -115,11 +138,16 @@ export async function POST(request) {
     console.error('[scan] Error logging scan action:', err);
   }
 
+  if (process.env.NODE_ENV !== 'production') console.info(`[scan:${operationId}] RAW -> PARSED -> NORMALIZED -> AGGREGATED`, JSON.stringify(scanResult.providerDebug));
+
+  console.info(`[scan:${operationId}] completed in ${Date.now() - startedAt}ms; identity=${scanResult.result.confidence?.identity ?? 'unknown'} drinkingWindow=${scanResult.result.drinkFrom ?? 'unknown'}-${scanResult.result.drinkUntil ?? 'unknown'}`);
+
   return NextResponse.json({
     success: true,
     operationId,
     providers: scanResult.sources,
-    providerErrors: scanResult.errors,
+    providerErrors: publicProviderErrors(scanResult.errors),
+    enrichmentErrors: scanResult.enrichmentErrors || [],
     data: scanResult.result,
     wine: null,
   });

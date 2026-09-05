@@ -49,7 +49,11 @@ export default function AddWineFAB() {
       const result = await response.json();
 
       if (!response.ok || result.error) {
-        throw new Error(result.error || "Eroare la analiză");
+        throw new Error(
+          result.error?.includes("IDENTIFICATION_FAILED")
+            ? "Nu am putut identifica suficient vinul din această fotografie. Încearcă o fotografie mai clară sau completează manual."
+            : result.error || "Eroare la analiză",
+        );
       }
 
       toast.dismiss(toastId);
