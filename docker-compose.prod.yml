@@ -5,6 +5,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        BASE_URL: /crama
+        NEXT_PUBLIC_APP_URL: https://casa-spiridus.go.ro/crama
 
     container_name: vinerys-app
     restart: unless-stopped
