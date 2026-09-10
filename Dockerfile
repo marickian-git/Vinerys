@@ -67,6 +67,12 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 
+ARG BASE_URL=/crama
+ENV BASE_URL=$BASE_URL
+
+ARG NEXT_PUBLIC_APP_URL=https://casa-spiridus.go.ro/crama
+ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
+
 RUN groupadd --system --gid 1001 nodejs \
     && useradd --system --uid 1001 --gid 1001 nextjs
 
@@ -92,7 +98,7 @@ HEALTHCHECK \
     --timeout=10s \
     --start-period=40s \
     --retries=3 \
-    CMD curl -f http://localhost:3000/api/health || exit 1
+    CMD curl -f http://localhost:3000/crama/api/health || exit 1
 
 CMD ["node", "server.js"]
  

@@ -10,7 +10,7 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata = {
   title: "Vinerys — Pivnița Digitală",
   description: "Gestionează-ți colecția de vinuri cu eleganță",
-  manifest: appPath('/manifest.json'),
+  manifest: appPath('/manifest.webmanifest'),
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -31,7 +31,7 @@ export default function RootLayout({ children }) {
     <html lang="ro">
       <head>
         {/* PWA */}
-        <link rel="manifest" href={appPath('/manifest.json')} />
+        <link rel="manifest" href={appPath('/manifest.webmanifest')} />
         <meta name="theme-color" content="#8b1a2e" />
         <meta name="application-name" content="Vinerys" />
 

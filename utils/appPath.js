@@ -1,1 +1,8 @@
-export { appPath, configuredBasePath, normalizeBasePath } from './appPath.mjs';
+export {
+    appPath,
+    configuredAppURL,
+    configuredAuthURL,
+    configuredBasePath,
+    configuredOrigin,
+    normalizeBasePath,
+} from './appPath.mjs';

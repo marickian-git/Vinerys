@@ -8,7 +8,7 @@ const STATIC_ASSETS = [
   withBase('/dashboard'),
   withBase('/wines'),
   withBase('/offline'),
-  withBase('/manifest.json'),
+  withBase('/manifest.webmanifest'),
   withBase('/icons/icon-192.png'),
   withBase('/icons/icon-512.png'),
 ];

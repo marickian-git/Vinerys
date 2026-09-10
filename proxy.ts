@@ -9,9 +9,13 @@ export function proxy(request: NextRequest) {
   const basePath = normalizeBasePath(
     process.env.NEXT_PUBLIC_BASE_URL ?? process.env.BASE_URL ?? "",
   );
+  const appPathname =
+    basePath && pathname.startsWith(`${basePath}/`)
+      ? pathname.slice(basePath.length)
+      : pathname;
 
-  const isProtected = PROTECTED_ROUTES.some((route) =>
-    pathname.startsWith(route),
+  const isProtected = PROTECTED_ROUTES.some(
+    (route) => appPathname === route || appPathname.startsWith(`${route}/`),
   );
 
   if (!isProtected) return NextResponse.next();
@@ -20,7 +24,10 @@ export function proxy(request: NextRequest) {
 
   if (!sessionCookie) {
     const signInUrl = new URL(`${basePath}/sign-in`, request.url);
-    signInUrl.searchParams.set("callbackUrl", `${basePath}${pathname}` || "/");
+    signInUrl.searchParams.set(
+      "callbackUrl",
+      `${basePath}${appPathname}` || "/",
+    );
     return NextResponse.redirect(signInUrl);
   }
 

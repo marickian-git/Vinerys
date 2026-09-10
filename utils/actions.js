@@ -6,6 +6,7 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import prisma from "./db";
 import { auth } from "./auth";
+import { configuredAuthURL } from "./appPath.mjs";
 import { decryptSecret, encryptSecret } from "./aiSecrets";
 import { getProviderDefinition, isKnownProvider, listProviderDefinitions } from "./aiProviderRegistry";
 import { validateProviderBaseUrl } from "./aiUrlSecurity";
@@ -349,7 +350,7 @@ export async function updatePassword(formData) {
   }
 
   try {
-    const res = await fetch(`${process.env.BETTER_AUTH_URL}/api/auth/change-password`, {
+    const res = await fetch(`${configuredAuthURL()}/change-password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ currentPassword, newPassword }),
