@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signIn } from "@/utils/auth-client";
+import { appPath } from "@/utils/appPath";
 import toast from "react-hot-toast";
 
 export default function SignInPage() {
@@ -271,17 +272,46 @@ export default function SignInPage() {
             <div className="orb orb-3" />
           </div>
 
-          <svg className="wine-glass-art" viewBox="0 0 200 400" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M60 20 L140 20 L160 120 Q170 180 100 200 Q30 180 40 120 Z" stroke="rgba(196,69,105,0.8)" strokeWidth="1.5" fill="none"/>
-            <path d="M40 120 Q30 180 100 200 Q170 180 160 120" fill="rgba(139,26,46,0.3)" />
-            <line x1="100" y1="200" x2="100" y2="340" stroke="rgba(196,69,105,0.6)" strokeWidth="1.5"/>
-            <ellipse cx="100" cy="340" rx="50" ry="8" stroke="rgba(196,69,105,0.6)" strokeWidth="1.5" fill="none"/>
+          <svg
+            className="wine-glass-art"
+            viewBox="0 0 200 400"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M60 20 L140 20 L160 120 Q170 180 100 200 Q30 180 40 120 Z"
+              stroke="rgba(196,69,105,0.8)"
+              strokeWidth="1.5"
+              fill="none"
+            />
+            <path
+              d="M40 120 Q30 180 100 200 Q170 180 160 120"
+              fill="rgba(139,26,46,0.3)"
+            />
+            <line
+              x1="100"
+              y1="200"
+              x2="100"
+              y2="340"
+              stroke="rgba(196,69,105,0.6)"
+              strokeWidth="1.5"
+            />
+            <ellipse
+              cx="100"
+              cy="340"
+              rx="50"
+              ry="8"
+              stroke="rgba(196,69,105,0.6)"
+              strokeWidth="1.5"
+              fill="none"
+            />
           </svg>
 
           <div className="wine-left-content">
             <h1 className="wine-tagline">
-              Colecția ta,<br />
-              <em>perfectă</em> în<br />
+              Colecția ta,
+              <br />
+              <em>perfectă</em> în
+              <br />
               fiecare detaliu.
             </h1>
             <p className="wine-desc">Pivnița digitală personală</p>
@@ -308,11 +338,13 @@ export default function SignInPage() {
         <div className="wine-right">
           <div className={`form-container ${mounted ? "mounted" : ""}`}>
             <div className="form-logo">
-              <img src="/logo.png" alt="Vinerys" />
+              <img src={appPath("/logo.png")} alt="Vinerys" />
             </div>
 
             <h2 className="form-title">Bine ai revenit</h2>
-            <p className="form-subtitle">Autentifică-te pentru a-ți accesa colecția</p>
+            <p className="form-subtitle">
+              Autentifică-te pentru a-ți accesa colecția
+            </p>
 
             <form onSubmit={handleSubmit}>
               <div className="field-group">
@@ -333,15 +365,21 @@ export default function SignInPage() {
                   className="field-input"
                   placeholder="••••••••"
                   value={form.password}
-                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, password: e.target.value })
+                  }
                   required
                 />
               </div>
               <button type="submit" className="submit-btn" disabled={loading}>
-                {loading
-                  ? <span><span className="spinner" />Se autentifică...</span>
-                  : <span>Intră în colecție</span>
-                }
+                {loading ? (
+                  <span>
+                    <span className="spinner" />
+                    Se autentifică...
+                  </span>
+                ) : (
+                  <span>Intră în colecție</span>
+                )}
               </button>
             </form>
 
@@ -352,7 +390,9 @@ export default function SignInPage() {
             </div>
 
             <div className="form-footer">
-              <p>Nu ai cont? <Link href="/sign-up">Creează-ți pivnița</Link></p>
+              <p>
+                Nu ai cont? <Link href="/sign-up">Creează-ți pivnița</Link>
+              </p>
             </div>
           </div>
         </div>

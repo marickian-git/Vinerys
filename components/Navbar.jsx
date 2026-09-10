@@ -1,10 +1,11 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useSession, signOut } from '@/utils/auth-client';
-import { useRouter, usePathname } from 'next/navigation';
-import { useState, useRef, useEffect } from 'react';
-import AddWineFAB from '@/components/AddWineFAB';
+import Link from "next/link";
+import { useSession, signOut } from "@/utils/auth-client";
+import { useRouter, usePathname } from "next/navigation";
+import { useState, useRef, useEffect } from "react";
+import AddWineFAB from "@/components/AddWineFAB";
+import { appPath } from "@/utils/appPath";
 
 export default function Navbar() {
   const { data: session } = useSession();
@@ -20,13 +21,14 @@ export default function Navbar() {
     try {
       await signOut();
     } catch (e) {
-      console.error('signOut error', e);
+      console.error("signOut error", e);
     }
-    window.location.href = '/sign-in';
+    window.location.href = "/sign-in";
   };
 
-  const isActive = (href) => pathname === href || pathname.startsWith(href + '/');
-  const isAuthPage = pathname === '/sign-in' || pathname === '/sign-up';
+  const isActive = (href) =>
+    pathname === href || pathname.startsWith(href + "/");
+  const isAuthPage = pathname === "/sign-in" || pathname === "/sign-up";
   if (isAuthPage) return null;
 
   useEffect(() => {
@@ -35,11 +37,11 @@ export default function Navbar() {
         setDropdownOpen(false);
       }
     };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const initial = session?.user?.name?.charAt(0).toUpperCase() ?? '?';
+  const initial = session?.user?.name?.charAt(0).toUpperCase() ?? "?";
   const avatarSrc = session?.user?.image;
 
   return (
@@ -225,36 +227,62 @@ export default function Navbar() {
       <nav className="vn-nav">
         <div className="vn-nav-inner">
           <Link href="/" className="vn-logo">
-            <img src="/logo.png" alt="Vinerys" />
+            <img src={appPath("/logo.png")} alt="Vinerys" />
           </Link>
 
           {session ? (
             <div className="vn-links">
-              <Link href="/wines" className={`vn-link ${isActive('/wines') ? 'active' : ''}`}>Vinurile mele</Link>
-              <Link href="/dashboard" className={`vn-link ${isActive('/dashboard') ? 'active' : ''}`}>Dashboard</Link>
+              <Link
+                href="/wines"
+                className={`vn-link ${isActive("/wines") ? "active" : ""}`}>
+                Vinurile mele
+              </Link>
+              <Link
+                href="/dashboard"
+                className={`vn-link ${isActive("/dashboard") ? "active" : ""}`}>
+                Dashboard
+              </Link>
               <div className="vn-divider" />
               <div className="vn-user" ref={dropdownRef}>
-                <button className="vn-avatar-btn" onClick={() => setDropdownOpen(o => !o)}>
+                <button
+                  className="vn-avatar-btn"
+                  onClick={() => setDropdownOpen((o) => !o)}>
                   <div className="vn-avatar">
-                    {avatarSrc ? <img src={avatarSrc} alt={session.user.name} /> : initial}
+                    {avatarSrc ? (
+                      <img src={avatarSrc} alt={session.user.name} />
+                    ) : (
+                      initial
+                    )}
                   </div>
                   <span className="vn-username">{session.user.name}</span>
-                  <span className={`vn-chevron ${dropdownOpen ? 'open' : ''}`}>▼</span>
+                  <span className={`vn-chevron ${dropdownOpen ? "open" : ""}`}>
+                    ▼
+                  </span>
                 </button>
 
-                <div className={`vn-dropdown ${dropdownOpen ? 'open' : ''}`}>
+                <div className={`vn-dropdown ${dropdownOpen ? "open" : ""}`}>
                   <div className="vn-dropdown-header">
                     <div className="vn-dropdown-name">{session.user.name}</div>
-                    <div className="vn-dropdown-email">{session.user.email}</div>
+                    <div className="vn-dropdown-email">
+                      {session.user.email}
+                    </div>
                   </div>
-                  <Link href="/profile" className="vn-dropdown-item" onClick={() => setDropdownOpen(false)}>
+                  <Link
+                    href="/profile"
+                    className="vn-dropdown-item"
+                    onClick={() => setDropdownOpen(false)}>
                     <span className="vn-dropdown-icon">👤</span> Profilul meu
                   </Link>
-                  <Link href="/settings" className="vn-dropdown-item" onClick={() => setDropdownOpen(false)}>
+                  <Link
+                    href="/settings"
+                    className="vn-dropdown-item"
+                    onClick={() => setDropdownOpen(false)}>
                     <span className="vn-dropdown-icon">⚙️</span> Setări cont
                   </Link>
                   <div className="vn-dropdown-divider" />
-                  <button className="vn-dropdown-item danger" onClick={handleSignOut}>
+                  <button
+                    className="vn-dropdown-item danger"
+                    onClick={handleSignOut}>
                     <span className="vn-dropdown-icon">←</span> Deconectare
                   </button>
                 </div>
@@ -262,42 +290,98 @@ export default function Navbar() {
             </div>
           ) : (
             <div className="vn-links vn-auth">
-              <Link href="/sign-in" className="vn-btn-ghost">Autentificare</Link>
-              <Link href="/sign-up" className="vn-btn-primary">Înregistrare</Link>
+              <Link href="/sign-in" className="vn-btn-ghost">
+                Autentificare
+              </Link>
+              <Link href="/sign-up" className="vn-btn-primary">
+                Înregistrare
+              </Link>
             </div>
           )}
 
-          <button className={`vn-hamburger ${menuOpen ? 'open' : ''}`} onClick={() => setMenuOpen(!menuOpen)} aria-label="Meniu">
-            <span /><span /><span />
+          <button
+            className={`vn-hamburger ${menuOpen ? "open" : ""}`}
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="Meniu">
+            <span />
+            <span />
+            <span />
           </button>
         </div>
       </nav>
 
-      <div className={`vn-mobile-menu ${menuOpen ? 'open' : ''}`}>
+      <div className={`vn-mobile-menu ${menuOpen ? "open" : ""}`}>
         {session ? (
           <>
             <div className="vn-mobile-user">
               <div className="vn-avatar">
-                {avatarSrc
-                  ? <img src={avatarSrc} alt={session.user.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
-                  : initial
-                }
+                {avatarSrc ? (
+                  <img
+                    src={avatarSrc}
+                    alt={session.user.name}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      borderRadius: "50%",
+                    }}
+                  />
+                ) : (
+                  initial
+                )}
               </div>
               <span className="vn-mobile-username">{session.user.name}</span>
             </div>
             <div className="vn-mobile-divider" />
-            <Link href="/wines" className={`vn-mobile-link ${isActive('/wines') ? 'active' : ''}`} onClick={() => setMenuOpen(false)}>🍷 Vinurile mele</Link>
-            <Link href="/dashboard" className={`vn-mobile-link ${isActive('/dashboard') ? 'active' : ''}`} onClick={() => setMenuOpen(false)}>📊 Dashboard</Link>
+            <Link
+              href="/wines"
+              className={`vn-mobile-link ${isActive("/wines") ? "active" : ""}`}
+              onClick={() => setMenuOpen(false)}>
+              🍷 Vinurile mele
+            </Link>
+            <Link
+              href="/dashboard"
+              className={`vn-mobile-link ${isActive("/dashboard") ? "active" : ""}`}
+              onClick={() => setMenuOpen(false)}>
+              📊 Dashboard
+            </Link>
             <div className="vn-mobile-divider" />
-            <Link href="/profile" className={`vn-mobile-link ${isActive('/profile') ? 'active' : ''}`} onClick={() => setMenuOpen(false)}>👤 Profilul meu</Link>
-            <Link href="/settings" className={`vn-mobile-link ${isActive('/settings') ? 'active' : ''}`} onClick={() => setMenuOpen(false)}>⚙️ Setări cont</Link>
+            <Link
+              href="/profile"
+              className={`vn-mobile-link ${isActive("/profile") ? "active" : ""}`}
+              onClick={() => setMenuOpen(false)}>
+              👤 Profilul meu
+            </Link>
+            <Link
+              href="/settings"
+              className={`vn-mobile-link ${isActive("/settings") ? "active" : ""}`}
+              onClick={() => setMenuOpen(false)}>
+              ⚙️ Setări cont
+            </Link>
             <div className="vn-mobile-divider" />
-            <button className="vn-mobile-signout" onClick={() => { setMenuOpen(false); handleSignOut(); }}>← Deconectare</button>
+            <button
+              className="vn-mobile-signout"
+              onClick={() => {
+                setMenuOpen(false);
+                handleSignOut();
+              }}>
+              ← Deconectare
+            </button>
           </>
         ) : (
           <>
-            <Link href="/sign-in" className="vn-mobile-link" onClick={() => setMenuOpen(false)}>Autentificare</Link>
-            <Link href="/sign-up" className="vn-mobile-link active" onClick={() => setMenuOpen(false)}>Înregistrare</Link>
+            <Link
+              href="/sign-in"
+              className="vn-mobile-link"
+              onClick={() => setMenuOpen(false)}>
+              Autentificare
+            </Link>
+            <Link
+              href="/sign-up"
+              className="vn-mobile-link active"
+              onClick={() => setMenuOpen(false)}>
+              Înregistrare
+            </Link>
           </>
         )}
       </div>

@@ -9,7 +9,7 @@ export function configuredBasePath(env = process.env) {
 }
 
 export function configuredAppURL(env = process.env) {
-    return (env.NEXT_PUBLIC_APP_URL ?? env.BETTER_AUTH_URL ?? 'http://localhost:3001').replace(/\/+$/, '');
+    return (env.NEXT_PUBLIC_APP_URL ?? env.BETTER_AUTH_URL ?? 'http://localhost:3000').replace(/\/+$/, '');
 }
 
 export function configuredAuthURL(env = process.env) {

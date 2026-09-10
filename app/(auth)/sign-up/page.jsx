@@ -4,20 +4,34 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signUp } from "@/utils/auth-client";
+import { appPath } from "@/utils/appPath";
 import toast from "react-hot-toast";
 
 export default function SignUpPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", password: "", confirm: "" });
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirm: "",
+  });
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (form.password !== form.confirm) { toast.error("Parolele nu se potrivesc"); return; }
-    if (form.password.length < 8) { toast.error("Parola trebuie să aibă minim 8 caractere"); return; }
+    if (form.password !== form.confirm) {
+      toast.error("Parolele nu se potrivesc");
+      return;
+    }
+    if (form.password.length < 8) {
+      toast.error("Parola trebuie să aibă minim 8 caractere");
+      return;
+    }
     setLoading(true);
     const { error } = await signUp.email({
       name: form.name,
@@ -269,39 +283,176 @@ export default function SignUpPage() {
             <div className="orb orb-3" />
           </div>
 
-          <svg className="bottles-art" width="220" height="280" viewBox="0 0 220 280" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg
+            className="bottles-art"
+            width="220"
+            height="280"
+            viewBox="0 0 220 280"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg">
             <g opacity="0.7">
-              <rect x="38" y="80" width="28" height="140" rx="6" fill="rgba(139,26,46,0.4)" stroke="rgba(196,69,105,0.5)" strokeWidth="1"/>
-              <rect x="42" y="60" width="20" height="25" rx="3" fill="rgba(139,26,46,0.3)" stroke="rgba(196,69,105,0.4)" strokeWidth="1"/>
-              <rect x="47" y="50" width="10" height="14" rx="2" fill="rgba(196,69,105,0.5)" stroke="rgba(196,69,105,0.6)" strokeWidth="1"/>
-              <rect x="42" y="140" width="20" height="40" rx="0" fill="rgba(196,69,105,0.15)"/>
-              <line x1="42" y1="185" x2="62" y2="185" stroke="rgba(196,69,105,0.3)" strokeWidth="0.5"/>
+              <rect
+                x="38"
+                y="80"
+                width="28"
+                height="140"
+                rx="6"
+                fill="rgba(139,26,46,0.4)"
+                stroke="rgba(196,69,105,0.5)"
+                strokeWidth="1"
+              />
+              <rect
+                x="42"
+                y="60"
+                width="20"
+                height="25"
+                rx="3"
+                fill="rgba(139,26,46,0.3)"
+                stroke="rgba(196,69,105,0.4)"
+                strokeWidth="1"
+              />
+              <rect
+                x="47"
+                y="50"
+                width="10"
+                height="14"
+                rx="2"
+                fill="rgba(196,69,105,0.5)"
+                stroke="rgba(196,69,105,0.6)"
+                strokeWidth="1"
+              />
+              <rect
+                x="42"
+                y="140"
+                width="20"
+                height="40"
+                rx="0"
+                fill="rgba(196,69,105,0.15)"
+              />
+              <line
+                x1="42"
+                y1="185"
+                x2="62"
+                y2="185"
+                stroke="rgba(196,69,105,0.3)"
+                strokeWidth="0.5"
+              />
             </g>
             <g opacity="0.9">
-              <rect x="88" y="50" width="32" height="170" rx="7" fill="rgba(92,14,28,0.5)" stroke="rgba(196,69,105,0.7)" strokeWidth="1.2"/>
-              <rect x="93" y="28" width="22" height="28" rx="4" fill="rgba(92,14,28,0.4)" stroke="rgba(196,69,105,0.5)" strokeWidth="1"/>
-              <rect x="98" y="16" width="12" height="16" rx="3" fill="rgba(196,69,105,0.6)" stroke="rgba(196,69,105,0.8)" strokeWidth="1"/>
-              <rect x="93" y="155" width="22" height="50" rx="0" fill="rgba(139,26,46,0.25)"/>
-              <rect x="90" y="100" width="28" height="18" rx="2" fill="rgba(245,230,232,0.08)" stroke="rgba(245,230,232,0.15)" strokeWidth="0.5"/>
+              <rect
+                x="88"
+                y="50"
+                width="32"
+                height="170"
+                rx="7"
+                fill="rgba(92,14,28,0.5)"
+                stroke="rgba(196,69,105,0.7)"
+                strokeWidth="1.2"
+              />
+              <rect
+                x="93"
+                y="28"
+                width="22"
+                height="28"
+                rx="4"
+                fill="rgba(92,14,28,0.4)"
+                stroke="rgba(196,69,105,0.5)"
+                strokeWidth="1"
+              />
+              <rect
+                x="98"
+                y="16"
+                width="12"
+                height="16"
+                rx="3"
+                fill="rgba(196,69,105,0.6)"
+                stroke="rgba(196,69,105,0.8)"
+                strokeWidth="1"
+              />
+              <rect
+                x="93"
+                y="155"
+                width="22"
+                height="50"
+                rx="0"
+                fill="rgba(139,26,46,0.25)"
+              />
+              <rect
+                x="90"
+                y="100"
+                width="28"
+                height="18"
+                rx="2"
+                fill="rgba(245,230,232,0.08)"
+                stroke="rgba(245,230,232,0.15)"
+                strokeWidth="0.5"
+              />
             </g>
             <g opacity="0.65">
-              <rect x="152" y="90" width="26" height="130" rx="6" fill="rgba(139,26,46,0.35)" stroke="rgba(196,69,105,0.45)" strokeWidth="1"/>
-              <rect x="156" y="70" width="18" height="24" rx="3" fill="rgba(139,26,46,0.25)" stroke="rgba(196,69,105,0.35)" strokeWidth="1"/>
-              <rect x="160" y="60" width="10" height="13" rx="2" fill="rgba(196,69,105,0.45)" stroke="rgba(196,69,105,0.55)" strokeWidth="1"/>
-              <rect x="156" y="160" width="18" height="35" rx="0" fill="rgba(196,69,105,0.12)"/>
+              <rect
+                x="152"
+                y="90"
+                width="26"
+                height="130"
+                rx="6"
+                fill="rgba(139,26,46,0.35)"
+                stroke="rgba(196,69,105,0.45)"
+                strokeWidth="1"
+              />
+              <rect
+                x="156"
+                y="70"
+                width="18"
+                height="24"
+                rx="3"
+                fill="rgba(139,26,46,0.25)"
+                stroke="rgba(196,69,105,0.35)"
+                strokeWidth="1"
+              />
+              <rect
+                x="160"
+                y="60"
+                width="10"
+                height="13"
+                rx="2"
+                fill="rgba(196,69,105,0.45)"
+                stroke="rgba(196,69,105,0.55)"
+                strokeWidth="1"
+              />
+              <rect
+                x="156"
+                y="160"
+                width="18"
+                height="35"
+                rx="0"
+                fill="rgba(196,69,105,0.12)"
+              />
             </g>
-            <ellipse cx="110" cy="225" rx="75" ry="8" fill="rgba(196,69,105,0.12)"/>
+            <ellipse
+              cx="110"
+              cy="225"
+              rx="75"
+              ry="8"
+              fill="rgba(196,69,105,0.12)"
+            />
           </svg>
 
           <div className="wine-left-content">
             <h1 className="wine-tagline">
-              Începe să-ți<br />
-              construiești<br />
+              Începe să-ți
+              <br />
+              construiești
+              <br />
               <em>pivnița perfectă</em>
             </h1>
             <p className="wine-desc">Înregistrare gratuită</p>
             <div className="feature-list">
-              {["Cataloghează orice vin", "Notițe de degustare", "Statistici colecție", "Acces de pe orice dispozitiv"].map((f) => (
+              {[
+                "Cataloghează orice vin",
+                "Notițe de degustare",
+                "Statistici colecție",
+                "Acces de pe orice dispozitiv",
+              ].map((f) => (
                 <div className="feature-item" key={f}>
                   <div className="feature-dot" />
                   <span className="feature-text">{f}</span>
@@ -314,9 +465,8 @@ export default function SignUpPage() {
         {/* RIGHT */}
         <div className="wine-right">
           <div className={`form-container ${mounted ? "mounted" : ""}`}>
-
             <div className="form-logo">
-              <img src="/logo.png" alt="Vinerys" />
+              <img src={appPath("/logo.png")} alt="Vinerys" />
             </div>
 
             <h2 className="form-title">Creează-ți contul</h2>
@@ -354,14 +504,24 @@ export default function SignUpPage() {
                   className="field-input"
                   placeholder="Minim 8 caractere"
                   value={form.password}
-                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, password: e.target.value })
+                  }
                   required
                 />
                 <div className="pwd-strength">
-                  {[0,1,2].map((i) => {
+                  {[0, 1, 2].map((i) => {
                     const len = form.password.length;
-                    const strength = len === 0 ? -1 : len < 6 ? 0 : len < 10 ? 1 : 2;
-                    const cls = i <= strength ? (strength === 0 ? "weak" : strength === 1 ? "medium" : "strong") : "";
+                    const strength =
+                      len === 0 ? -1 : len < 6 ? 0 : len < 10 ? 1 : 2;
+                    const cls =
+                      i <= strength
+                        ? strength === 0
+                          ? "weak"
+                          : strength === 1
+                            ? "medium"
+                            : "strong"
+                        : "";
                     return <div key={i} className={`pwd-bar ${cls}`} />;
                   })}
                 </div>
@@ -374,21 +534,28 @@ export default function SignUpPage() {
                   className="field-input"
                   placeholder="••••••••"
                   value={form.confirm}
-                  onChange={(e) => setForm({ ...form, confirm: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, confirm: e.target.value })
+                  }
                   required
                 />
               </div>
 
               <button type="submit" className="submit-btn" disabled={loading}>
-                {loading
-                  ? <span><span className="spinner" />Se creează contul...</span>
-                  : <span>Deschide pivnița</span>
-                }
+                {loading ? (
+                  <span>
+                    <span className="spinner" />
+                    Se creează contul...
+                  </span>
+                ) : (
+                  <span>Deschide pivnița</span>
+                )}
               </button>
             </form>
 
             <p className="terms-note">
-              Creând un cont, ești de acord cu stocarea datelor tale în condiții de siguranță.
+              Creând un cont, ești de acord cu stocarea datelor tale în condiții
+              de siguranță.
             </p>
 
             <div className="separator">
@@ -398,7 +565,9 @@ export default function SignUpPage() {
             </div>
 
             <div className="form-footer">
-              <p>Ai deja cont? <Link href="/sign-in">Autentifică-te</Link></p>
+              <p>
+                Ai deja cont? <Link href="/sign-in">Autentifică-te</Link>
+              </p>
             </div>
           </div>
         </div>
