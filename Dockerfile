@@ -1,4 +1,4 @@
-
+ 
 # Stage 1: dependencies
 FROM node:20-bookworm-slim AS deps
 
@@ -32,11 +32,21 @@ COPY . .
 # Generate Prisma client
 RUN npx prisma generate
 
-# Build-time public variables
-ARG NEXT_PUBLIC_APP_URL=http://casa-spiridus.go.ro:3989
+# ============================================================
+# Build-time variables
+# ============================================================
+
+# Next.js base path
+ARG BASE_URL=/crama
+ENV BASE_URL=$BASE_URL
+
+# Public application URL
+ARG NEXT_PUBLIC_APP_URL=https://casa-spiridus.go.ro/crama
 ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
+
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# Build Next.js application
 RUN npm run build
 
 
