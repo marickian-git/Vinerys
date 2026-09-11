@@ -14,7 +14,11 @@ export function configuredAppURL(env = process.env) {
 
 export function configuredAuthURL(env = process.env) {
     const appURL = configuredAppURL(env);
-    return appURL.endsWith('/api/auth') ? appURL : `${appURL}/api/auth`;
+    const basePath = configuredBasePath(env);
+    const originURL = basePath && appURL.endsWith(basePath)
+        ? appURL.slice(0, -basePath.length)
+        : appURL;
+    return originURL.endsWith('/api/auth') ? originURL : `${originURL}/api/auth`;
 }
 
 export function configuredOrigin(env = process.env) {

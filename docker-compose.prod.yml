@@ -20,12 +20,15 @@ services:
 
     environment:
       NODE_ENV: production
+      BASE_URL: /crama
+      BETTER_AUTH_URL: https://casa-spiridus.go.ro
+      NEXT_PUBLIC_APP_URL: https://casa-spiridus.go.ro/crama
 
     networks:
       - vinerys-net
 
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/crama/api/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:3000/crama/health"]
       interval: 30s
       timeout: 10s
       retries: 3
