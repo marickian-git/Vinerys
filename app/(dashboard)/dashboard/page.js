@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { getDashboardStats, getWines, getAdvancedStats, getProfile } from '@/utils/actions';
 import WineCard from '@/components/wines/WineCard';
 import CellarNameEditor from '@/components/CellarNameEditor';
+import { getDisplayImageUrl } from '@/utils/mediaUrl';
 import {
   Wine,
   TrendingUp,
@@ -17,9 +18,9 @@ import {
 function IconBottles({ color }) {
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M9 2h2v2.5c0 .28.1.54.27.74L13 7.5V18a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V7.5l1.73-2.26A1 1 0 0 0 9 4.5V2Z" stroke={color} strokeWidth="1.3" strokeLinejoin="round"/>
-      <path d="M7 10.5h6" stroke={color} strokeWidth="1.3" strokeLinecap="round"/>
-      <path d="M15 4h1.5a1 1 0 0 1 1 1v1a1 1 0 0 0 1 1H19v11a1 1 0 0 1-1 1h-1.5" stroke={color} strokeWidth="1.3" strokeLinecap="round"/>
+      <path d="M9 2h2v2.5c0 .28.1.54.27.74L13 7.5V18a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V7.5l1.73-2.26A1 1 0 0 0 9 4.5V2Z" stroke={color} strokeWidth="1.3" strokeLinejoin="round" />
+      <path d="M7 10.5h6" stroke={color} strokeWidth="1.3" strokeLinecap="round" />
+      <path d="M15 4h1.5a1 1 0 0 1 1 1v1a1 1 0 0 0 1 1H19v11a1 1 0 0 1-1 1h-1.5" stroke={color} strokeWidth="1.3" strokeLinecap="round" />
     </svg>
   );
 }
@@ -27,10 +28,10 @@ function IconBottles({ color }) {
 function IconCellar({ color }) {
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <ellipse cx="12" cy="11" rx="7" ry="4" stroke={color} strokeWidth="1.3"/>
-      <path d="M5 11v5c0 2.21 3.13 4 7 4s7-1.79 7-4v-5" stroke={color} strokeWidth="1.3"/>
-      <path d="M5 14c0 2.21 3.13 4 7 4s7-1.79 7-4" stroke={color} strokeWidth="1.3" strokeDasharray="2 2"/>
-      <circle cx="12" cy="11" r="1.5" fill={color} opacity=".4"/>
+      <ellipse cx="12" cy="11" rx="7" ry="4" stroke={color} strokeWidth="1.3" />
+      <path d="M5 11v5c0 2.21 3.13 4 7 4s7-1.79 7-4v-5" stroke={color} strokeWidth="1.3" />
+      <path d="M5 14c0 2.21 3.13 4 7 4s7-1.79 7-4" stroke={color} strokeWidth="1.3" strokeDasharray="2 2" />
+      <circle cx="12" cy="11" r="1.5" fill={color} opacity=".4" />
     </svg>
   );
 }
@@ -38,8 +39,8 @@ function IconCellar({ color }) {
 function IconValue({ color }) {
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 3l2.5 5.5L21 9.5l-4.5 4.5 1 6.5L12 17.5 6.5 20.5l1-6.5L3 9.5l6.5-1L12 3Z" stroke={color} strokeWidth="1.3" strokeLinejoin="round"/>
-      <path d="M12 8v5M10 11h4" stroke={color} strokeWidth="1.2" strokeLinecap="round"/>
+      <path d="M12 3l2.5 5.5L21 9.5l-4.5 4.5 1 6.5L12 17.5 6.5 20.5l1-6.5L3 9.5l6.5-1L12 3Z" stroke={color} strokeWidth="1.3" strokeLinejoin="round" />
+      <path d="M12 8v5M10 11h4" stroke={color} strokeWidth="1.2" strokeLinecap="round" />
     </svg>
   );
 }
@@ -47,9 +48,9 @@ function IconValue({ color }) {
 function IconGlobe({ color }) {
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.3"/>
-      <path d="M12 3c-2.5 3-4 5.5-4 9s1.5 6 4 9M12 3c2.5 3 4 5.5 4 9s-1.5 6-4 9" stroke={color} strokeWidth="1.2"/>
-      <path d="M3.5 9h17M3.5 15h17" stroke={color} strokeWidth="1.2" strokeLinecap="round"/>
+      <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.3" />
+      <path d="M12 3c-2.5 3-4 5.5-4 9s1.5 6 4 9M12 3c2.5 3 4 5.5 4 9s-1.5 6-4 9" stroke={color} strokeWidth="1.2" />
+      <path d="M3.5 9h17M3.5 15h17" stroke={color} strokeWidth="1.2" strokeLinecap="round" />
     </svg>
   );
 }
@@ -64,11 +65,11 @@ export async function generateMetadata() {
   }
 }
 
-const TYPE_LABELS   = { RED: 'Roșu', WHITE: 'Alb', ROSE: 'Roze', SPARKLING: 'Spumant', DESSERT: 'Desert', FORTIFIED: 'Fortifiat' };
-const TYPE_COLORS   = { RED: '#8b1a2e', WHITE: '#d4af37', ROSE: '#c44569', SPARKLING: '#b4c8dc', DESSERT: '#b47828', FORTIFIED: '#643078' };
+const TYPE_LABELS = { RED: 'Roșu', WHITE: 'Alb', ROSE: 'Roze', SPARKLING: 'Spumant', DESSERT: 'Desert', FORTIFIED: 'Fortifiat' };
+const TYPE_COLORS = { RED: '#8b1a2e', WHITE: '#d4af37', ROSE: '#c44569', SPARKLING: '#b4c8dc', DESSERT: '#b47828', FORTIFIED: '#643078' };
 const STATUS_LABELS = { IN_CELLAR: 'În pivniță', CONSUMED: 'Consumat', SOLD: 'Vândut', GIFTED: 'Dăruit' };
 const STATUS_COLORS = { IN_CELLAR: '#55c44e', CONSUMED: 'rgba(245,230,232,0.3)', SOLD: '#d4af37', GIFTED: '#c44569' };
-const STAR_LABELS   = { 5: 'Excepțional', 4: 'Excelent', 3: 'Bun', 2: 'Decent', 1: 'Slab' };
+const STAR_LABELS = { 5: 'Excepțional', 4: 'Excelent', 3: 'Bun', 2: 'Decent', 1: 'Slab' };
 
 function Stars({ rating }) {
   return (
@@ -147,7 +148,7 @@ function CardTitle({ children, href, aside }) {
 
 /* ─── Page ─────────────────────────────────────────────────────────────── */
 export default async function DashboardPage() {
-  let stats    = { totalBottles: 0, totalValue: 0, totalWines: 0, byType: {}, byStatus: {} };
+  let stats = { totalBottles: 0, totalValue: 0, totalWines: 0, byType: {}, byStatus: {} };
   let recentWines = [];
   let advanced = {
     topWines: [], byCountry: {}, monthlyData: [],
@@ -164,18 +165,18 @@ export default async function DashboardPage() {
       getAdvancedStats(),
       getProfile(),
     ]);
-    stats       = s;
+    stats = s;
     recentWines = winesResult.wines ?? [];
-    advanced    = adv;
-    cellarName  = profile?.cellarName || 'Dashboard';
-  } catch {}
+    advanced = adv;
+    cellarName = profile?.cellarName || 'Dashboard';
+  } catch { }
 
-  const topType           = Object.entries(stats.byType).sort((a, b) => b[1] - a[1])[0];
-  const inCellar          = stats.byStatus?.IN_CELLAR ?? 0;
-  const maxMonthly        = Math.max(...advanced.monthlyData.map(m => m.count), 1);
-  const topCountries      = Object.entries(advanced.byCountry).sort((a, b) => b[1] - a[1]).slice(0, 6);
+  const topType = Object.entries(stats.byType).sort((a, b) => b[1] - a[1])[0];
+  const inCellar = stats.byStatus?.IN_CELLAR ?? 0;
+  const maxMonthly = Math.max(...advanced.monthlyData.map(m => m.count), 1);
+  const topCountries = Object.entries(advanced.byCountry).sort((a, b) => b[1] - a[1]).slice(0, 6);
   const totalCountryWines = topCountries.reduce((a, [, v]) => a + v, 0) || 1;
-  const currentYear       = new Date().getFullYear();
+  const currentYear = new Date().getFullYear();
 
   // Vinuri depășite — vin direct din backend (drinkUntil < currentYear)
   const overdueWines = advanced.overdueWines ?? [];
@@ -769,7 +770,7 @@ export default async function DashboardPage() {
                     <Link key={wine.id} href={`/wines/${wine.id}`} className="db-top-item">
                       <span className="db-top-rank">{i + 1}</span>
                       {wine.labelImageUrl || wine.bottleImageUrl ? (
-                        <img src={wine.labelImageUrl || wine.bottleImageUrl} alt={wine.name} className="db-top-img" />
+                        <img src={getDisplayImageUrl(wine.labelImageUrl || wine.bottleImageUrl)} alt={wine.name} className="db-top-img" />
                       ) : (
                         <div className="db-top-img">
                           <Wine size={15} strokeWidth={1.5} color="rgba(196,69,105,0.45)" />

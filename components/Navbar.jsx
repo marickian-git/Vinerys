@@ -6,6 +6,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import AddWineFAB from "@/components/AddWineFAB";
 import { appPath } from "@/utils/appPath";
+import { getDisplayImageUrl } from "@/utils/mediaUrl";
 
 export default function Navbar() {
   const { data: session } = useSession();
@@ -43,7 +44,7 @@ export default function Navbar() {
   if (isAuthPage) return null;
 
   const initial = session?.user?.name?.charAt(0).toUpperCase() ?? "?";
-  const avatarSrc = session?.user?.image;
+  const avatarSrc = getDisplayImageUrl(session?.user?.image, "vinerys");
 
   return (
     <>

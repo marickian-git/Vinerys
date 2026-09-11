@@ -10,7 +10,7 @@ const minioClient = new Client({
 
 export async function uploadFile(file, bucket, path) {
   const buffer = Buffer.from(await file.arrayBuffer());
-  
+
   // Asigură-te că bucket-ul există
   const bucketExists = await minioClient.bucketExists(bucket);
   if (!bucketExists) {
@@ -23,7 +23,8 @@ export async function uploadFile(file, bucket, path) {
   });
 
   // Generează URL accesibil
-  const url = `http://${process.env.MINIO_ENDPOINT}:${process.env.MINIO_PORT}/${bucket}/${path}`;
+  const publicBase = (process.env.MINIO_PUBLIC_URL || 'https://casa-spiridus.go.ro/minio').replace(/\/+$/, '');
+  const url = `${publicBase}/${bucket}/${encodeURIComponent(path)}`;
   return url;
 }
 

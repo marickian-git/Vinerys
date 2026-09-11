@@ -5,6 +5,7 @@ import WineActions from '@/components/wines/WineActions';
 import ConsumeButton from '@/components/wines/ConsumeButton';
 import { DrinkWindowCard } from '@/components/wines/DrinkWindowBadge';
 import AromaProfile from '@/components/wines/AromaProfile';
+import { getDisplayImageUrl } from '@/utils/mediaUrl';
 
 export async function generateMetadata({ params }) {
   const { id } = await params;
@@ -17,19 +18,19 @@ export async function generateMetadata({ params }) {
 }
 
 const TYPE_CONFIG = {
-  RED:       { label: 'Roșu',      dot: '#8b1a2e', bg: 'rgba(139,26,46,0.2)' },
-  WHITE:     { label: 'Alb',       dot: '#d4af37', bg: 'rgba(212,175,55,0.15)' },
-  ROSE:      { label: 'Roze',      dot: '#c44569', bg: 'rgba(196,69,105,0.2)' },
-  SPARKLING: { label: 'Spumant',   dot: '#b4c8dc', bg: 'rgba(180,200,220,0.12)' },
-  DESSERT:   { label: 'Desert',    dot: '#b47828', bg: 'rgba(180,120,40,0.15)' },
+  RED: { label: 'Roșu', dot: '#8b1a2e', bg: 'rgba(139,26,46,0.2)' },
+  WHITE: { label: 'Alb', dot: '#d4af37', bg: 'rgba(212,175,55,0.15)' },
+  ROSE: { label: 'Roze', dot: '#c44569', bg: 'rgba(196,69,105,0.2)' },
+  SPARKLING: { label: 'Spumant', dot: '#b4c8dc', bg: 'rgba(180,200,220,0.12)' },
+  DESSERT: { label: 'Desert', dot: '#b47828', bg: 'rgba(180,120,40,0.15)' },
   FORTIFIED: { label: 'Fortifiat', dot: '#643078', bg: 'rgba(100,40,120,0.15)' },
 };
 
 const STATUS_CONFIG = {
   IN_CELLAR: { label: 'În pivniță', color: 'rgba(85,196,78,0.8)' },
-  CONSUMED:  { label: 'Consumat',   color: 'rgba(245,230,232,0.3)' },
-  SOLD:      { label: 'Vândut',     color: 'rgba(212,175,55,0.7)' },
-  GIFTED:    { label: 'Dăruit',     color: 'rgba(196,69,105,0.7)' },
+  CONSUMED: { label: 'Consumat', color: 'rgba(245,230,232,0.3)' },
+  SOLD: { label: 'Vândut', color: 'rgba(212,175,55,0.7)' },
+  GIFTED: { label: 'Dăruit', color: 'rgba(196,69,105,0.7)' },
 };
 
 function InfoRow({ label, value }) {
@@ -52,12 +53,12 @@ export default async function WineDetailPage({ params }) {
     notFound();
   }
 
-  const type   = TYPE_CONFIG[wine.type]     ?? TYPE_CONFIG.RED;
+  const type = TYPE_CONFIG[wine.type] ?? TYPE_CONFIG.RED;
   const status = STATUS_CONFIG[wine.status] ?? STATUS_CONFIG.IN_CELLAR;
-  const stars  = Array.from({ length: 5 }, (_, i) => i < (wine.rating ?? 0));
+  const stars = Array.from({ length: 5 }, (_, i) => i < (wine.rating ?? 0));
 
   const hasDrinkWindow = wine.drinkFrom || wine.drinkUntil;
-  const hasAromas      = wine.aromaProfile?.length > 0;
+  const hasAromas = wine.aromaProfile?.length > 0;
 
   return (
     <div>
@@ -182,7 +183,7 @@ export default async function WineDetailPage({ params }) {
               <div className="wd-image">
                 <div className="wd-image-glow" />
                 {wine.labelImageUrl || wine.bottleImageUrl ? (
-                  <img src={wine.labelImageUrl || wine.bottleImageUrl} alt={wine.name} />
+                  <img src={getDisplayImageUrl(wine.labelImageUrl || wine.bottleImageUrl)} alt={wine.name} />
                 ) : (
                   <span className="wd-image-icon">🍷</span>
                 )}

@@ -5,6 +5,7 @@ import { useDropzone } from "react-dropzone";
 import { motion, AnimatePresence } from "motion/react";
 import toast from "react-hot-toast";
 import { appPath } from "@/utils/appPath";
+import { getDisplayImageUrl } from "@/utils/mediaUrl";
 
 const ALLOWED = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const MAX_MB = 5;
@@ -70,7 +71,7 @@ export default function ImageUpload({
   folder = "wines",
 }) {
   const [uploading, setUploading] = useState(false);
-  const [preview, setPreview] = useState(value || null);
+  const [preview, setPreview] = useState(getDisplayImageUrl(value) || null);
   const [progress, setProgress] = useState(0);
 
   const uploadFile = async (file) => {

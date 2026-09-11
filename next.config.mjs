@@ -9,6 +9,7 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_BASE_URL: basePath,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL ?? '',
+    NEXT_PUBLIC_MINIO_PUBLIC_URL: process.env.MINIO_PUBLIC_URL ?? 'https://casa-spiridus.go.ro/minio',
   },
   images: {
     remotePatterns: [

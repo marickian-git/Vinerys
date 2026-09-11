@@ -2,6 +2,7 @@ import { getProfile, getDashboardStats } from '@/utils/actions';
 import Link from 'next/link';
 import ImageUpload from '@/components/wines/ImageUpload';
 import ProfileEditForm from '@/components/profile/ProfileEditForm';
+import { getDisplayImageUrl } from '@/utils/mediaUrl';
 
 export const metadata = { title: 'Profilul meu — Vinerys' };
 
@@ -13,7 +14,7 @@ export default async function ProfilePage() {
 
   try {
     [profile, stats] = await Promise.all([getProfile(), getDashboardStats()]);
-  } catch {}
+  } catch { }
 
   if (!profile) return null;
 
@@ -186,7 +187,7 @@ export default async function ProfilePage() {
             <div className="prof-avatar-wrap">
               <div className="prof-avatar">
                 {profile.image
-                  ? <img src={profile.image} alt={profile.name} />
+                  ? <img src={getDisplayImageUrl(profile.image)} alt={profile.name} />
                   : <span className="prof-avatar-initial">{initial}</span>
                 }
               </div>

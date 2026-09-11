@@ -23,6 +23,7 @@ services:
       BASE_URL: /crama
       BETTER_AUTH_URL: https://casa-spiridus.go.ro
       NEXT_PUBLIC_APP_URL: https://casa-spiridus.go.ro/crama
+      MINIO_PUBLIC_URL: https://casa-spiridus.go.ro/minio
 
     networks:
       - vinerys-net

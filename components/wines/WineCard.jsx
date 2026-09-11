@@ -1,32 +1,63 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { DrinkWindowBadge } from '@/components/wines/DrinkWindowBadge';
-import AromaProfile from '@/components/wines/AromaProfile';
+import Link from "next/link";
+import { DrinkWindowBadge } from "@/components/wines/DrinkWindowBadge";
+import AromaProfile from "@/components/wines/AromaProfile";
+import { getDisplayImageUrl } from "@/utils/mediaUrl";
 
 const TYPE_CONFIG = {
-  RED:       { bg: 'rgba(139,26,46,0.25)',  border: 'rgba(139,26,46,0.5)',   dot: '#8b1a2e', label: 'Roșu' },
-  WHITE:     { bg: 'rgba(212,175,55,0.15)', border: 'rgba(212,175,55,0.4)',  dot: '#d4af37', label: 'Alb' },
-  ROSE:      { bg: 'rgba(196,69,105,0.2)',  border: 'rgba(196,69,105,0.45)', dot: '#c44569', label: 'Roze' },
-  SPARKLING: { bg: 'rgba(180,200,220,0.12)',border: 'rgba(180,200,220,0.3)', dot: '#b4c8dc', label: 'Spumant' },
-  DESSERT:   { bg: 'rgba(180,120,40,0.15)', border: 'rgba(180,120,40,0.35)', dot: '#b47828', label: 'Desert' },
-  FORTIFIED: { bg: 'rgba(100,40,120,0.15)', border: 'rgba(100,40,120,0.35)', dot: '#643078', label: 'Fortifiat' },
+  RED: {
+    bg: "rgba(139,26,46,0.25)",
+    border: "rgba(139,26,46,0.5)",
+    dot: "#8b1a2e",
+    label: "Roșu",
+  },
+  WHITE: {
+    bg: "rgba(212,175,55,0.15)",
+    border: "rgba(212,175,55,0.4)",
+    dot: "#d4af37",
+    label: "Alb",
+  },
+  ROSE: {
+    bg: "rgba(196,69,105,0.2)",
+    border: "rgba(196,69,105,0.45)",
+    dot: "#c44569",
+    label: "Roze",
+  },
+  SPARKLING: {
+    bg: "rgba(180,200,220,0.12)",
+    border: "rgba(180,200,220,0.3)",
+    dot: "#b4c8dc",
+    label: "Spumant",
+  },
+  DESSERT: {
+    bg: "rgba(180,120,40,0.15)",
+    border: "rgba(180,120,40,0.35)",
+    dot: "#b47828",
+    label: "Desert",
+  },
+  FORTIFIED: {
+    bg: "rgba(100,40,120,0.15)",
+    border: "rgba(100,40,120,0.35)",
+    dot: "#643078",
+    label: "Fortifiat",
+  },
 };
 
 const STATUS_CONFIG = {
-  IN_CELLAR: { label: 'În pivniță', color: 'rgba(85,196,78,0.8)' },
-  CONSUMED:  { label: 'Consumat',   color: 'rgba(245,230,232,0.3)' },
-  SOLD:      { label: 'Vândut',     color: 'rgba(212,175,55,0.7)' },
-  GIFTED:    { label: 'Dăruit',     color: 'rgba(196,69,105,0.7)' },
+  IN_CELLAR: { label: "În pivniță", color: "rgba(85,196,78,0.8)" },
+  CONSUMED: { label: "Consumat", color: "rgba(245,230,232,0.3)" },
+  SOLD: { label: "Vândut", color: "rgba(212,175,55,0.7)" },
+  GIFTED: { label: "Dăruit", color: "rgba(196,69,105,0.7)" },
 };
 
 export default function WineCard({ wine }) {
-  const type   = TYPE_CONFIG[wine.type]     ?? TYPE_CONFIG.RED;
+  const type = TYPE_CONFIG[wine.type] ?? TYPE_CONFIG.RED;
   const status = STATUS_CONFIG[wine.status] ?? STATUS_CONFIG.IN_CELLAR;
-  const stars  = Array.from({ length: 5 }, (_, i) => i < (wine.rating ?? 0));
+  const stars = Array.from({ length: 5 }, (_, i) => i < (wine.rating ?? 0));
 
   const hasDrinkWindow = wine.drinkFrom || wine.drinkUntil;
-  const hasAromas      = wine.aromaProfile?.length > 0;
+  const hasAromas = wine.aromaProfile?.length > 0;
 
   return (
     <>
@@ -110,76 +141,137 @@ export default function WineCard({ wine }) {
         <div className="wc-image">
           <div className="wc-image-bg" />
           {wine.labelImageUrl || wine.bottleImageUrl ? (
-            <img src={wine.labelImageUrl || wine.bottleImageUrl} alt={wine.name} className="wc-img" />
+            <img
+              src={getDisplayImageUrl(
+                wine.labelImageUrl || wine.bottleImageUrl,
+              )}
+              alt={wine.name}
+              className="wc-img"
+            />
           ) : (
             <span className="wc-bottle-icon">🍷</span>
           )}
-          <div className="wc-type-badge" style={{ background: type.bg, border: `1px solid ${type.border}` }}>
+          <div
+            className="wc-type-badge"
+            style={{ background: type.bg, border: `1px solid ${type.border}` }}>
             <div className="wc-type-dot" style={{ background: type.dot }} />
             {type.label}
           </div>
           {wine.isFavorite && <div className="wc-favorite">❤️</div>}
-          {!wine.isFavorite && wine.quantity > 1 && <div className="wc-qty">×{wine.quantity}</div>}
+          {!wine.isFavorite && wine.quantity > 1 && (
+            <div className="wc-qty">×{wine.quantity}</div>
+          )}
         </div>
 
         <div className="wc-body">
           <div className="wc-name">{wine.name}</div>
           <div className="wc-producer">
-            {[wine.producer, wine.region, wine.country].filter(Boolean).join(' · ') || 'Producător necunoscut'}
+            {[wine.producer, wine.region, wine.country]
+              .filter(Boolean)
+              .join(" · ") || "Producător necunoscut"}
           </div>
 
           <div className="wc-meta">
-            {wine.vintage && <span className="wc-meta-item">{wine.vintage}</span>}
-            {wine.vintage && wine.alcoholPercentage && <div className="wc-meta-sep" />}
-            {wine.alcoholPercentage && <span className="wc-meta-item">{wine.alcoholPercentage}% alc.</span>}
-            {wine.alcoholPercentage && wine.bottleSize && <div className="wc-meta-sep" />}
-            {wine.bottleSize && <span className="wc-meta-item">{wine.bottleSize}</span>}
+            {wine.vintage && (
+              <span className="wc-meta-item">{wine.vintage}</span>
+            )}
+            {wine.vintage && wine.alcoholPercentage && (
+              <div className="wc-meta-sep" />
+            )}
+            {wine.alcoholPercentage && (
+              <span className="wc-meta-item">
+                {wine.alcoholPercentage}% alc.
+              </span>
+            )}
+            {wine.alcoholPercentage && wine.bottleSize && (
+              <div className="wc-meta-sep" />
+            )}
+            {wine.bottleSize && (
+              <span className="wc-meta-item">{wine.bottleSize}</span>
+            )}
           </div>
 
-     {hasDrinkWindow && (
-                <DrinkWindowBadge drinkFrom={wine.drinkFrom} drinkUntil={wine.drinkUntil} />
-              )}
+          {hasDrinkWindow && (
+            <DrinkWindowBadge
+              drinkFrom={wine.drinkFrom}
+              drinkUntil={wine.drinkUntil}
+            />
+          )}
           {/* Arome + Drink Window — same row */}
           {(hasAromas || hasDrinkWindow) && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', marginBottom: '0.6rem', alignItems: 'center' }}>
-              {hasAromas && wine.aromaProfile.slice(0, 3).map(aroma => {
-                const colors = {
-                  default: { bg: 'rgba(196,69,105,0.08)', border: 'rgba(196,69,105,0.2)', color: 'rgba(196,69,105,0.8)' }
-                };
-                return (
-                  <span key={aroma} style={{
-                    padding: '0.12rem 0.45rem', borderRadius: '20px',
-                    background: 'rgba(196,69,105,0.07)', border: '1px solid rgba(196,69,105,0.15)',
-                    fontSize: '0.6rem', color: 'rgba(245,230,232,0.5)',
-                    fontFamily: "'Jost', sans-serif", fontWeight: 300,
-                  }}>{aroma}</span>
-                );
-              })}
-           
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "0.25rem",
+                marginBottom: "0.6rem",
+                alignItems: "center",
+              }}>
+              {hasAromas &&
+                wine.aromaProfile.slice(0, 3).map((aroma) => {
+                  const colors = {
+                    default: {
+                      bg: "rgba(196,69,105,0.08)",
+                      border: "rgba(196,69,105,0.2)",
+                      color: "rgba(196,69,105,0.8)",
+                    },
+                  };
+                  return (
+                    <span
+                      key={aroma}
+                      style={{
+                        padding: "0.12rem 0.45rem",
+                        borderRadius: "20px",
+                        background: "rgba(196,69,105,0.07)",
+                        border: "1px solid rgba(196,69,105,0.15)",
+                        fontSize: "0.6rem",
+                        color: "rgba(245,230,232,0.5)",
+                        fontFamily: "'Jost', sans-serif",
+                        fontWeight: 300,
+                      }}>
+                      {aroma}
+                    </span>
+                  );
+                })}
+
               {hasAromas && wine.aromaProfile.length > 3 && (
-                <span style={{
-                  padding: '0.12rem 0.4rem', borderRadius: '20px',
-                  background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
-                  fontSize: '0.6rem', color: 'rgba(245,230,232,0.2)',
-                  fontFamily: "'Jost', sans-serif",
-                }}>+{wine.aromaProfile.length - 3}</span>
+                <span
+                  style={{
+                    padding: "0.12rem 0.4rem",
+                    borderRadius: "20px",
+                    background: "rgba(255,255,255,0.03)",
+                    border: "1px solid rgba(255,255,255,0.07)",
+                    fontSize: "0.6rem",
+                    color: "rgba(245,230,232,0.2)",
+                    fontFamily: "'Jost', sans-serif",
+                  }}>
+                  +{wine.aromaProfile.length - 3}
+                </span>
               )}
-            
             </div>
           )}
 
-          <div className="wc-footer" style={{ marginTop: 'auto' }}>
+          <div className="wc-footer" style={{ marginTop: "auto" }}>
             <div className="wc-stars">
-              {wine.rating
-                ? stars.map((filled, i) => (
-                    <span key={i} className={`wc-star ${filled ? '' : 'wc-star-empty'}`}>★</span>
-                  ))
-                : <span className="wc-no-rating">Neevaluat</span>
-              }
+              {wine.rating ? (
+                stars.map((filled, i) => (
+                  <span
+                    key={i}
+                    className={`wc-star ${filled ? "" : "wc-star-empty"}`}>
+                    ★
+                  </span>
+                ))
+              ) : (
+                <span className="wc-no-rating">Neevaluat</span>
+              )}
             </div>
             <div className="wc-right">
-              {wine.purchasePrice && <span className="wc-price">{wine.purchasePrice} €</span>}
-              <span className="wc-status" style={{ color: status.color }}>{status.label}</span>
+              {wine.purchasePrice && (
+                <span className="wc-price">{wine.purchasePrice} €</span>
+              )}
+              <span className="wc-status" style={{ color: status.color }}>
+                {status.label}
+              </span>
             </div>
           </div>
         </div>
