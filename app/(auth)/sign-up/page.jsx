@@ -33,19 +33,23 @@ export default function SignUpPage() {
       return;
     }
     setLoading(true);
-    const { error } = await signUp.email({
-      name: form.name,
-      email: form.email,
-      password: form.password,
-      callbackURL: "/dashboard",
-    });
-    if (error) {
-      toast.error(error.message ?? "Eroare la înregistrare");
+    try {
+      const { error } = await signUp.email({
+        name: form.name,
+        email: form.email,
+        password: form.password,
+      });
+      if (error) {
+        toast.error(error.message ?? "Eroare la înregistrare");
+        setLoading(false);
+        return;
+      }
+      toast.success("Cont creat cu succes!");
+      router.replace("/dashboard");
+    } catch (error) {
+      toast.error(error?.message ?? "Eroare la înregistrare");
       setLoading(false);
-      return;
     }
-    toast.success("Cont creat cu succes!");
-    router.push("/dashboard");
   };
 
   return (

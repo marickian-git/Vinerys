@@ -20,18 +20,22 @@ export default function SignInPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await signIn.email({
-      email: form.email,
-      password: form.password,
-      callbackURL: "/dashboard",
-    });
-    if (error) {
-      toast.error(error.message ?? "Eroare la autentificare");
+    try {
+      const { error } = await signIn.email({
+        email: form.email,
+        password: form.password,
+      });
+      if (error) {
+        toast.error(error.message ?? "Eroare la autentificare");
+        setLoading(false);
+        return;
+      }
+      toast.success("Bine ai venit!");
+      router.replace("/dashboard");
+    } catch (error) {
+      toast.error(error?.message ?? "Eroare la autentificare");
       setLoading(false);
-      return;
     }
-    toast.success("Bine ai venit!");
-    router.push("/dashboard");
   };
 
   return (
