@@ -4,6 +4,8 @@ import Link from "next/link";
 import { DrinkWindowBadge } from "@/components/wines/DrinkWindowBadge";
 import AromaProfile from "@/components/wines/AromaProfile";
 import { getDisplayImageUrl } from "@/utils/mediaUrl";
+import { useState } from "react";
+import WinePourLoader from "@/components/wines/WinePourLoader";
 
 const TYPE_CONFIG = {
   RED: {
@@ -52,6 +54,7 @@ const STATUS_CONFIG = {
 };
 
 export default function WineCard({ wine }) {
+  const [imageLoaded, setImageLoaded] = useState(false);
   const type = TYPE_CONFIG[wine.type] ?? TYPE_CONFIG.RED;
   const status = STATUS_CONFIG[wine.status] ?? STATUS_CONFIG.IN_CELLAR;
   const stars = Array.from({ length: 5 }, (_, i) => i < (wine.rating ?? 0));
@@ -141,13 +144,19 @@ export default function WineCard({ wine }) {
         <div className="wc-image">
           <div className="wc-image-bg" />
           {wine.labelImageUrl || wine.bottleImageUrl ? (
-            <img
-              src={getDisplayImageUrl(
-                wine.labelImageUrl || wine.bottleImageUrl,
-              )}
-              alt={wine.name}
-              className="wc-img"
-            />
+            <>
+              {!imageLoaded && <WinePourLoader label="Se încarcă..." />}
+              <img
+                src={getDisplayImageUrl(
+                  wine.labelImageUrl || wine.bottleImageUrl,
+                )}
+                alt={wine.name}
+                className="wc-img"
+                onLoad={() => setImageLoaded(true)}
+                onError={() => setImageLoaded(true)}
+                style={{ opacity: imageLoaded ? 0.85 : 0 }}
+              />
+            </>
           ) : (
             <span className="wc-bottle-icon">🍷</span>
           )}

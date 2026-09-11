@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "motion/react";
 import toast from "react-hot-toast";
 import { appPath } from "@/utils/appPath";
 import { getDisplayImageUrl } from "@/utils/mediaUrl";
+import WinePourLoader from "@/components/wines/WinePourLoader";
 
 const ALLOWED = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const MAX_MB = 5;
@@ -384,9 +385,7 @@ export default function ImageUpload({
 
           {uploading && (
             <>
-              <div className="iu-spinner">
-                <div className="iu-spin" />
-              </div>
+              <WinePourLoader label="Se încarcă în pivniță..." />
               <div className="iu-progress">
                 <div
                   className="iu-progress-fill"
