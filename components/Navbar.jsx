@@ -29,7 +29,6 @@ export default function Navbar() {
   const isActive = (href) =>
     pathname === href || pathname.startsWith(href + "/");
   const isAuthPage = pathname === "/sign-in" || pathname === "/sign-up";
-  if (isAuthPage) return null;
 
   useEffect(() => {
     const handler = (e) => {
@@ -40,6 +39,8 @@ export default function Navbar() {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  if (isAuthPage) return null;
 
   const initial = session?.user?.name?.charAt(0).toUpperCase() ?? "?";
   const avatarSrc = session?.user?.image;

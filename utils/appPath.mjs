@@ -5,7 +5,7 @@ export function normalizeBasePath(value) {
 }
 
 export function configuredBasePath(env = process.env) {
-    return normalizeBasePath(env.NEXT_PUBLIC_BASE_URL ?? env.BASE_URL ?? '');
+    return normalizeBasePath(env.NEXT_PUBLIC_BASE_URL ?? env.BASE_URL ?? process.env.NEXT_PUBLIC_BASE_URL ?? '');
 }
 
 export function configuredAppURL(env = process.env) {
