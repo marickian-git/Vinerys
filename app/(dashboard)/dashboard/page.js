@@ -594,8 +594,8 @@ export default async function DashboardPage() {
             <KpiCard
               iconEl={<IconBottles color="#c44569" />}
               value={stats.totalBottles}
-              label="Sticle totale"
-              sub={`${inCellar} în pivniță`}
+              label="Sticle în pivniță"
+              sub={`${inCellar} vinuri în pivniță`}
               accentColor="#c44569"
               iconBg="rgba(196,69,105,0.1)"
             />

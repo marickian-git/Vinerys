@@ -6,7 +6,6 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import prisma from "./db";
 import { auth } from "./auth";
-import { configuredAuthURL } from "./appPath.mjs";
 import { decryptSecret, encryptSecret } from "./aiSecrets";
 import { getProviderDefinition, isKnownProvider, listProviderDefinitions } from "./aiProviderRegistry";
 import { validateProviderBaseUrl } from "./aiUrlSecurity";
@@ -26,6 +25,34 @@ async function getCurrentUser() {
   }
 
   return session.user;
+}
+
+// ─────────────────────────────────────────
+// HELPER - istoric acțiuni (WineLog)
+// ─────────────────────────────────────────
+
+function serializeForLog(value) {
+  return value instanceof Date ? value.toISOString() : value ?? null;
+}
+
+function diffWine(before, after) {
+  const changes = {};
+  for (const [key, next] of Object.entries(after)) {
+    if (key === 'updatedAt' || !(key in before)) continue;
+    const from = serializeForLog(before[key]);
+    const to = serializeForLog(next);
+    if (JSON.stringify(from) !== JSON.stringify(to)) changes[key] = { from, to };
+  }
+  return changes;
+}
+
+async function logWineAction({ wineId, userId, action, details }) {
+  try {
+    await prisma.wineLog.create({ data: { wineId, userId, action, details } });
+  } catch (error) {
+    // Istoricul nu trebuie să blocheze acțiunea principală
+    console.error(`[wine-log] ${action} failed:`, error.message);
+  }
 }
 
 // ─────────────────────────────────────────
@@ -172,7 +199,7 @@ export async function createWine(formData) {
     return { error: parsed.error.flatten().fieldErrors };
   }
 
-  await prisma.wine.create({
+  const wine = await prisma.wine.create({
     data: {
       ...parsed.data,
       userId: user.id,
@@ -181,6 +208,13 @@ export async function createWine(formData) {
       drinkFrom: parsed.data.drinkFrom ?? null,
       drinkUntil: parsed.data.drinkUntil ?? null,
     },
+  });
+
+  await logWineAction({
+    wineId: wine.id,
+    userId: user.id,
+    action: 'ADDED',
+    details: { name: wine.name, quantity: wine.quantity, purchasePrice: wine.purchasePrice },
   });
 
   revalidatePath("/wines");
@@ -213,7 +247,7 @@ export async function updateWine(id, formData) {
     return { error: parsed.error.flatten().fieldErrors };
   }
 
-  await prisma.wine.update({
+  const updated = await prisma.wine.update({
     where: { id },
     data: {
       ...parsed.data,
@@ -223,6 +257,11 @@ export async function updateWine(id, formData) {
       drinkUntil: parsed.data.drinkUntil ?? null,
     },
   });
+
+  const changes = diffWine(existing, updated);
+  if (Object.keys(changes).length) {
+    await logWineAction({ wineId: id, userId: user.id, action: 'UPDATED', details: { changes } });
+  }
 
   revalidatePath("/wines");
   revalidatePath(`/wines/${id}`);
@@ -236,6 +275,13 @@ export async function deleteWine(id) {
   if (!wine) throw new Error("Vinul nu a fost găsit");
   if (wine.userId !== user.id) throw new Error("Acces interzis");
 
+  // Log-ul rămâne după ștergere (wineId devine null prin onDelete: SetNull)
+  await logWineAction({
+    wineId: id,
+    userId: user.id,
+    action: 'DELETE',
+    details: { name: wine.name, producer: wine.producer, vintage: wine.vintage, quantity: wine.quantity },
+  });
   await prisma.wine.delete({ where: { id } });
 
   revalidatePath("/wines");
@@ -253,8 +299,60 @@ export async function toggleFavorite(id) {
     data: { isFavorite: !wine.isFavorite },
   });
 
+  await logWineAction({
+    wineId: id,
+    userId: user.id,
+    action: 'UPDATED',
+    details: { changes: { isFavorite: { from: wine.isFavorite, to: !wine.isFavorite } } },
+  });
+
   revalidatePath("/wines");
   revalidatePath(`/wines/${id}`);
+}
+
+export async function consumeWine(id, quantity = 1) {
+  const user = await getCurrentUser();
+  const amount = Number.parseInt(quantity, 10);
+  if (!Number.isInteger(amount) || amount < 1) return { error: 'Cantitate invalidă' };
+
+  const result = await prisma.$transaction(async (tx) => {
+    const wine = await tx.wine.findFirst({ where: { id, userId: user.id } });
+    if (!wine) return { error: 'Vinul nu a fost găsit' };
+
+    // Decrement condiționat: evită cantități negative la click-uri simultane
+    const { count } = await tx.wine.updateMany({
+      where: { id, userId: user.id, quantity: { gte: amount } },
+      data: { quantity: { decrement: amount } },
+    });
+    if (count === 0) return { error: `Mai ai doar ${wine.quantity} sticl${wine.quantity === 1 ? 'ă' : 'e'}` };
+
+    const remaining = wine.quantity - amount;
+    if (remaining === 0) {
+      await tx.wine.update({
+        where: { id },
+        data: { status: 'CONSUMED', consumptionDate: new Date() },
+      });
+    }
+
+    // Direct (nu prin logWineAction): o eroare înghițită ar lăsa tranzacția Postgres abortată
+    await tx.wineLog.create({
+      data: {
+        wineId: id,
+        userId: user.id,
+        action: 'CONSUMED',
+        details: { quantityConsumed: amount, remainingQuantity: remaining },
+      },
+    });
+
+    return { success: true, remaining };
+  });
+
+  if (result.success) {
+    revalidatePath("/wines");
+    revalidatePath(`/wines/${id}`);
+    revalidatePath("/dashboard");
+  }
+  return result;
 }
 
 // ─────────────────────────────────────────
@@ -264,20 +362,15 @@ export async function toggleFavorite(id) {
 export async function getDashboardStats() {
   const user = await getCurrentUser();
 
-  const [wines, totalQuantity, totalValue] = await Promise.all([
-    prisma.wine.findMany({
-      where: { userId: user.id },
-      select: { type: true, country: true, status: true, quantity: true, purchasePrice: true, rating: true },
-    }),
-    prisma.wine.aggregate({
-      where: { userId: user.id },
-      _sum: { quantity: true },
-    }),
-    prisma.wine.aggregate({
-      where: { userId: user.id },
-      _sum: { estimatedValue: true },
-    }),
-  ]);
+  const wines = await prisma.wine.findMany({
+    where: { userId: user.id },
+    select: { type: true, status: true, quantity: true, estimatedValue: true },
+  });
+
+  // Sticle și valoare = doar ce e fizic în pivniță; valoarea e per sticlă × cantitate
+  const inCellar = wines.filter(w => w.status === 'IN_CELLAR');
+  const totalBottles = inCellar.reduce((sum, w) => sum + (w.quantity ?? 0), 0);
+  const totalValue = inCellar.reduce((sum, w) => sum + (w.estimatedValue ?? 0) * (w.quantity ?? 0), 0);
 
   const byType = wines.reduce((acc, w) => {
     acc[w.type] = (acc[w.type] ?? 0) + 1;
@@ -290,8 +383,8 @@ export async function getDashboardStats() {
   }, {});
 
   return {
-    totalBottles: totalQuantity._sum.quantity ?? 0,
-    totalValue: totalValue._sum.estimatedValue ?? 0,
+    totalBottles,
+    totalValue,
     totalWines: wines.length,
     byType,
     byStatus,
@@ -350,16 +443,13 @@ export async function updatePassword(formData) {
   }
 
   try {
-    const res = await fetch(`${configuredAuthURL()}/change-password`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ currentPassword, newPassword }),
+    await auth.api.changePassword({
+      body: { currentPassword, newPassword, revokeOtherSessions: true },
+      headers: await headers(),
     });
-    if (!res.ok) {
-      const data = await res.json();
-      return { error: data.message || 'Parola curentă e incorectă' };
-    }
-  } catch {
+  } catch (error) {
+    if (error?.body?.code === 'INVALID_PASSWORD') return { error: 'Parola curentă e incorectă' };
+    console.error('[password] change failed:', error?.body?.code || error?.message);
     return { error: 'Eroare la schimbarea parolei' };
   }
 
