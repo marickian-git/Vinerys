@@ -12,6 +12,7 @@ import { getProviderDefinition, isKnownProvider, listProviderDefinitions } from 
 import { validateProviderBaseUrl } from "./aiUrlSecurity";
 import { listProviderModels } from "./aiProviders";
 import { shareUrlFor } from "./share";
+import { LIMITS, rateLimit, tooManyRequestsMessage } from "./rateLimit";
 import { listUserObjects, objectKeyFromUrl, removeObjects } from "./storage";
 
 // ─────────────────────────────────────────
@@ -472,6 +473,9 @@ export async function updatePassword(formData) {
   if (newPassword !== confirmPassword) {
     return { error: 'Parolele nu coincid' };
   }
+
+  const limited = rateLimit(`password:${user.id}`, LIMITS.passwordChange);
+  if (!limited.ok) return { error: tooManyRequestsMessage(limited.retryAfter) };
 
   try {
     await auth.api.changePassword({

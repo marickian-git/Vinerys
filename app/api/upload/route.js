@@ -5,6 +5,7 @@ import sharp from 'sharp';
 import { auth } from '@/utils/auth';
 import { BUCKET, ensureBucket, getMinioClient, getPublicUrl } from '@/utils/minio';
 import { UPLOAD_FOLDERS } from '@/utils/storage';
+import { LIMITS, rateLimit, tooManyRequestsMessage } from '@/utils/rateLimit';
 
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB la intrare; după procesare rămân câteva sute de KB
 const MAX_DIMENSION = 2000;
@@ -13,6 +14,14 @@ export async function POST(request) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) {
     return NextResponse.json({ error: 'Neautentificat' }, { status: 401 });
+  }
+
+  const limited = rateLimit(`upload:${session.user.id}`, LIMITS.upload);
+  if (!limited.ok) {
+    return NextResponse.json(
+      { error: tooManyRequestsMessage(limited.retryAfter) },
+      { status: 429, headers: { 'Retry-After': String(limited.retryAfter) } },
+    );
   }
 
   let file, folder;

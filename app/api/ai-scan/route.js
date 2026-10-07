@@ -5,6 +5,7 @@ import { auth } from '@/utils/auth';
 import prisma from '@/utils/db';
 import { analyzeWineLabelEnsemble, AI_PROVIDERS } from '@/utils/aiProviders';
 import { decryptSecret } from '@/utils/aiSecrets';
+import { LIMITS, rateLimit, tooManyRequestsMessage } from '@/utils/rateLimit';
 
 function publicProviderErrors(items = []) {
   return items.map(({ raw, parsed, normalized, ...item }) => item);
@@ -23,6 +24,14 @@ export async function POST(request) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) {
     return NextResponse.json({ error: 'Neautentificat' }, { status: 401 });
+  }
+
+  const limited = rateLimit(`ai-scan:${session.user.id}`, LIMITS.aiScan);
+  if (!limited.ok) {
+    return NextResponse.json(
+      { error: tooManyRequestsMessage(limited.retryAfter) },
+      { status: 429, headers: { 'Retry-After': String(limited.retryAfter) } },
+    );
   }
 
   const operationId = randomUUID();
