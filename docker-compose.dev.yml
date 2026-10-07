@@ -1,9 +1,6 @@
-version: '3.8'
-
 services:
   postgres:
-    image: postgres:15-alpine
-    platform: linux/arm64
+    image: postgres:17-alpine
     container_name: vinerys-db-dev
     ports:
       - "5433:5432"  # Folosim 5433 ca să nu intre în conflict cu Postgres local
@@ -21,7 +18,6 @@ services:
 
   minio:
     image: minio/minio
-    platform: linux/arm64
     container_name: vinerys-minio-dev
     command: server /data --console-address ":9001"
     ports:

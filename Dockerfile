@@ -73,11 +73,15 @@ ENV BASE_URL=$BASE_URL
 ARG NEXT_PUBLIC_APP_URL=https://casa-spiridus.go.ro/crama
 ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
 
+ARG APP_VERSION=dev
+ENV APP_VERSION=$APP_VERSION
+
 RUN groupadd --system --gid 1001 nodejs \
     && useradd --system --uid 1001 --gid 1001 nextjs
 
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/node_modules ./node_modules
 
@@ -98,7 +102,8 @@ HEALTHCHECK \
     --timeout=10s \
     --start-period=40s \
     --retries=3 \
-    CMD curl -f http://localhost:3000/crama/api/health || exit 1
+    CMD curl -f "http://localhost:3000${BASE_URL}/health" || exit 1
 
-CMD ["node", "server.js"]
+# Migrațiile se aplică la pornire; dacă eșuează, containerul nu pornește (nu rulăm cod nou pe schemă veche)
+CMD ["sh", "-c", "npx prisma migrate deploy && exec node server.js"]
  
