@@ -219,7 +219,7 @@ Obiectiv: validăm înainte să construim; construim doar ce are cerere confirma
 - [ ] CI verde pe PR-ul `fix/phase-0-stabilization` → `main`
 - [ ] Pe server, în `.env.production`: `MINIO_ENDPOINT`, `MINIO_PORT`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY` **chiar setate**. Codul vechi avea fallback-uri (`casa-spiridus.go.ro`, `9010`, `minioadmin`), codul nou nu mai are, deci fără ele upload-ul și imaginile cad
 - [ ] Reverse proxy: `proxy_set_header X-Real-IP $remote_addr;` pe locația `/crama`. Altfel toți utilizatorii par să vină de la același IP și împart limita de 5 login-uri/minut
-- [ ] (Opțional, pentru email) `SMTP_HOST=smtp-relay.brevo.com`, `SMTP_PORT=587`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM` în `.env.production`
+- [ ] Email: copiază din `.env` local în `.env.production` cele 5 variabile `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM` (Brevo e configurat și testat, blocarea pe IP e dezactivată)
 
 **Deja făcut pe DB-ul de producție** (compatibil cu codul vechi): migrațiile `share_opt_in` și `wine_log_baseline`, migrarea cheii AI, ștergerea imaginilor orfane. La pornire, `prisma migrate deploy` nu are nimic de aplicat.
 

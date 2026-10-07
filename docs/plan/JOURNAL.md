@@ -13,7 +13,17 @@
 
 ---
 
-## 2026-10-07 — Email, orfane, 0.3 Calitate și CI
+## 2026-10-07 — Email Brevo configurat și verificat
+
+**Făcut:** `.env` local cu `SMTP_HOST/PORT/USER/PASS` (Brevo) și `EMAIL_FROM="Vinerys <marickian21@gmail.com>"`. Autentificarea SMTP merge. Test real prin aplicație: sign-up pe `marickian21+vinerys-test@gmail.com` a trimis emailul de confirmare, iar cererea de resetare pe aceeași adresă emailul de resetare. Contul de test a fost șters.
+
+**Învățat / capcane:**
+- Conturile Brevo noi au „Authorised IPs” activ: `525 5.7.1 Unauthorized IP address`. Am dezactivat blocarea, fiindcă serverul de pe `go.ro` are probabil IP dinamic.
+- Cheia corectă e cea SMTP (`xsmtpsib-…`), nu cheia API (`xkeysib-…`). Login-ul SMTP e `…@smtp-brevo.com`, nu emailul contului.
+- Expeditor `@gmail.com`: nu se poate autentifica (DKIM/DMARC). Brevo poate rescrie „From”, iar emailurile pot ajunge în Spam. Se rezolvă cu domeniu propriu (BIZ-002).
+- Aceleași 5 variabile trebuie puse și în `.env.production` pe server.
+
+
 
 **Făcut:**
 - **Imagini orfane:** am descărcat local cele 23 (`../vinerys-backups/orphan-images-20261007/`), apoi le-am șters. Bucket-ul are 67 de obiecte, toate referite.
