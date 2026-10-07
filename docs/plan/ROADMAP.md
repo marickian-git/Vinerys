@@ -140,7 +140,8 @@ Pentru fiecare câmp din model decidem cum devine vizual:
 - [ ] Detaliu vin: foto-erou, fereastră de consum vizuală, istoric degustări
 - [ ] Adăugare camera-first: poză → confirmare (formularul complet doar la nevoie)
 - [ ] Setări / Profil / Agenți AI
-- [ ] Auth (sign-in/up), pagina publică, 404/eroare/offline
+- [ ] Auth (sign-in/up, forgot/reset password), pagina publică, 404/eroare/offline
+- [ ] Șabloane email pe noul design (confirmare email, resetare parolă; RO + EN) — DESIGN-010
 - [ ] Spargere fișiere mari: `WineForm` (1222 linii), dashboard (909), `AISettingsSection` (953)
 
 ---
