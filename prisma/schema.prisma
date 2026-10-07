@@ -18,7 +18,8 @@ model User {
   image         String?
   role          Role      @default(USER)
   cellarName    String?
-  shareId       String?   @unique @default(cuid())
+  shareId       String?   @unique
+  shareEnabled  Boolean   @default(false)
   aiProvider    String?   @default("gemini")
   aiApiKey      String?
   createdAt     DateTime  @default(now())

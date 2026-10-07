@@ -1,5 +1,6 @@
 "use server";
 
+import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
@@ -10,6 +11,7 @@ import { decryptSecret, encryptSecret } from "./aiSecrets";
 import { getProviderDefinition, isKnownProvider, listProviderDefinitions } from "./aiProviderRegistry";
 import { validateProviderBaseUrl } from "./aiUrlSecurity";
 import { listProviderModels } from "./aiProviders";
+import { shareUrlFor } from "./share";
 
 // ─────────────────────────────────────────
 // HELPER - obține userul curent
@@ -608,6 +610,43 @@ export async function updateCellarName(name) {
 
   revalidatePath('/', 'layout');
   return { success: true };
+}
+
+// ─────────────────────────────────────────
+// PARTAJARE COLECȚIE (opt-in)
+// ─────────────────────────────────────────
+
+const newShareId = () => randomBytes(16).toString("base64url");
+
+export async function setCollectionSharing(enabled) {
+  const user = await getCurrentUser();
+  const current = await prisma.user.findUnique({ where: { id: user.id }, select: { shareId: true } });
+
+  const updated = await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      shareEnabled: Boolean(enabled),
+      // Prima activare generează linkul; la reactivare se păstrează cel vechi
+      ...(enabled && !current?.shareId ? { shareId: newShareId() } : {}),
+    },
+    select: { shareId: true, shareEnabled: true },
+  });
+
+  revalidatePath("/settings");
+  return { success: true, enabled: updated.shareEnabled, shareUrl: shareUrlFor(updated.shareId) };
+}
+
+export async function regenerateShareLink() {
+  const user = await getCurrentUser();
+  // Linkul vechi devine invalid imediat
+  const updated = await prisma.user.update({
+    where: { id: user.id },
+    data: { shareId: newShareId() },
+    select: { shareId: true, shareEnabled: true },
+  });
+
+  revalidatePath("/settings");
+  return { success: true, enabled: updated.shareEnabled, shareUrl: shareUrlFor(updated.shareId) };
 }
 
 export async function updateAISettings(provider, apiKey) {

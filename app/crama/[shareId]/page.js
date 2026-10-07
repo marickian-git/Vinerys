@@ -4,8 +4,8 @@ import WineCard from '@/components/wines/WineCard';
 
 export async function generateMetadata({ params }) {
   const { shareId } = await params;
-  const user = await prisma.user.findUnique({
-    where: { shareId },
+  const user = await prisma.user.findFirst({
+    where: { shareId, shareEnabled: true },
     select: { cellarName: true, name: true },
   });
   if (!user) return { title: 'Colecție — Vinerys' };
@@ -18,8 +18,8 @@ const TYPE_COLORS = { RED: '#8b1a2e', WHITE: '#d4af37', ROSE: '#c44569', SPARKLI
 export default async function PublicCollectionPage({ params }) {
   const { shareId } = await params;
 
-  const user = await prisma.user.findUnique({
-    where: { shareId },
+  const user = await prisma.user.findFirst({
+    where: { shareId, shareEnabled: true },
     select: { id: true, name: true, cellarName: true, createdAt: true },
   });
 
@@ -207,7 +207,7 @@ export default async function PublicCollectionPage({ params }) {
         </div>
 
         <div className="pub-footer">
-          <p>Colecție gestionată cu <a href="/">Vinerys</a> · Îți place? <a href="/sign-up">Creează-ți propria pivniță digitală</a></p>
+          <p>Colecție gestionată cu <Link href="/">Vinerys</Link> · Îți place? <Link href="/sign-up">Creează-ți propria pivniță digitală</Link></p>
         </div>
       </div>
     </>

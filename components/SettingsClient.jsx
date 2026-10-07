@@ -11,6 +11,7 @@ import AISettingsSection from "@/components/AISettingsSection";
 
 export default function SettingsClient({
   shareUrl,
+  shareEnabled,
   aiProvider,
   aiHasKey,
   aiAgents,
@@ -194,12 +195,10 @@ export default function SettingsClient({
           </div>
 
           {/* Partajare colecție */}
-          {shareUrl && (
-            <div className="set-card">
-              <div className="set-card-title">🔗 Partajează colecția</div>
-              <ShareLinkSection shareUrl={shareUrl} />
-            </div>
-          )}
+          <div className="set-card">
+            <div className="set-card-title">🔗 Partajează colecția</div>
+            <ShareLinkSection initialUrl={shareUrl} initialEnabled={shareEnabled} />
+          </div>
 
           {/* Schimbare parolă */}
           <div className="set-card">
