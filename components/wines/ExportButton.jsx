@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { appPath } from '@/utils/appPath';
 
 const STATUS_OPTIONS = [
   { value: 'IN_CELLAR',  label: 'În pivniță' },
@@ -30,7 +31,7 @@ export default function ExportButton() {
     const params = new URLSearchParams({ format, filter });
     if (status) params.set('status', status);
 
-    const url = `/api/export?${params}`;
+    const url = appPath(`/api/export?${params}`);
 
     if (format === 'pdf') {
       window.open(url, '_blank');
