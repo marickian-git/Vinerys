@@ -71,7 +71,7 @@ Obiectiv: structura care susține design nou, multi-limbă, business și mobile 
 - [ ] Separare `Wine` (eticheta) / `Bottle` (exemplar: preț, locație, dată) / `Tasting` (degustare: notă, rating, mâncare, poze)
 - [ ] `Event` log ca sursă de adevăr pentru istoric și statistici
 - [ ] Migrare date existente fără pierderi + script de verificare
-- [ ] Normalizare și vocabulare canonice: țări, locații, arome, culoare derivată — DATA-010 (de creat pe GitHub)
+- [ ] Normalizare și vocabulare canonice: țări, locații, arome, culoare derivată — DATA-010 (#120)
 
 ### 1.3 Pipeline imagini `⬜`
 - [ ] `sharp`: resize + WebP + thumbnail la upload
@@ -88,6 +88,7 @@ Obiectiv: structura care susține design nou, multi-limbă, business și mobile 
 ### 1.5 AI găzduit `⬜`
 - [ ] Chei de platformă + cote per utilizator (necesar pentru utilizatori obișnuiți / business)
 - [ ] BYO keys rămâne opțiune avansată
+- [ ] Decupare automată sticlă/etichetă din fotografie + paletă pe vin — AI-014 (#121)
 - [ ] Cache după hash imagine + bază canonică de vinuri (al doilea scan = instant, gratuit)
 - [ ] Structured outputs native unde providerul suportă
 - [ ] Tracking cost per agent / per utilizator
@@ -120,8 +121,8 @@ Pentru fiecare câmp din model decidem cum devine vizual:
 | Pivnița întreagă | „Portretul pivniței”: o compoziție generativă unică per utilizator (tipuri, țări, vârste), folosită și pe pagina publică și în Wrapped |
 | Ora / sezonul | Ecranul Acasă se adaptează: seara „Ce bem diseară?”, vara rosé/alb în față, iarna roșii structurate |
 
-### 2.1 Direcție vizuală `⬜`
-- [ ] Machete construite pe datele reale din pivniță (vezi 2.0) pentru 2–3 direcții (A „Cramă de noapte”, B „Etichetă editorială”, C „Modern minimal”) pe 5 ecrane: Acasă, Pivniță, Detaliu vin, Sommelier, Scanare
+### 2.1 Direcție vizuală `🟨` (machete publicate, aștept alegerea D1)
+- [x] Machete construite pe datele reale din pivniță (vezi 2.0) pentru 2–3 direcții — [canvas privat](https://claude.ai/artifact/CAJw4MLMmbdk24wmFDwWJQ); Sommelier și Scanare se fac în direcția aleasă — (A „Cramă de noapte”, B „Etichetă editorială”, C „Modern minimal”) pe 5 ecrane: Acasă, Pivniță, Detaliu vin, Sommelier, Scanare
 - [ ] Alegere direcție → decizie D1
 
 ### 2.2 Design system `⬜`
@@ -216,7 +217,9 @@ Obiectiv: validăm înainte să construim; construim doar ce are cerere confirma
 
 ## ⚠️ Checklist la următorul deploy (push pe `main`)
 
-> **Status 2026-10-07: deploy amânat.** Utilizatorul nu poate face momentan pașii de pe server și scope-ul `workflow`. Lucrul continuă local pe `fix/phase-0-stabilization` (commit-uri, fără push). Lipsa variabilelor MinIO pe server nu strică aplicația: proxy-ul de imagini dă 404 și upload-ul dă eroare, dar restul merge.
+> **Status 2026-10-07 seara: PR #119 mergeuit (`1e76595`), CI verde, imaginea publicată pe Docker Hub. Pe Pi rulează încă versiunea veche (Watchtower n-a preluat-o). Testele de după deploy și mutarea issue-urilor pe „Done” se fac după update.**
+>
+> Istoric: deploy amânat inițial. Utilizatorul nu poate face momentan pașii de pe server și scope-ul `workflow`. Lucrul continuă local pe `fix/phase-0-stabilization` (commit-uri, fără push). Lipsa variabilelor MinIO pe server nu strică aplicația: proxy-ul de imagini dă 404 și upload-ul dă eroare, dar restul merge.
 
 **Infrastructură:** aplicația rulează pe un **Raspberry Pi 5 cu CasaOS** (container Docker din Docker Hub, actualizat de Watchtower). Variabilele de mediu le setează utilizatorul manual, în CasaOS.
 
@@ -269,7 +272,7 @@ Mapare suplimentară: 1.4 → M11 · 2.0–2.4 → M10 · 3.x → M12 · 5.x →
 
 | ID | Decizie | Status | Rezultat |
 |---|---|---|---|
-| D1 | Direcție vizuală (A/B/C) | ⬜ deschisă | — |
+| D1 | Direcție vizuală (A/B/C) | 🟨 machete gata | A Cramă de noapte · B Etichetă editorială · C Modern minimal |
 | D2 | Limbi inițiale | ✅ | RO + EN, structură extensibilă |
 | D3 | Tehnologie mobile | ⬜ deschisă | Recomandare: Expo + API v1 |
 | D4 | Provider email (reset parolă, notificări) | ⬜ deschisă | Ex: Resend / SMTP propriu |

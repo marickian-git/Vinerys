@@ -13,7 +13,30 @@
 
 ---
 
-## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub
+## 2026-10-07 — Merge Faza 0 + machete de design (DESIGN-002)
+
+**Făcut:**
+- **Merge PR #119** în `main` (`1e76595`), după erori interne GitHub (push/merge reîncercate automat, au trecut la a 4-a încercare). Primul run de pe `main` a fost anulat în timpul instalării Chromium (probabil instabilitatea GitHub de atunci). L-am repornit: **verde**, iar imaginea e publicată pe Docker Hub. La ~16:02 Pi-ul rula încă imaginea veche: `/crama/health` fără `db`/`version`, deci Watchtower nu o preluase.
+- **Machete:** [canvas privat](https://claude.ai/artifact/CAJw4MLMmbdk24wmFDwWJQ) cu 3 direcții × 3 ecrane, toate pe datele reale din Crama Spiridus:
+  - **A · Cramă de noapte:** dark bordo/auriu, Cormorant + Manrope. Sugestia serii cu curba de maturitate, „De băut curând” cu inele de urgență, zone cu sticle colorate, roată de arome.
+  - **B · Etichetă editorială:** hârtie, Instrument Serif + Plex Mono. Titlu de „ziar” pentru sugestia serii, calendarul de consum (sticle pe anul de final al ferestrei: 14 până la finalul lui 2027), lista vinurilor ca o carte de vinuri, detaliu ca o etichetă.
+  - **C · Modern minimal:** Geist, culoarea vine doar din vinuri. „Portretul pivniței” (29 de bare colorate, înălțimea = timpul rămas), treemap al zonelor (suprafața = sticle), fereastra ca celule pe ani, arome ca bare.
+- GitHub: #120 DATA-010 (normalizare), #121 AI-014 (decupare automată sticlă/etichetă), comentarii pe #86 și #90.
+- Branch nou de lucru: `feat/phase-2-design` (din `main`).
+
+**Decizii:**
+- Machetele **nu folosesc fotografiile reale**: sunt scene din casă (TV, interior, curte). Sticlele sunt desenate, colorate după tip și vârstă.
+- Sommelier și Scanare se desenează după ce se alege direcția (D1).
+
+**Învățat / capcane:**
+- Pozele de etichetă sunt fotografii întregi, deci paleta extrasă e a fundalului. Ideea „culoare din etichetă” depinde de decupare (AI-014). Același lucru contează și pentru confidențialitatea paginii publice.
+- În zsh, un `$3` necitat nu se desparte în mai multe argumente (`--label data` devine un singur flag). Flag-urile se scriu explicit.
+
+**Rămas / next:**
+- Utilizatorul alege direcția (sau o combinație) → D1.
+- Update pe Pi (Watchtower / manual în CasaOS) → teste după deploy → issue-uri pe „Done”.
+
+ + merge blocat de GitHub
 
 **Făcut:**
 - `docs/plan/DATA-REPORT.md`: interogări read-only pe datele reale.
