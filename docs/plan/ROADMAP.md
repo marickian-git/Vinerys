@@ -30,13 +30,15 @@ Detalii probleme: vezi `AUDIT.md`.
 - [x] Calcul corect „Valoare colecție” (× cantitate, doar `IN_CELLAR`) — B4
 - [x] Scriere `WineLog` la create/update/delete/favorite — B5
 
-### 0.2 Securitate `⬜`
-- [ ] Colecție publică opt-in: toggle + regenerare link — B6
-- [ ] Escaping HTML în export PDF — B7
-- [ ] MinIO: fără credențiale default, whitelist pentru `folder`, ștergere imagini la delete — B8
-- [ ] Migrare `aiApiKey` plaintext → `AIAgent` criptat, apoi drop coloană — B9
-- [ ] Rate limiting (auth, ai-scan, upload) — B10
+### 0.2 Securitate `🟨` (gata, mai puțin email; GitHub #6–#14)
+- [x] Colecție publică opt-in: toggle + regenerare link — B6
+- [x] Escaping HTML în export PDF — B7
+- [x] MinIO: fără credențiale default, whitelist pentru `folder`, ștergere imagini la delete — B8
+- [x] Migrare `aiApiKey` plaintext → `AIAgent` criptat, apoi drop coloană — B9
+- [x] Rate limiting (auth, ai-scan, upload) — B10
+- [x] Procesare imagini cu sharp (WebP, fără EXIF, thumbnails) — SEC-004, tras din 1.3
 - [ ] Reset parolă + verificare email (necesită provider email → decizie D4) — B10
+- [ ] Ștergerea celor 23 imagini orfane (44 MB) — aștept confirmare
 
 ### 0.3 Calitate și CI `⬜`
 - [ ] **DB locală pentru dev** (docker-compose.dev.yml + seed): acum `.env` pointează la DB-ul de producție — B15
@@ -207,6 +209,17 @@ Obiectiv: validăm înainte să construim; construim doar ce are cerere confirma
 - [ ] 6.4 Publicare App Store + Google Play
 
 ---
+
+## ⚠️ Checklist la următorul deploy (push pe `main`)
+
+Codul de pe `fix/phase-0-stabilization` presupune următoarele. Le bifăm la deploy:
+- [ ] `.env.production` pe server: `MINIO_ENDPOINT`, `MINIO_PORT`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY` setate (nu mai există fallback-uri); `MINIO_USE_SSL=false` (sau `true` dacă MinIO e pe TLS); `MINIO_PUBLIC_URL` poate rămâne
+- [ ] Reverse proxy-ul trimite `X-Real-IP $remote_addr` (rate limiting pe IP real)
+- [ ] Migrațiile sunt **deja aplicate** pe DB (`share_opt_in`); `prisma migrate deploy` nu are nimic de făcut
+- [ ] După deploy, verificăm: imaginile se încarcă prin `/crama/api/media/...`, consum, share toggle, export
+- [ ] **După** ce noul cod rulează: scoatem policy-ul public de pe bucket-ul MinIO (imaginile se servesc doar prin proxy)
+- [ ] **După** ce noul cod rulează: migrația care șterge coloana `user.aiApiKey` (codul vechi o mai citea)
+- [ ] Colecțiile publice au devenit private: reactivăm din Setări dacă vrem linkul vechi înapoi (același link)
 
 ## Corespondență GitHub Project
 

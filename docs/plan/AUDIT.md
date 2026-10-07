@@ -19,12 +19,12 @@ Starea proiectului la commit `c0473ae`. Bifează problemele când sunt rezolvate
 | B3 | ✅ `fix/phase-0-stabilization` | Schimbarea parolei face un fetch server-side fără cookie-uri, deci eșuează cu mesajul greșit „parola curentă e incorectă” | `utils/actions.js` → `updatePassword` |
 | B4 | ✅ `fix/phase-0-stabilization` | „Valoare colecție” adună `estimatedValue` fără să înmulțească cu cantitatea și include consumate/vândute | `utils/actions.js` → `getDashboardStats` |
 | B5 | ✅ `fix/phase-0-stabilization` | `WineLog` se scrie doar la scan AI, deci nu există istoric | `utils/actions.js` |
-| B6 | ⬜ | Fiecare user are colecția publică din oficiu (`shareId` cu default cuid), fără opțiune de dezactivare sau regenerare. Linkurile din footer nu folosesc basePath. | `prisma/schema.prisma`, `app/crama/[shareId]/page.js` |
-| B7 | ⬜ | Exportul PDF/HTML pune numele vinurilor în HTML fără escaping (XSS) | `app/api/export/route.js` |
-| B8 | ⬜ | MinIO are fallback `minioadmin/minioadmin` și hostname hardcodat, `useSSL:false`, bucket public. `folder` vine nevalidat de la client. Pozele nu se redimensionează (max 5MB brut) și nu se șterg la delete vin/cont. Există un client duplicat. | `utils/minio.js`, `app/lib/minio.js`, `app/api/upload/route.js` |
-| B9 | ⬜ | `User.aiApiKey` ține cheia AI în plaintext (legacy) | `prisma/schema.prisma` |
-| B10 | ⬜ | Lipsesc resetarea parolei, verificarea emailului și rate limiting-ul | auth, `api/ai-scan`, `api/upload` |
-| B11 | ⬜ | `deleteAccount` nu șterge imaginile din MinIO | `utils/actions.js` |
+| B6 | ✅ `6cd3b4e` | Fiecare user are colecția publică din oficiu (`shareId` cu default cuid), fără opțiune de dezactivare sau regenerare. Linkurile din footer nu folosesc basePath. | `prisma/schema.prisma`, `app/crama/[shareId]/page.js` |
+| B7 | ✅ `957c46e` | Exportul PDF/HTML pune numele vinurilor în HTML fără escaping (XSS) | `app/api/export/route.js` |
+| B8 | ✅ `a03c663` | MinIO are fallback `minioadmin/minioadmin` și hostname hardcodat, `useSSL:false`, bucket public. `folder` vine nevalidat de la client. Pozele nu se redimensionează (max 5MB brut) și nu se șterg la delete vin/cont. Există un client duplicat. | `utils/minio.js`, `app/lib/minio.js`, `app/api/upload/route.js` |
+| B9 | ✅ `c997aed` | `User.aiApiKey` ține cheia AI în plaintext (legacy) | `prisma/schema.prisma` |
+| B10 | 🟨 rate limiting `d8da57e`; email rămas | Lipsesc resetarea parolei, verificarea emailului și rate limiting-ul | auth, `api/ai-scan`, `api/upload` |
+| B11 | ✅ `a03c663` | `deleteAccount` nu șterge imaginile din MinIO | `utils/actions.js` |
 | B12 | ⬜ | `viewport.userScalable=false` blochează zoom-ul (accesibilitate) | `app/layout.js` |
 | B13 | ⬜ | Service worker-ul cachează pagini cu date private (`/dashboard`, `/wines`) | `public/sw.js` |
 | B15 | ⬜ | `.env` / `.env.local` folosesc DB-ul **de producție** (`casa-spiridus.go.ro:5432`) și pentru dev → orice test local modifică date reale | `.env`, `docker-compose.dev.yml` |

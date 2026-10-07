@@ -13,6 +13,40 @@
 
 ---
 
+## 2026-10-07 — 0.2 Securitate (fără email)
+
+**Făcut** (branch `fix/phase-0-stabilization`, toate testate la rulare cu useri de test, care au fost apoi șterși):
+- **SEC-001** `6cd3b4e`: `user.shareEnabled` (default false), toggle și regenerare link în Setări (`ShareLinkSection`). Pagina publică cere `shareEnabled`, iar footer-ul folosește `Link` (basePath). Migrație aplicată pe DB: cele 2 colecții existente au devenit private, cu `shareId` păstrat.
+- **SEC-002** `957c46e`: `utils/escape.js` (`escapeHtml`, `escapeCsv` cu protecție la formula injection), aplicate în export, plus CSP pe răspunsul HTML. Valoarea totală din export se înmulțește acum cu cantitatea.
+- **SEC-003/004/005** `a03c663`:
+  - `utils/minio.js` citește config doar din env, `ensureBucket` nu mai face bucket-ul public.
+  - Upload: whitelist de foldere, sharp → WebP max 2000px, fără EXIF/GPS, respinge non-imagini.
+  - Proxy `/api/media/[...key]`: acces pentru proprietar sau colecție publică activă; thumbnail-uri `?w=`.
+  - Imaginile nefolosite se șterg la update/delete vin, la schimbarea avatarului și la ștergerea contului.
+  - `scripts/cleanup-orphan-images.mjs` (dry-run) a găsit **23 orfane, 44 MB**, neșterse.
+- **SEC-006** `c997aed`: `scripts/migrate-legacy-ai-keys.mjs --apply` a creat agentul „Cheie veche (migrată)” (openai, dezactivat, criptat) și a golit `user.aiApiKey`. Codul legacy a fost eliminat. Cheia Gemini merge acum în header, nu în URL. ai-scan sare agenții care nu se pot decripta.
+- **SEC-009** `d8da57e`: rateLimit better-auth (sign-in 5/min/IP, sign-up 5/h etc.) plus `utils/rateLimit.js` pentru ai-scan, upload și parolă.
+- Backup-uri înainte de fiecare modificare pe DB: `../vinerys-backups/*-pre-share-optin.dump`, `*-pre-ai-key-migration.dump`.
+
+**Decizii:**
+- **Expand/contract** pentru DB-ul partajat cu producția: aplicăm doar migrații compatibile cu codul vechi care încă rulează. Ștergerile de coloane (`aiApiKey`) și închiderea bucket-ului vin după deploy. Vezi „Checklist la următorul deploy” din ROADMAP.
+- Imaginile rămân stocate în DB ca URL MinIO (compatibil cu codul vechi), iar afișarea trece prin proxy. Migrarea la chei pure de obiect rămâne pentru 1.3.
+- Cheile obiectelor conțin `userId` ca prefix (`folder/<userId>_<ts>_<rand>.webp`): proxy-ul autorizează fără query în DB pentru proprietar.
+- Rate limiting în memorie (o singură instanță). La scalare: Redis sau DB.
+
+**Învățat / capcane:**
+- `AI_CREDENTIALS_SECRET` local = cel din producție (cheile agenților se decriptează local). Nu se schimbă.
+- Scripturile Node standalone nu pot importa `utils/*.js` care importă fără extensie (ESM strict). Scripturile din `scripts/` folosesc direct `minio`, `@prisma/client` și `utils/aiSecrets.js`.
+- Codul vechi de upload genera chei `folder/<userId>_<ts>_<nume>`, iar URL-urile salvate au `/` codat ca `%2F`.
+- better-auth limitează doar requesturile HTTP; apelurile `auth.api.*` din server actions trebuie limitate separat.
+
+**Rămas / next:**
+- SEC-007/008 (reset parolă, verificare email): aștept decizia D4 pentru provider-ul de email.
+- Confirmare pentru ștergerea celor 23 imagini orfane.
+- 0.3 Calitate și CI (Vitest pe escape, rateLimit, storage, consensus AI; lint; pipeline).
+
+---
+
 ## 2026-10-07 — GitHub Project reorganizat + test la rulare 0.1
 
 **Făcut:**
