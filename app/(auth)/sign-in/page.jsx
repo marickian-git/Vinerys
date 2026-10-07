@@ -14,7 +14,9 @@ export default function SignInPage() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    // Animația de intrare pornește după primul frame
+    const frame = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   const handleSubmit = async (e) => {

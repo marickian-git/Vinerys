@@ -305,7 +305,7 @@ export default async function WineDetailPage({ params }) {
             {wine.tastingNotes && (
               <div className="wd-section">
                 <div className="wd-section-title">Notițe de degustare</div>
-                <p className="wd-tasting-notes">"{wine.tastingNotes}"</p>
+                <p className="wd-tasting-notes">„{wine.tastingNotes}”</p>
               </div>
             )}
           </div>

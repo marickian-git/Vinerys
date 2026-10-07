@@ -99,7 +99,7 @@ export default function NotFound() {
             <Link href="/dashboard" className="nf-btn-primary">🏠 Dashboard</Link>
             <Link href="/wines" className="nf-btn-ghost">🍷 Colecția mea</Link>
           </div>
-          <p className="nf-quote">"In vino veritas, in aqua sanitas."</p>
+          <p className="nf-quote">„In vino veritas, in aqua sanitas.”</p>
         </div>
       </div>
     </>

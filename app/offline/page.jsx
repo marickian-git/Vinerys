@@ -73,7 +73,7 @@ export default function OfflinePage() {
           <Link href="/dashboard" className="off-btn">
             ↺ Încearcă din nou
           </Link>
-          <p className="off-quote">"Vinul bun nu are nevoie de rețea."</p>
+          <p className="off-quote">„Vinul bun nu are nevoie de rețea.”</p>
         </div>
       </div>
     </>

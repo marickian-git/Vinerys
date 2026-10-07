@@ -1,14 +1,17 @@
 {
-  "name": "nextjs-tutorial",
+  "name": "vinerys",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "npx prisma generate && next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "studio": "npx prisma studio",
-    "images:orphans": "node scripts/cleanup-orphan-images.mjs"
+    "images:orphans": "node scripts/cleanup-orphan-images.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.4.2",
@@ -39,6 +42,9 @@
     "eslint-config-next": "16.1.6",
     "postcss": "^8.5.6",
     "prisma": "^7.7.0",
-    "tailwindcss": "^4.2.1"
-  }
+    "tailwindcss": "^4.2.1",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.11"
+  },
+  "description": "Pivnița digitală: colecție de vinuri, scanare AI a etichetelor și recomandări de consum"
 }
