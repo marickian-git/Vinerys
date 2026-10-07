@@ -11,7 +11,9 @@
     "images:orphans": "node scripts/cleanup-orphan-images.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "db:dev": "docker compose -f docker-compose.dev.yml up -d postgres"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.4.2",
@@ -34,6 +36,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4.2.1",
     "@types/node": "25.3.2",
     "autoprefixer": "^10.4.27",

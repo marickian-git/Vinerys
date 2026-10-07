@@ -1,13 +1,89 @@
-name: Build & Deploy Vinerys
+name: CI & Deploy Vinerys
 
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  quality:
+    name: Lint, typecheck, teste
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: vinerys_user
+          POSTGRES_PASSWORD: vinerys_pass
+          POSTGRES_DB: vinerys_dev
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U vinerys_user"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://vinerys_user:vinerys_pass@localhost:5433/vinerys_dev
+      E2E_DATABASE_URL: postgresql://vinerys_user:vinerys_pass@localhost:5433/vinerys_dev
+      NEXT_TELEMETRY_DISABLED: 1
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npx prisma generate
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Migrații pe bază curată (verifică istoricul complet)
+        run: npx prisma migrate deploy
+
+      - name: Schema = migrații (fără drift)
+        run: |
+          DIFF=$(npx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script)
+          echo "$DIFF"
+          echo "$DIFF" | grep -q "This is an empty migration" || (echo "::error::schema.prisma diferă de migrații" && exit 1)
+
+      - name: Instalează Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: E2E (build + start + Playwright)
+        run: npm run test:e2e
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
   build-and-push:
-    name: Build Docker Image
+    name: Build & push imagine Docker
+    needs: quality
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
     steps:
@@ -44,6 +120,7 @@ jobs:
           build-args: |
             BASE_URL=/crama
             NEXT_PUBLIC_APP_URL=https://casa-spiridus.go.ro/crama
+            APP_VERSION=${{ github.sha }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
@@ -54,4 +131,4 @@ jobs:
           echo "## 🍷 Deploy Vinerys" >> $GITHUB_STEP_SUMMARY
           echo "**Imagine:** \`${{ secrets.DOCKERHUB_USERNAME }}/vinerys:latest\`" >> $GITHUB_STEP_SUMMARY
           echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Watchtower va actualiza serverul automat.**" >> $GITHUB_STEP_SUMMARY
+          echo "**Watchtower va actualiza serverul automat.** Verifică \`/crama/health\` → \`version\`." >> $GITHUB_STEP_SUMMARY
