@@ -8,10 +8,13 @@ import { updatePassword, deleteAccount } from "@/utils/actions";
 import toast from "react-hot-toast";
 import ShareLinkSection from "@/components/ShareLinkSection";
 import AISettingsSection from "@/components/AISettingsSection";
+import EmailVerificationBanner from "@/components/EmailVerificationBanner";
 
 export default function SettingsClient({
   shareUrl,
   shareEnabled,
+  email,
+  emailVerified,
   aiProvider,
   aiAgents,
   aiProviders,
@@ -181,6 +184,8 @@ export default function SettingsClient({
             <h1 className="set-title">Setări</h1>
           </div>
           <div className="set-divider" />
+
+          {email && !emailVerified && <EmailVerificationBanner email={email} />}
 
           {/* AI Scan */}
           <div className="set-card">

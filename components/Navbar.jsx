@@ -24,12 +24,12 @@ export default function Navbar() {
     } catch (e) {
       console.error("signOut error", e);
     }
-    window.location.href = "/sign-in";
+    window.location.href = appPath("/sign-in");
   };
 
   const isActive = (href) =>
     pathname === href || pathname.startsWith(href + "/");
-  const isAuthPage = pathname === "/sign-in" || pathname === "/sign-up";
+  const isAuthPage = ["/sign-in", "/sign-up", "/forgot-password", "/reset-password"].includes(pathname);
 
   useEffect(() => {
     const handler = (e) => {

@@ -375,6 +375,11 @@ export default function SignInPage() {
                   required
                 />
               </div>
+              <p style={{ textAlign: "right", margin: "-0.5rem 0 1.25rem" }}>
+                <Link href="/forgot-password" style={{ fontSize: "0.75rem", color: "rgba(196,69,105,0.85)", textDecoration: "none" }}>
+                  Ai uitat parola?
+                </Link>
+              </p>
               <button type="submit" className="submit-btn" disabled={loading}>
                 {loading ? (
                   <span>

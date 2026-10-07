@@ -2,7 +2,13 @@ import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import prisma from "./db";
-import { configuredAuthURL, configuredOrigin } from "./appPath.mjs";
+import { configuredAppURL, configuredAuthURL, configuredOrigin } from "./appPath.mjs";
+import { sendEmail } from "./email";
+import { resetPasswordEmail, verifyEmailEmail } from "./emailTemplates";
+
+// Linkurile din email se construiesc din URL-ul aplicației (include basePath /crama),
+// nu din `url` primit de la better-auth, care pornește de la baseURL fără basePath.
+const appLink = (path: string) => `${configuredAppURL()}${path}`;
 
 export const auth = betterAuth({
   baseURL: configuredAuthURL(),
@@ -33,7 +39,24 @@ export const auth = betterAuth({
   },
   emailAndPassword: {
     enabled: true,
+    // Nu blocăm login-ul conturilor neverificate (conturile existente nu au email confirmat)
     requireEmailVerification: false,
+    resetPasswordTokenExpiresIn: 60 * 60,
+    revokeSessionsOnPasswordReset: true,
+    sendResetPassword: async ({ user, token }) => {
+      const url = appLink(`/reset-password?token=${encodeURIComponent(token)}`);
+      await sendEmail({ to: user.email, ...resetPasswordEmail({ name: user.name, url }) });
+    },
+  },
+  emailVerification: {
+    sendOnSignUp: true,
+    autoSignInAfterVerification: true,
+    expiresIn: 60 * 60 * 24,
+    sendVerificationEmail: async ({ user, token }) => {
+      const callbackURL = `${new URL(configuredAppURL()).pathname.replace(/\/$/, "")}/dashboard?verified=1`;
+      const url = appLink(`/api/auth/verify-email?token=${encodeURIComponent(token)}&callbackURL=${encodeURIComponent(callbackURL)}`);
+      await sendEmail({ to: user.email, ...verifyEmailEmail({ name: user.name, url }) });
+    },
   },
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 zile

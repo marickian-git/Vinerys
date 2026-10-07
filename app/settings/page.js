@@ -20,5 +20,5 @@ export default async function SettingsPage() {
   const aiAgents = await getAIAgents();
   const aiProviders = await getAIProviderCatalog();
 
-  return <SettingsClient shareUrl={shareUrl} shareEnabled={shareEnabled} aiProvider={aiProvider} aiAgents={aiAgents} aiProviders={aiProviders} />;
+  return <SettingsClient email={session?.user?.email} emailVerified={Boolean(session?.user?.emailVerified)} shareUrl={shareUrl} shareEnabled={shareEnabled} aiProvider={aiProvider} aiAgents={aiAgents} aiProviders={aiProviders} />;
 }
