@@ -12,6 +12,7 @@ import { getProviderDefinition, isKnownProvider, listProviderDefinitions } from 
 import { validateProviderBaseUrl } from "./aiUrlSecurity";
 import { listProviderModels } from "./aiProviders";
 import { shareUrlFor } from "./share";
+import { listUserObjects, objectKeyFromUrl, removeObjects } from "./storage";
 
 // ─────────────────────────────────────────
 // HELPER - obține userul curent
@@ -55,6 +56,25 @@ async function logWineAction({ wineId, userId, action, details }) {
     // Istoricul nu trebuie să blocheze acțiunea principală
     console.error(`[wine-log] ${action} failed:`, error.message);
   }
+}
+
+// ─────────────────────────────────────────
+// HELPER - imagini care nu mai sunt folosite
+// ─────────────────────────────────────────
+
+// Șterge din MinIO imaginile care nu mai sunt referite de niciun vin sau avatar
+async function releaseImages(urls) {
+  const keys = [];
+  for (const url of new Set(urls.filter(Boolean))) {
+    const key = objectKeyFromUrl(url);
+    if (!key) continue;
+    const [wineRefs, userRefs] = await Promise.all([
+      prisma.wine.count({ where: { OR: [{ labelImageUrl: url }, { bottleImageUrl: url }] } }),
+      prisma.user.count({ where: { image: url } }),
+    ]);
+    if (wineRefs + userRefs === 0) keys.push(key);
+  }
+  await removeObjects(keys);
 }
 
 // ─────────────────────────────────────────
@@ -260,6 +280,12 @@ export async function updateWine(id, formData) {
     },
   });
 
+  await releaseImages(
+    [existing.labelImageUrl, existing.bottleImageUrl].filter(
+      (url) => url && url !== updated.labelImageUrl && url !== updated.bottleImageUrl,
+    ),
+  );
+
   const changes = diffWine(existing, updated);
   if (Object.keys(changes).length) {
     await logWineAction({ wineId: id, userId: user.id, action: 'UPDATED', details: { changes } });
@@ -285,6 +311,7 @@ export async function deleteWine(id) {
     details: { name: wine.name, producer: wine.producer, vintage: wine.vintage, quantity: wine.quantity },
   });
   await prisma.wine.delete({ where: { id } });
+  await releaseImages([wine.labelImageUrl, wine.bottleImageUrl]);
 
   revalidatePath("/wines");
   redirect("/wines");
@@ -419,10 +446,12 @@ export async function updateProfile(formData) {
     return { error: { name: ['Numele trebuie să aibă minim 2 caractere'] } };
   }
 
+  const previous = await prisma.user.findUnique({ where: { id: user.id }, select: { image: true } });
   await prisma.user.update({
     where: { id: user.id },
     data: { name, image, updatedAt: new Date() },
   });
+  if (previous?.image && previous.image !== image) await releaseImages([previous.image]);
 
   revalidatePath('/profile');
   revalidatePath('/settings');
@@ -461,9 +490,16 @@ export async function updatePassword(formData) {
 export async function deleteAccount() {
   const user = await getCurrentUser();
 
+  // Imaginile se listează înainte, ca să nu rămână fișiere orfane după ștergerea contului
+  const imageKeys = await listUserObjects(user.id).catch((error) => {
+    console.error('[account] list images failed:', error.message);
+    return [];
+  });
+
   await prisma.wine.deleteMany({ where: { userId: user.id } });
   await prisma.session.deleteMany({ where: { userId: user.id } });
   await prisma.user.delete({ where: { id: user.id } });
+  await removeObjects(imageKeys);
 
   redirect('/sign-in');
 }

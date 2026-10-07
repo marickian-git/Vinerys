@@ -9,7 +9,7 @@ import { getDisplayImageUrl } from "@/utils/mediaUrl";
 import WinePourLoader from "@/components/wines/WinePourLoader";
 
 const ALLOWED = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-const MAX_MB = 5;
+const MAX_MB = 10;
 
 function WineGridPattern() {
   const columns = 20;
@@ -115,7 +115,7 @@ export default function ImageUpload({
       }
 
       setProgress(100);
-      setPreview(data.url);
+      setPreview(getDisplayImageUrl(data.url));
       onChange?.(data.url);
       toast.success("Imagine încărcată!");
     } catch (err) {

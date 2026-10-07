@@ -183,7 +183,7 @@ export default async function WineDetailPage({ params }) {
               <div className="wd-image">
                 <div className="wd-image-glow" />
                 {wine.labelImageUrl || wine.bottleImageUrl ? (
-                  <img src={getDisplayImageUrl(wine.labelImageUrl || wine.bottleImageUrl)} alt={wine.name} />
+                  <img src={getDisplayImageUrl(wine.labelImageUrl || wine.bottleImageUrl, { width: 960 })} alt={wine.name} />
                 ) : (
                   <span className="wd-image-icon">🍷</span>
                 )}

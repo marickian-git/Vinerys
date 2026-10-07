@@ -44,7 +44,7 @@ export default function Navbar() {
   if (isAuthPage) return null;
 
   const initial = session?.user?.name?.charAt(0).toUpperCase() ?? "?";
-  const avatarSrc = getDisplayImageUrl(session?.user?.image, "vinerys");
+  const avatarSrc = getDisplayImageUrl(session?.user?.image, { width: 96 });
 
   return (
     <>

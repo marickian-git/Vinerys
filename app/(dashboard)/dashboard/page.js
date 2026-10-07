@@ -770,7 +770,7 @@ export default async function DashboardPage() {
                     <Link key={wine.id} href={`/wines/${wine.id}`} className="db-top-item">
                       <span className="db-top-rank">{i + 1}</span>
                       {wine.labelImageUrl || wine.bottleImageUrl ? (
-                        <img src={getDisplayImageUrl(wine.labelImageUrl || wine.bottleImageUrl)} alt={wine.name} className="db-top-img" />
+                        <img src={getDisplayImageUrl(wine.labelImageUrl || wine.bottleImageUrl, { width: 96 })} alt={wine.name} className="db-top-img" />
                       ) : (
                         <div className="db-top-img">
                           <Wine size={15} strokeWidth={1.5} color="rgba(196,69,105,0.45)" />

@@ -1,27 +1,19 @@
-const DEFAULT_PUBLIC_MINIO_URL = 'https://casa-spiridus.go.ro/minio';
+import { appPath } from './appPath';
 
-function publicMinioUrl() {
-  return (process.env.NEXT_PUBLIC_MINIO_PUBLIC_URL || DEFAULT_PUBLIC_MINIO_URL).replace(/\/+$/, '');
-}
+const BUCKET_MARKER = '/vinerys/';
+export const THUMB_WIDTHS = [96, 240, 480, 960];
 
-export function getPublicMinioUrl(objectName, bucket = 'vinerys') {
-  return `${publicMinioUrl()}/${bucket}/${encodeURIComponent(objectName)}`;
-}
-
-export function getDisplayImageUrl(value, bucket = 'vinerys') {
+// Orice URL MinIO salvat în DB → proxy-ul intern /api/media (cu verificare de acces și resize opțional)
+export function getDisplayImageUrl(value, { width } = {}) {
   if (!value) return value;
-
   try {
     const url = new URL(value);
-    const bucketMarker = `/${bucket}/`;
-    const bucketIndex = url.pathname.indexOf(bucketMarker);
-    if (bucketIndex !== -1) {
-      const objectName = decodeURIComponent(url.pathname.slice(bucketIndex + bucketMarker.length));
-      return getPublicMinioUrl(objectName, bucket);
-    }
+    const index = url.pathname.indexOf(BUCKET_MARKER);
+    if (index === -1) return value;
+    const key = decodeURIComponent(url.pathname.slice(index + BUCKET_MARKER.length));
+    const path = appPath(`/api/media/${key}`);
+    return width && THUMB_WIDTHS.includes(width) ? `${path}?w=${width}` : path;
   } catch {
     return value;
   }
-
-  return value;
 }

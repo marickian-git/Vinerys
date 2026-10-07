@@ -149,6 +149,7 @@ export default function WineCard({ wine }) {
               <img
                 src={getDisplayImageUrl(
                   wine.labelImageUrl || wine.bottleImageUrl,
+                  { width: 480 },
                 )}
                 alt={wine.name}
                 className="wc-img"
