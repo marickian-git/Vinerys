@@ -21,6 +21,7 @@ model User {
   shareId       String?   @unique
   shareEnabled  Boolean   @default(false)
   aiProvider    String?   @default("gemini")
+  /// @deprecated SEC-006: golită prin scripts/migrate-legacy-ai-keys.mjs; coloana se șterge după deploy
   aiApiKey      String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt

@@ -30,7 +30,7 @@ export async function POST(request) {
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: {
-      id: true, aiProvider: true, aiApiKey: true,
+      id: true,
       aiAgents: {
         where: { enabled: true },
         orderBy: [{ priority: 'asc' }, { createdAt: 'asc' }],
@@ -54,22 +54,15 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Lipsește imaginea (imageBase64)' }, { status: 400 });
   }
 
-  const agents = user.aiAgents.map((agent) => ({
-    ...agent,
-    apiKey: decryptSecret(agent.encryptedApiKey),
-  }));
-  if (!agents.length && user.aiProvider && user.aiApiKey) {
-    agents.push({
-      provider: user.aiProvider,
-      apiKey: user.aiApiKey,
-      name: 'Legacy AI agent',
-      enabled: true,
-      priority: 0,
-      timeoutMs: 20000,
-      maxRetries: 1,
-      weight: 1,
-    });
-  }
+  // Un agent cu cheie care nu se poate decripta (ex. secret schimbat) e sărit, nu blochează scanarea
+  const agents = user.aiAgents.flatMap((agent) => {
+    try {
+      return [{ ...agent, apiKey: decryptSecret(agent.encryptedApiKey) }];
+    } catch {
+      console.error(`[scan:${operationId}] agent ${agent.id}: cheia nu poate fi decriptată`);
+      return [];
+    }
+  });
   if (!agents.length) {
     return NextResponse.json({ error: 'Configurează cel puțin un agent AI activ în Setări → AI.' }, { status: 400 });
   }

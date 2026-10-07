@@ -106,8 +106,8 @@ export async function listProviderModels(agent) {
     const headers = { 'Content-Type': 'application/json' };
     if (agent.provider === 'gemini') {
         const data = await requestJson(
-            `https://generativelanguage.googleapis.com/v1beta/models?key=${agent.apiKey}`,
-            headers,
+            'https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000',
+            { ...headers, 'x-goog-api-key': agent.apiKey },
             null,
             agent.timeoutMs || 20000,
             'GET',
@@ -163,7 +163,7 @@ async function callProviderWithModel(agent, prompt, imageBase64 = null, mimeType
         const model = modelOverride || options.model || 'gemini-3.6-flash';
         const parts = [{ text: prompt }];
         if (imageBase64) parts.push({ inline_data: { mime_type: mimeType, data: imageBase64 } });
-        const data = await requestJson(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${agent.apiKey}`, { 'Content-Type': 'application/json' }, { contents: [{ parts }], generationConfig: { temperature: 0.1, maxOutputTokens: 1800 } }, options.timeoutMs);
+        const data = await requestJson(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, { 'Content-Type': 'application/json', 'x-goog-api-key': agent.apiKey }, { contents: [{ parts }], generationConfig: { temperature: 0.1, maxOutputTokens: 1800 } }, options.timeoutMs);
         return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
     }
     if (agent.provider === 'claude') {

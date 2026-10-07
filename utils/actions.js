@@ -685,28 +685,6 @@ export async function regenerateShareLink() {
   return { success: true, enabled: updated.shareEnabled, shareUrl: shareUrlFor(updated.shareId) };
 }
 
-export async function updateAISettings(provider, apiKey) {
-  const user = await getCurrentUser();
-
-  const validProviders = ['gemini', 'claude', 'groq', 'openrouter'];
-  if (!validProviders.includes(provider)) {
-    return { error: 'Provider invalid' };
-  }
-
-  const data = { aiProvider: provider };
-  if (apiKey !== null && apiKey !== undefined) {
-    data.aiApiKey = apiKey;
-  }
-
-  await prisma.user.update({
-    where: { id: user.id },
-    data,
-  });
-
-  revalidatePath('/settings');
-  return { success: true };
-}
-
 export async function getAIAgents() {
   const user = await getCurrentUser();
   return prisma.aIAgent.findMany({
@@ -859,16 +837,4 @@ export async function deleteAIAgent(id) {
   await prisma.aIAgent.deleteMany({ where: { id, userId: user.id } });
   revalidatePath('/settings');
   return { success: true };
-}
-
-export async function getAISettings() {
-  const user = await getCurrentUser();
-  const profile = await prisma.user.findUnique({
-    where: { id: user.id },
-    select: { aiProvider: true, aiApiKey: true },
-  });
-  return {
-    provider: profile?.aiProvider || 'gemini',
-    hasKey: !!profile?.aiApiKey,
-  };
 }

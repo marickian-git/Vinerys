@@ -13,7 +13,6 @@ export default function SettingsClient({
   shareUrl,
   shareEnabled,
   aiProvider,
-  aiHasKey,
   aiAgents,
   aiProviders,
 }) {
@@ -188,7 +187,6 @@ export default function SettingsClient({
             <div className="set-card-title">🤖 AI — Scanare etichetă</div>
             <AISettingsSection
               initialProvider={aiProvider}
-              initialHasKey={aiHasKey}
               initialAgents={aiAgents}
               providers={aiProviders}
             />
