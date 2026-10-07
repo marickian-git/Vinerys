@@ -19,7 +19,7 @@ export const AI_PROVIDERS = AI_PROVIDER_REGISTRY;
 
 export const ENSEMBLE_DEFAULT_PROVIDERS = ['gemini', 'groq', 'openrouter'];
 
-function parseJson(raw) {
+export function parseJson(raw) {
     const text = typeof raw === 'string' ? raw.replace(/```json|```/gi, '').trim() : JSON.stringify(raw);
     const match = text.match(/\{[\s\S]*\}/);
     if (!match) throw new Error('Răspunsul AI nu conține JSON');
@@ -31,7 +31,7 @@ function asNumber(value) {
     return Number(value);
 }
 
-function normalizeIdentification(raw) {
+export function normalizeIdentification(raw) {
     const vintage = Number.parseInt(raw.vintage, 10);
     const year = Number.isInteger(vintage) && vintage >= 1800 && vintage <= CURRENT_YEAR ? vintage : null;
     return {
@@ -48,13 +48,13 @@ function hasUsefulIdentity(result) {
     return Boolean(result?.name || result?.producer);
 }
 
-function identityResultStatus(result) {
+export function identityResultStatus(result) {
     if (!result || !hasUsefulIdentity(result)) return 'EMPTY';
     if (result.name && result.producer) return 'USEFUL';
     return 'PARTIAL';
 }
 
-function normalizeEnrichment(raw, identity) {
+export function normalizeEnrichment(raw, identity) {
     const vintage = identity.vintage;
     const drinkFrom = vintage ? asNumber(raw.drinkFrom) : null;
     const drinkUntil = vintage ? asNumber(raw.drinkUntil) : null;
@@ -106,8 +106,8 @@ export async function listProviderModels(agent) {
     const headers = { 'Content-Type': 'application/json' };
     if (agent.provider === 'gemini') {
         const data = await requestJson(
-            `https://generativelanguage.googleapis.com/v1beta/models?key=${agent.apiKey}`,
-            headers,
+            'https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000',
+            { ...headers, 'x-goog-api-key': agent.apiKey },
             null,
             agent.timeoutMs || 20000,
             'GET',
@@ -163,7 +163,7 @@ async function callProviderWithModel(agent, prompt, imageBase64 = null, mimeType
         const model = modelOverride || options.model || 'gemini-3.6-flash';
         const parts = [{ text: prompt }];
         if (imageBase64) parts.push({ inline_data: { mime_type: mimeType, data: imageBase64 } });
-        const data = await requestJson(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${agent.apiKey}`, { 'Content-Type': 'application/json' }, { contents: [{ parts }], generationConfig: { temperature: 0.1, maxOutputTokens: 1800 } }, options.timeoutMs);
+        const data = await requestJson(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, { 'Content-Type': 'application/json', 'x-goog-api-key': agent.apiKey }, { contents: [{ parts }], generationConfig: { temperature: 0.1, maxOutputTokens: 1800 } }, options.timeoutMs);
         return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
     }
     if (agent.provider === 'claude') {
@@ -232,7 +232,7 @@ async function withRetry(agent, prompt, imageBase64, mimeType, normalizeResult) 
 }
 
 const keyOf = (value) => value?.toString().trim().toLocaleLowerCase('ro-RO').normalize('NFD').replace(/[\u0300-\u036f]/g, '') || '';
-function consensus(items, fields) {
+export function consensus(items, fields) {
     const result = {};
     const fieldConfidence = {};
     for (const field of fields) {
@@ -258,7 +258,7 @@ function consensus(items, fields) {
     return { result, fieldConfidence };
 }
 
-function chooseEnrichment(items) {
+export function chooseEnrichment(items) {
     const basisRank = { EXACT_WINE: 5, PRODUCER_AND_VINTAGE: 4, REGION_AND_STYLE: 3, GRAPE_AND_STYLE: 2, GENERIC_ESTIMATE: 1, UNKNOWN: 0 };
     const ordered = [...items].sort((a, b) => (basisRank[b.result.drinkWindowBasis] - basisRank[a.result.drinkWindowBasis]) || (b.result.drinkWindowConfidence - a.result.drinkWindowConfidence) || (b.weight - a.weight));
     const best = ordered[0]?.result || {};

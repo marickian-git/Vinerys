@@ -1,13 +1,19 @@
 {
-  "name": "nextjs-tutorial",
+  "name": "vinerys",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "npx prisma generate && next build",
     "start": "next start",
-    "lint": "next lint",
-    "studio": "npx prisma studio"
+    "lint": "eslint .",
+    "studio": "npx prisma studio",
+    "images:orphans": "node scripts/cleanup-orphan-images.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "db:dev": "docker compose -f docker-compose.dev.yml up -d postgres"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.4.2",
@@ -19,15 +25,18 @@
     "minio": "^8.0.7",
     "motion": "^12.34.3",
     "next": "^16.1.6",
+    "nodemailer": "^10.0.15",
     "pdfjs-dist": "^5.4.624",
     "pg": "^8.19.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-dropzone": "^15.0.0",
     "react-hot-toast": "^2.6.0",
+    "sharp": "^0.34.5",
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4.2.1",
     "@types/node": "25.3.2",
     "autoprefixer": "^10.4.27",
@@ -36,7 +45,9 @@
     "eslint-config-next": "16.1.6",
     "postcss": "^8.5.6",
     "prisma": "^7.7.0",
-    "sharp": "^0.34.5",
-    "tailwindcss": "^4.2.1"
-  }
+    "tailwindcss": "^4.2.1",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.11"
+  },
+  "description": "Pivnița digitală: colecție de vinuri, scanare AI a etichetelor și recomandări de consum"
 }

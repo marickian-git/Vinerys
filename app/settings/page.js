@@ -3,6 +3,7 @@ import { auth } from '@/utils/auth';
 import prisma from '@/utils/db';
 import { getAIAgents, getAIProviderCatalog } from '@/utils/actions';
 import SettingsClient from '@/components/SettingsClient';
+import { shareUrlFor } from '@/utils/share';
 
 export const metadata = { title: 'Setări — Vinerys' };
 
@@ -10,15 +11,14 @@ export default async function SettingsPage() {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = session?.user ? await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { shareId: true, aiProvider: true, aiApiKey: true },
+    select: { shareId: true, shareEnabled: true, aiProvider: true },
   }) : null;
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-  const shareUrl = user?.shareId ? `${appUrl}/crama/${user.shareId}` : null;
+  const shareUrl = shareUrlFor(user?.shareId);
+  const shareEnabled = Boolean(user?.shareEnabled);
   const aiProvider = user?.aiProvider || 'gemini';
-  const aiHasKey = !!user?.aiApiKey;
   const aiAgents = await getAIAgents();
   const aiProviders = await getAIProviderCatalog();
 
-  return <SettingsClient shareUrl={shareUrl} aiProvider={aiProvider} aiHasKey={aiHasKey} aiAgents={aiAgents} aiProviders={aiProviders} />;
+  return <SettingsClient email={session?.user?.email} emailVerified={Boolean(session?.user?.emailVerified)} shareUrl={shareUrl} shareEnabled={shareEnabled} aiProvider={aiProvider} aiAgents={aiAgents} aiProviders={aiProviders} />;
 }

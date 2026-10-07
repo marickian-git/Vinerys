@@ -14,7 +14,9 @@ export default function SignInPage() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    // Animația de intrare pornește după primul frame
+    const frame = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   const handleSubmit = async (e) => {
@@ -375,6 +377,11 @@ export default function SignInPage() {
                   required
                 />
               </div>
+              <p style={{ textAlign: "right", margin: "-0.5rem 0 1.25rem" }}>
+                <Link href="/forgot-password" style={{ fontSize: "0.75rem", color: "rgba(196,69,105,0.85)", textDecoration: "none" }}>
+                  Ai uitat parola?
+                </Link>
+              </p>
               <button type="submit" className="submit-btn" disabled={loading}>
                 {loading ? (
                   <span>

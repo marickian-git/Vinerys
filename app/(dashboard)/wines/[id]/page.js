@@ -183,7 +183,7 @@ export default async function WineDetailPage({ params }) {
               <div className="wd-image">
                 <div className="wd-image-glow" />
                 {wine.labelImageUrl || wine.bottleImageUrl ? (
-                  <img src={getDisplayImageUrl(wine.labelImageUrl || wine.bottleImageUrl)} alt={wine.name} />
+                  <img src={getDisplayImageUrl(wine.labelImageUrl || wine.bottleImageUrl, { width: 960 })} alt={wine.name} />
                 ) : (
                   <span className="wd-image-icon">🍷</span>
                 )}
@@ -305,7 +305,7 @@ export default async function WineDetailPage({ params }) {
             {wine.tastingNotes && (
               <div className="wd-section">
                 <div className="wd-section-title">Notițe de degustare</div>
-                <p className="wd-tasting-notes">"{wine.tastingNotes}"</p>
+                <p className="wd-tasting-notes">„{wine.tastingNotes}”</p>
               </div>
             )}
           </div>

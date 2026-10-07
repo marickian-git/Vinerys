@@ -11,7 +11,9 @@ export default function ServiceWorkerRegister() {
             registrations.map((registration) => registration.unregister()),
           ),
         )
-        .then(() => console.log("Old service workers unregistered"))
+        // Cache-urile vechi pot conține pagini private (dashboard, colecție) — le ștergem
+        .then(() => ("caches" in window ? caches.keys() : []))
+        .then((keys) => Promise.all(keys.filter((key) => key.startsWith("vinerys")).map((key) => caches.delete(key))))
         .catch((err) => console.error("SW error:", err));
     }
   }, []);

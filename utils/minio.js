@@ -1,40 +1,38 @@
 import { Client } from 'minio';
 
-const minioClient = new Client({
-  endPoint: process.env.MINIO_ENDPOINT || 'casa-spiridus.go.ro',
-  port: parseInt(process.env.MINIO_PORT) || 9010,
-  useSSL: false,
-  accessKey: process.env.MINIO_ACCESS_KEY || 'minioadmin',
-  secretKey: process.env.MINIO_SECRET_KEY || 'minioadmin',
-});
+// Configurația vine exclusiv din environment: fără credențiale sau hostname-uri default
+function required(name) {
+  const value = process.env[name];
+  if (!value) throw new Error(`${name} nu este configurat`);
+  return value;
+}
+
+let client;
+
+export function getMinioClient() {
+  if (!client) {
+    client = new Client({
+      endPoint: required('MINIO_ENDPOINT'),
+      port: process.env.MINIO_PORT ? Number.parseInt(process.env.MINIO_PORT, 10) : undefined,
+      useSSL: process.env.MINIO_USE_SSL === 'true',
+      accessKey: required('MINIO_ACCESS_KEY'),
+      secretKey: required('MINIO_SECRET_KEY'),
+    });
+  }
+  return client;
+}
 
 export const BUCKET = process.env.MINIO_BUCKET || 'vinerys';
 
-// Asigură că bucket-ul există și e public
-export async function initBucket() {
-  const exists = await minioClient.bucketExists(BUCKET);
-  if (!exists) {
-    await minioClient.makeBucket(BUCKET, '');
-  }
-
-  // Policy public read pentru imagini
-  const policy = JSON.stringify({
-    Version: '2012-10-17',
-    Statement: [{
-      Effect: 'Allow',
-      Principal: { AWS: ['*'] },
-      Action: ['s3:GetObject'],
-      Resource: [`arn:aws:s3:::${BUCKET}/*`],
-    }],
-  });
-
-  await minioClient.setBucketPolicy(BUCKET, policy);
+// Creează bucket-ul dacă lipsește. Nu îl mai face public: imaginile se servesc prin /api/media
+export async function ensureBucket() {
+  const minio = getMinioClient();
+  if (!(await minio.bucketExists(BUCKET))) await minio.makeBucket(BUCKET, '');
 }
 
-// Generează URL public pentru un obiect
+// URL-ul salvat în DB (format istoric, păstrat pentru compatibilitate). Afișarea trece prin getDisplayImageUrl.
 export function getPublicUrl(objectName) {
-  const publicBase = (process.env.MINIO_PUBLIC_URL || 'https://casa-spiridus.go.ro/minio').replace(/\/+$/, '');
+  const fallback = `${process.env.MINIO_USE_SSL === 'true' ? 'https' : 'http'}://${process.env.MINIO_ENDPOINT}${process.env.MINIO_PORT ? `:${process.env.MINIO_PORT}` : ''}`;
+  const publicBase = (process.env.MINIO_PUBLIC_URL || fallback).replace(/\/+$/, '');
   return `${publicBase}/${BUCKET}/${encodeURIComponent(objectName)}`;
 }
-
-export default minioClient;

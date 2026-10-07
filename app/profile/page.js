@@ -187,7 +187,7 @@ export default async function ProfilePage() {
             <div className="prof-avatar-wrap">
               <div className="prof-avatar">
                 {profile.image
-                  ? <img src={getDisplayImageUrl(profile.image)} alt={profile.name} />
+                  ? <img src={getDisplayImageUrl(profile.image, { width: 240 })} alt={profile.name} />
                   : <span className="prof-avatar-initial">{initial}</span>
                 }
               </div>

@@ -8,11 +8,14 @@ import { updatePassword, deleteAccount } from "@/utils/actions";
 import toast from "react-hot-toast";
 import ShareLinkSection from "@/components/ShareLinkSection";
 import AISettingsSection from "@/components/AISettingsSection";
+import EmailVerificationBanner from "@/components/EmailVerificationBanner";
 
 export default function SettingsClient({
   shareUrl,
+  shareEnabled,
+  email,
+  emailVerified,
   aiProvider,
-  aiHasKey,
   aiAgents,
   aiProviders,
 }) {
@@ -182,24 +185,23 @@ export default function SettingsClient({
           </div>
           <div className="set-divider" />
 
+          {email && !emailVerified && <EmailVerificationBanner email={email} />}
+
           {/* AI Scan */}
           <div className="set-card">
             <div className="set-card-title">🤖 AI — Scanare etichetă</div>
             <AISettingsSection
               initialProvider={aiProvider}
-              initialHasKey={aiHasKey}
               initialAgents={aiAgents}
               providers={aiProviders}
             />
           </div>
 
           {/* Partajare colecție */}
-          {shareUrl && (
-            <div className="set-card">
-              <div className="set-card-title">🔗 Partajează colecția</div>
-              <ShareLinkSection shareUrl={shareUrl} />
-            </div>
-          )}
+          <div className="set-card">
+            <div className="set-card-title">🔗 Partajează colecția</div>
+            <ShareLinkSection initialUrl={shareUrl} initialEnabled={shareEnabled} />
+          </div>
 
           {/* Schimbare parolă */}
           <div className="set-card">

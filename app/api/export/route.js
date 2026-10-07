@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { auth } from '@/utils/auth';
 import prisma from '@/utils/db';
+import { escapeHtml as h, escapeCsv } from '@/utils/escape';
 
 const TYPE_LABELS   = { RED: 'Roșu', WHITE: 'Alb', ROSE: 'Roze', SPARKLING: 'Spumant', DESSERT: 'Desert', FORTIFIED: 'Fortifiat' };
 const STATUS_LABELS = { IN_CELLAR: 'În pivniță', CONSUMED: 'Consumat', SOLD: 'Vândut', GIFTED: 'Dăruit' };
@@ -34,11 +35,7 @@ function toCSV(wines) {
     'Potențial îmbătrânire', 'Dimensiune sticlă', 'Status', 'Favorit', 'Adăugat la',
   ];
 
-  const escape = (v) => {
-    if (v == null) return '';
-    const s = String(v).replace(/"/g, '""');
-    return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s}"` : s;
-  };
+  const escape = escapeCsv;
 
   const rows = wines.map(w => [
     w.name, w.producer, w.country, w.region,
@@ -74,25 +71,25 @@ function toPDFHTML(wines, userName) {
   const rows = wines.map((w, i) => `
     <tr class="${i % 2 === 0 ? 'even' : 'odd'}">
       <td class="num">${i + 1}</td>
-      <td><strong>${w.name}</strong>${w.producer ? `<br><span class="sub">${w.producer}</span>` : ''}</td>
-      <td>${w.vintage ?? '—'}</td>
-      <td>${TYPE_LABELS[w.type] ?? w.type}</td>
-      <td>${w.country ?? '—'}${w.region ? `<br><span class="sub">${w.region}</span>` : ''}</td>
-      <td class="center">${w.quantity ?? 1}</td>
+      <td><strong>${h(w.name)}</strong>${w.producer ? `<br><span class="sub">${h(w.producer)}</span>` : ''}</td>
+      <td>${h(w.vintage ?? '—')}</td>
+      <td>${h(TYPE_LABELS[w.type] ?? w.type)}</td>
+      <td>${h(w.country ?? '—')}${w.region ? `<br><span class="sub">${h(w.region)}</span>` : ''}</td>
+      <td class="center">${h(w.quantity ?? 1)}</td>
       <td class="center">${w.rating ? '★'.repeat(w.rating) + '☆'.repeat(5 - w.rating) : '—'}</td>
-      <td class="right">${w.purchasePrice ? w.purchasePrice + ' €' : '—'}</td>
-      <td>${STATUS_LABELS[w.status] ?? w.status}</td>
+      <td class="right">${w.purchasePrice ? h(w.purchasePrice) + ' €' : '—'}</td>
+      <td>${h(STATUS_LABELS[w.status] ?? w.status)}</td>
     </tr>
   `).join('');
 
-  const totalValue = wines.reduce((s, w) => s + (w.estimatedValue || w.purchasePrice || 0), 0);
+  const totalValue = wines.reduce((s, w) => s + (w.estimatedValue || w.purchasePrice || 0) * (w.quantity ?? 1), 0);
   const totalBottles = wines.reduce((s, w) => s + (w.quantity || 1), 0);
 
   return `<!DOCTYPE html>
 <html lang="ro">
 <head>
 <meta charset="UTF-8">
-<title>Colecție Vinerys — ${userName}</title>
+<title>Colecție Vinerys — ${h(userName)}</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Jost:wght@300;400;500&display=swap');
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -136,7 +133,7 @@ function toPDFHTML(wines, userName) {
 <body>
   <div class="cover">
     <p class="cover-eyebrow">Vinerys · Raport colecție</p>
-    <h1 class="cover-title">Colecția lui ${userName}</h1>
+    <h1 class="cover-title">Colecția lui ${h(userName)}</h1>
     <p class="cover-sub">Generat la ${date}</p>
     <div class="cover-meta">
       <div class="cover-stat">
@@ -214,7 +211,11 @@ export async function GET(request) {
   if (format === 'pdf') {
     const html = toPDFHTML(wines, profile?.cellarName || profile?.name || 'Colecție');
     return new NextResponse(html, {
-      headers: { 'Content-Type': 'text/html; charset=utf-8' },
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        // A doua linie de apărare: fără scripturi externe, fără requesturi spre alte origini
+        'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; script-src 'unsafe-inline'",
+      },
     });
   }
 

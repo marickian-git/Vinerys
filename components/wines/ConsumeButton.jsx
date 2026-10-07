@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
+import { consumeWine } from '@/utils/actions';
 
 export default function ConsumeButton({ wineId, currentQuantity }) {
   const router = useRouter();
@@ -17,17 +18,12 @@ export default function ConsumeButton({ wineId, currentQuantity }) {
 
     setConsuming(true);
     try {
-      const res = await fetch(`/api/wines/${wineId}/consume`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ quantity: 1 }),
-      });
-      if (res.ok) {
+      const result = await consumeWine(wineId, 1);
+      if (result?.success) {
         toast.success('O sticlă consumată 🍷');
         router.refresh();
       } else {
-        const error = await res.json();
-        toast.error(error.error || 'Eroare la consum');
+        toast.error(result?.error || 'Eroare la consum');
         setConfirm(false);
       }
     } catch {
