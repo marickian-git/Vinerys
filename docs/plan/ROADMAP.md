@@ -18,7 +18,7 @@ multi-limbă și, la final, aplicație mobilă în App Store / Google Play.
 
 ---
 
-## Faza 0 — Stabilizare și curățenie  `🟨`
+## Faza 0 — Stabilizare și curățenie  `🟨` (0.1–0.3 gata; rămâne deploy + 0.4)
 
 Obiectiv: aplicația actuală funcționează corect și sigur; avem plasă de siguranță (CI, teste) pentru refactor.
 Detalii probleme: vezi `AUDIT.md`.
@@ -30,24 +30,26 @@ Detalii probleme: vezi `AUDIT.md`.
 - [x] Calcul corect „Valoare colecție” (× cantitate, doar `IN_CELLAR`) — B4
 - [x] Scriere `WineLog` la create/update/delete/favorite — B5
 
-### 0.2 Securitate `🟨` (gata, mai puțin email; GitHub #6–#14)
+### 0.2 Securitate `✅` (GitHub #6–#14; trimiterea emailurilor așteaptă contul Brevo)
 - [x] Colecție publică opt-in: toggle + regenerare link — B6
 - [x] Escaping HTML în export PDF — B7
 - [x] MinIO: fără credențiale default, whitelist pentru `folder`, ștergere imagini la delete — B8
 - [x] Migrare `aiApiKey` plaintext → `AIAgent` criptat, apoi drop coloană — B9
 - [x] Rate limiting (auth, ai-scan, upload) — B10
 - [x] Procesare imagini cu sharp (WebP, fără EXIF, thumbnails) — SEC-004, tras din 1.3
-- [ ] Reset parolă + verificare email (necesită provider email → decizie D4) — B10
-- [ ] Ștergerea celor 23 imagini orfane (44 MB) — aștept confirmare
+- [x] Reset parolă + verificare email prin SMTP generic (Brevo) — B10
+- [x] Ștergerea celor 23 imagini orfane (44 MB; copie în `../vinerys-backups/orphan-images-20261007/`)
 
-### 0.3 Calitate și CI `⬜`
-- [ ] **DB locală pentru dev** (docker-compose.dev.yml + seed): acum `.env` pointează la DB-ul de producție — B15
-- [ ] Redenumire pachet, README real, `.env.example`
-- [ ] ESLint flat config + Prettier
-- [ ] Vitest: teste pentru `consensus`, `normalize*`, `validateProviderBaseUrl`, scor urgență
-- [ ] CI: lint + typecheck + test **înainte** de build Docker; tag `staging` înainte de `latest`
-- [ ] `prisma migrate deploy` automat la pornirea containerului
-- [ ] Health check care verifică și DB-ul
+### 0.3 Calitate și CI `✅` (GitHub #16–#21, #79–#83)
+- [x] **DB locală pentru dev** (docker-compose.dev.yml + seed): acum `.env` pointează la DB-ul de producție — B15
+- [x] Redenumire pachet, README real, `.env.example`
+- [x] ESLint flat config (Prettier amânat)
+- [x] Vitest: 58 teste (escape, rateLimit, stocare, media, aiSecrets, SSRF, consensus AI); scorul de urgență vine cu HOME-001
+- [x] Playwright: 8 teste e2e pe DB dedicat
+- [x] CI: lint + typecheck + unit + migrații + drift + e2e **înainte** de build Docker (tag `staging` amânat: deocamdată poarta de calitate e suficientă)
+- [x] `prisma migrate deploy` automat la pornirea containerului
+- [x] Health check care verifică și DB-ul (+ `version`)
+- [x] Migrație baseline `wine_log` (tabela lipsea din istoricul de migrații)
 
 ### 0.4 Observabilitate `⬜`
 - [ ] Logging structurat (pino) + Sentry (sau alternativă self-hosted)
@@ -212,14 +214,29 @@ Obiectiv: validăm înainte să construim; construim doar ce are cerere confirma
 
 ## ⚠️ Checklist la următorul deploy (push pe `main`)
 
-Codul de pe `fix/phase-0-stabilization` presupune următoarele. Le bifăm la deploy:
-- [ ] `.env.production` pe server: `MINIO_ENDPOINT`, `MINIO_PORT`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY` setate (nu mai există fallback-uri); `MINIO_USE_SSL=false` (sau `true` dacă MinIO e pe TLS); `MINIO_PUBLIC_URL` poate rămâne
-- [ ] Reverse proxy-ul trimite `X-Real-IP $remote_addr` (rate limiting pe IP real)
-- [ ] Migrațiile sunt **deja aplicate** pe DB (`share_opt_in`); `prisma migrate deploy` nu are nimic de făcut
-- [ ] După deploy, verificăm: imaginile se încarcă prin `/crama/api/media/...`, consum, share toggle, export
-- [ ] **După** ce noul cod rulează: scoatem policy-ul public de pe bucket-ul MinIO (imaginile se servesc doar prin proxy)
-- [ ] **După** ce noul cod rulează: migrația care șterge coloana `user.aiApiKey` (codul vechi o mai citea)
-- [ ] Colecțiile publice au devenit private: reactivăm din Setări dacă vrem linkul vechi înapoi (același link)
+**Înainte de merge:**
+- [ ] `gh auth refresh -s workflow` (fără acest scope GitHub refuză push-ul cu fișierul de workflow modificat)
+- [ ] CI verde pe PR-ul `fix/phase-0-stabilization` → `main`
+- [ ] Pe server, în `.env.production`: `MINIO_ENDPOINT`, `MINIO_PORT`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY` **chiar setate**. Codul vechi avea fallback-uri (`casa-spiridus.go.ro`, `9010`, `minioadmin`), codul nou nu mai are, deci fără ele upload-ul și imaginile cad
+- [ ] Reverse proxy: `proxy_set_header X-Real-IP $remote_addr;` pe locația `/crama`. Altfel toți utilizatorii par să vină de la același IP și împart limita de 5 login-uri/minut
+- [ ] (Opțional, pentru email) `SMTP_HOST=smtp-relay.brevo.com`, `SMTP_PORT=587`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM` în `.env.production`
+
+**Deja făcut pe DB-ul de producție** (compatibil cu codul vechi): migrațiile `share_opt_in` și `wine_log_baseline`, migrarea cheii AI, ștergerea imaginilor orfane. La pornire, `prisma migrate deploy` nu are nimic de aplicat.
+
+**Teste după deploy** (apoi issue-urile trec pe „Done”):
+- [ ] `/crama/health` → `db: ok`, `version` = SHA-ul commit-ului
+- [ ] Login, dashboard (sticle/valoare), listă, detaliu: imaginile se încarcă prin `/crama/api/media/...` și cardurile primesc variante `?w=480`
+- [ ] Upload imagine nouă la editarea unui vin (ajunge WebP)
+- [ ] Consumă o sticlă (pe un vin cu stoc > 1, ca să nu se piardă nimic)
+- [ ] Setări: activează colecția publică → link deschis în incognito → dezactivează
+- [ ] Export CSV + PDF
+- [ ] Scanare AI etichetă (agenții existenți funcționează; cheia Gemini merge acum prin header)
+- [ ] „Ai uitat parola?” (dacă SMTP e configurat)
+
+**După deploy:**
+- [ ] Scoatem policy-ul public de pe bucket-ul MinIO (imaginile se servesc doar prin proxy)
+- [ ] Migrația care șterge coloana `user.aiApiKey`
+- [ ] Reactivăm colecția publică din Setări, dacă o vrem (linkul vechi revine)
 
 ## Corespondență GitHub Project
 

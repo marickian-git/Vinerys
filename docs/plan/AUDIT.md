@@ -23,12 +23,17 @@ Starea proiectului la commit `c0473ae`. Bifează problemele când sunt rezolvate
 | B7 | ✅ `957c46e` | Exportul PDF/HTML pune numele vinurilor în HTML fără escaping (XSS) | `app/api/export/route.js` |
 | B8 | ✅ `a03c663` | MinIO are fallback `minioadmin/minioadmin` și hostname hardcodat, `useSSL:false`, bucket public. `folder` vine nevalidat de la client. Pozele nu se redimensionează (max 5MB brut) și nu se șterg la delete vin/cont. Există un client duplicat. | `utils/minio.js`, `app/lib/minio.js`, `app/api/upload/route.js` |
 | B9 | ✅ `c997aed` | `User.aiApiKey` ține cheia AI în plaintext (legacy) | `prisma/schema.prisma` |
-| B10 | 🟨 rate limiting `d8da57e`; email rămas | Lipsesc resetarea parolei, verificarea emailului și rate limiting-ul | auth, `api/ai-scan`, `api/upload` |
+| B10 | ✅ `d8da57e` `1b15cfe` | Lipsesc resetarea parolei, verificarea emailului și rate limiting-ul | auth, `api/ai-scan`, `api/upload` |
 | B11 | ✅ `a03c663` | `deleteAccount` nu șterge imaginile din MinIO | `utils/actions.js` |
-| B12 | ⬜ | `viewport.userScalable=false` blochează zoom-ul (accesibilitate) | `app/layout.js` |
-| B13 | ⬜ | Service worker-ul cachează pagini cu date private (`/dashboard`, `/wines`) | `public/sw.js` |
-| B15 | ⬜ | `.env` / `.env.local` folosesc DB-ul **de producție** (`casa-spiridus.go.ro:5432`) și pentru dev → orice test local modifică date reale | `.env`, `docker-compose.dev.yml` |
-| B14 | ⬜ | `public/manifest.json` (static, fără basePath) duplică `app/manifest.js` | `public/` |
+| B12 | ✅ `88086b7` | `viewport.userScalable=false` blochează zoom-ul (accesibilitate) | `app/layout.js` |
+| B13 | ✅ `88086b7` | Service worker-ul cachează pagini cu date private (`/dashboard`, `/wines`) | `public/sw.js` |
+| B15 | ✅ `84f66c3` | `.env` / `.env.local` folosesc DB-ul **de producție** (`casa-spiridus.go.ro:5432`) și pentru dev → orice test local modifică date reale | `.env`, `docker-compose.dev.yml` |
+| B14 | ✅ `88086b7` | `public/manifest.json` (static, fără basePath) duplică `app/manifest.js` | `public/` |
+
+| B16 | ✅ `88086b7` | Butonul de export apela `/api/export` fără basePath, deci nu funcționa în producție | `components/wines/ExportButton.jsx` |
+| B17 | ✅ `84f66c3` | Tabela `wine_log` lipsea din istoricul de migrații (creată cu `db push`), deci orice DB nou era incomplet | `prisma/migrations` |
+| B18 | ✅ `38e3070` | Validarea SSRF nu recunoștea IPv6 între paranteze (`https://[::1]`) și IPv4 mapat | `utils/aiUrlSecurity.js` |
+| B19 | ✅ `1b15cfe` | Logout-ul redirecționa la `/sign-in` fără basePath | `components/Navbar.jsx` |
 
 ## Datorie tehnică
 

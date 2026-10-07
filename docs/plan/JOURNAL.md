@@ -13,6 +13,46 @@
 
 ---
 
+## 2026-10-07 — Email, orfane, 0.3 Calitate și CI
+
+**Făcut:**
+- **Imagini orfane:** am descărcat local cele 23 (`../vinerys-backups/orphan-images-20261007/`), apoi le-am șters. Bucket-ul are 67 de obiecte, toate referite.
+- **Email** `1b15cfe`:
+  - SMTP generic (`utils/email.js`, nodemailer) + șabloane HTML în română.
+  - better-auth: resetare parolă (1h, folosire unică, revocă sesiunile) și verificare email la sign-up.
+  - Pagini `/forgot-password` și `/reset-password`, link „Ai uitat parola?”, banner de verificare în Setări.
+  - Testat end-to-end; fără SMTP, în dev linkurile apar în consolă.
+- **Lint/typecheck/unit** `38e3070`: `eslint.config.mjs`, `tsc --noEmit`, 58 teste Vitest. Testele au găsit un bypass SSRF pe IPv6 (B18), reparat.
+- **Fixuri** `88086b7`: zoom permis (B12), cache-urile vechi ale SW șterse (B13), export cu basePath (B16, era stricat în producție), manifest duplicat (B14).
+- **DB/Docker** `84f66c3`:
+  - Migrație baseline idempotentă pentru `wine_log` (B17). Aplicată pe producție ca no-op, cu backup înainte.
+  - `/health` verifică DB-ul și raportează `version`.
+  - Containerul rulează `prisma migrate deploy` la pornire. Testat cu imaginea Docker locală pe o bază goală: 9 migrații aplicate, healthy.
+- **E2E + CI** `ab2ab9f`:
+  - 8 teste Playwright pe Postgres local (`npm run db:dev`); config-ul refuză DB-ul de producție.
+  - Workflow: job `quality` (lint → typecheck → unit → migrații pe DB curat → drift → e2e), iar build-ul Docker rulează doar după el, pe `main`.
+  - README rescris, `.env.example` complet.
+- GitHub: #12, #13, #16–#21, #79–#83 pe „In Progress”, cu comentarii.
+
+**Decizii:**
+- **Email: Brevo** (gratuit, 300/zi, fără domeniu propriu; se verifică doar adresa expeditorului). Resend cere domeniu verificat, iar pe `go.ro` nu putem adăuga DNS. Codul e pe SMTP generic, deci la domeniul propriu (BIZ-002) schimbăm doar env-ul.
+- Conturile neverificate nu sunt blocate la login (cele existente nu au email confirmat).
+- Tag-ul `staging` e amânat: poarta de calitate din CI acoperă deocamdată riscul.
+
+**Învățat / capcane:**
+- `git push` pe HTTPS folosește alt cont (MarianSpiridon). Push-ul merge cu `git -c credential.helper= -c credential.helper='!gh auth git-credential' push`, dar fișierele din `.github/workflows` cer scope-ul `workflow` (`gh auth refresh -s workflow`).
+- Linkurile din emailuri se construiesc din `NEXT_PUBLIC_APP_URL` (include `/crama`). `url`-ul primit de la better-auth pornește de la baseURL fără basePath.
+- În e2e, butonul de consum devine „⏳” cât rulează acțiunea; testul trebuie să aștepte rezultatul (contorul de sticle), nu dispariția butonului.
+- `prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script` arată drift-ul unei baze față de schemă; producția era deja identică.
+- Next 16 nu mai are `next lint`; folosim `eslint .`.
+
+**Rămas / next:**
+- Scope `workflow` → push branch → PR → CI verde → checklist deploy → merge → teste după deploy → issue-urile trec pe „Done”.
+- Cont Brevo + variabilele SMTP pe server.
+- 0.4 Observabilitate, apoi Faza 1.
+
+---
+
 ## 2026-10-07 — 0.2 Securitate (fără email)
 
 **Făcut** (branch `fix/phase-0-stabilization`, toate testate la rulare cu useri de test, care au fost apoi șterși):
