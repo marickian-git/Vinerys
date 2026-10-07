@@ -218,8 +218,8 @@ Obiectiv: validăm înainte să construim; construim doar ce are cerere confirma
 > **Status 2026-10-07: deploy amânat.** Utilizatorul nu poate face momentan pașii de pe server și scope-ul `workflow`. Lucrul continuă local pe `fix/phase-0-stabilization` (commit-uri, fără push). Lipsa variabilelor MinIO pe server nu strică aplicația: proxy-ul de imagini dă 404 și upload-ul dă eroare, dar restul merge.
 
 **Înainte de merge:**
-- [ ] `gh auth refresh -s workflow` (fără acest scope GitHub refuză push-ul cu fișierul de workflow modificat)
-- [ ] CI verde pe PR-ul `fix/phase-0-stabilization` → `main`
+- [x] `gh auth refresh -h github.com -s workflow` (făcut 2026-10-07)
+- [x] CI verde pe PR [#119](https://github.com/marickian-git/Vinerys/pull/119) (`fix/phase-0-stabilization` → `main`), run 37640810282
 - [ ] Pe server, în `.env.production`: `MINIO_ENDPOINT`, `MINIO_PORT`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY` **chiar setate**. Codul vechi avea fallback-uri (`casa-spiridus.go.ro`, `9010`, `minioadmin`), codul nou nu mai are, deci fără ele upload-ul și imaginile cad
 - [ ] Reverse proxy: `proxy_set_header X-Real-IP $remote_addr;` pe locația `/crama`. Altfel toți utilizatorii par să vină de la același IP și împart limita de 5 login-uri/minut
 - [ ] Email: copiază din `.env` local în `.env.production` cele 5 variabile `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM` (Brevo e configurat și testat, blocarea pe IP e dezactivată)

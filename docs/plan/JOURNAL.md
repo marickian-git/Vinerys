@@ -13,7 +13,17 @@
 
 ---
 
-## 2026-10-07 — Deploy amânat
+## 2026-10-07 — Branch publicat, PR #119, CI verde
+
+**Făcut:** am acordat scope-ul `workflow`, am făcut push pe `fix/phase-0-stabilization` și am deschis PR-ul [#119](https://github.com/marickian-git/Vinerys/pull/119). Primul run CI (37640810282) e verde pe toți pașii: lint, typecheck, unit, migrații pe DB curat, drift, e2e. Build-ul Docker a fost sărit pe PR, cum e corect.
+
+**Învățat / capcane:**
+- `gh auth refresh` trebuie finalizat în browser (device code), pe contul `marickian-git`. Pe mașină e logat și `MarianSpiridon`, așa că trebuie verificat cu `gh auth status`.
+- Push-ul pe branch-uri non-main declanșează doar job-ul `quality`, nu deploy-ul.
+
+**Rămas:** merge-ul (= deploy) așteaptă variabilele din `.env.production` și headerul `X-Real-IP` pe server.
+
+
 
 **Decizie:** utilizatorul nu poate face acum `gh auth refresh -s workflow`, variabilele din `.env.production` și headerul `X-Real-IP` din nginx. Deploy-ul se amână, iar lucrul continuă local, cu commit-uri pe același branch.
 
