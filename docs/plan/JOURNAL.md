@@ -13,7 +13,30 @@
 
 ---
 
-## 2026-10-07 — Branch publicat, PR #119, CI verde
+## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub
+
+**Făcut:**
+- `docs/plan/DATA-REPORT.md`: interogări read-only pe datele reale.
+  - Datele sunt bogate datorită scanării AI: fereastră de consum 97%, poză etichetă 97%, arome 86%.
+  - Lipsesc: rating (25%), culoare (14%), favorite (11%).
+  - 22 din 24 de vinuri din pivniță sunt „la vârf acum”, mediana anilor e 2023.
+  - Locațiile sunt zone ale casei (Lada, Frigider, Bucătărie), nu rafturi.
+  - Duplicate din diacritice/spații („România”/„Romania”, „Frigider ”).
+- Merge-ul PR-ului #119 a pornit cu variabilele setate de utilizator în CasaOS (fără `X-Real-IP`, amânat). GitHub a răspuns însă cu Internal Server Error la push, la merge (GraphQL și REST) și la crearea de issue-uri. githubstatus.com arăta „All Systems Operational”. Reîncercare automată în fundal.
+
+**Decizii (pentru design):**
+- Scorul de urgență trebuie să ordoneze *în interiorul* ferestrei (timp rămas până la `drinkUntil`, cantitate), nu doar „în / în afara ferestrei”.
+- Harta pivniței pornește de la zone ale casei, nu de la o grilă de rafturi.
+- Paleta din etichetă și curba de maturitate sunt viabile ca elemente vizuale principale.
+- Rating-urile se colectează activ după degustare.
+- Notele AI se separă vizual de notele personale.
+
+**Rămas / next:**
+- Merge + deploy + teste după deploy, când GitHub acceptă din nou scrieri.
+- Issue-ul DATA-010 (normalizare) pe GitHub, plus comentariul pe DATA-009 (#86).
+- DESIGN-002: machete pe datele reale.
+
+
 
 **Făcut:** am acordat scope-ul `workflow`, am făcut push pe `fix/phase-0-stabilization` și am deschis PR-ul [#119](https://github.com/marickian-git/Vinerys/pull/119). Primul run CI (37640810282) e verde pe toți pașii: lint, typecheck, unit, migrații pe DB curat, drift, e2e. Build-ul Docker a fost sărit pe PR, cum e corect.
 

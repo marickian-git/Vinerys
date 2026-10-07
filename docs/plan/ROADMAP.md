@@ -71,6 +71,7 @@ Obiectiv: structura care susține design nou, multi-limbă, business și mobile 
 - [ ] Separare `Wine` (eticheta) / `Bottle` (exemplar: preț, locație, dată) / `Tasting` (degustare: notă, rating, mâncare, poze)
 - [ ] `Event` log ca sursă de adevăr pentru istoric și statistici
 - [ ] Migrare date existente fără pierderi + script de verificare
+- [ ] Normalizare și vocabulare canonice: țări, locații, arome, culoare derivată — DATA-010 (de creat pe GitHub)
 
 ### 1.3 Pipeline imagini `⬜`
 - [ ] `sharp`: resize + WebP + thumbnail la upload
@@ -101,7 +102,7 @@ Obiectiv: aplicația arată **deosebit** și e ușor de folosit, în special pe 
 > Nu facem doar un UI frumos. Fiecare vin, sticlă și pivniță își generează propria identitate vizuală din datele ei.
 > Machetele se fac cu date reale din pivniță, nu cu lorem ipsum.
 
-### 2.0 Inventar date → vizual `⬜`
+### 2.0 Inventar date → vizual `🟨` (raport de date gata: `DATA-REPORT.md`)
 Pentru fiecare câmp din model decidem cum devine vizual:
 
 | Date | Idee vizuală |
