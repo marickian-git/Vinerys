@@ -215,6 +215,8 @@ Obiectiv: validăm înainte să construim; construim doar ce are cerere confirma
 
 ## ⚠️ Checklist la următorul deploy (push pe `main`)
 
+> **Status 2026-10-07: deploy amânat.** Utilizatorul nu poate face momentan pașii de pe server și scope-ul `workflow`. Lucrul continuă local pe `fix/phase-0-stabilization` (commit-uri, fără push). Lipsa variabilelor MinIO pe server nu strică aplicația: proxy-ul de imagini dă 404 și upload-ul dă eroare, dar restul merge.
+
 **Înainte de merge:**
 - [ ] `gh auth refresh -s workflow` (fără acest scope GitHub refuză push-ul cu fișierul de workflow modificat)
 - [ ] CI verde pe PR-ul `fix/phase-0-stabilization` → `main`

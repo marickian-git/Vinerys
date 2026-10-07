@@ -13,7 +13,13 @@
 
 ---
 
-## 2026-10-07 — Email Brevo configurat și verificat
+## 2026-10-07 — Deploy amânat
+
+**Decizie:** utilizatorul nu poate face acum `gh auth refresh -s workflow`, variabilele din `.env.production` și headerul `X-Real-IP` din nginx. Deploy-ul se amână, iar lucrul continuă local, cu commit-uri pe același branch.
+
+**Verificat:** codul nou se degradează controlat dacă lipsesc variabilele MinIO. Proxy-ul media prinde eroarea (404), upload-ul răspunde cu eroare, ștergerile de imagini sunt best-effort, deci paginile nu cad. Fără `X-Real-IP`, better-auth folosește `x-forwarded-for`. Fără SMTP, emailurile nu pleacă, dar nimic nu se strică.
+
+
 
 **Făcut:** `.env` local cu `SMTP_HOST/PORT/USER/PASS` (Brevo) și `EMAIL_FROM="Vinerys <marickian21@gmail.com>"`. Autentificarea SMTP merge. Test real prin aplicație: sign-up pe `marickian21+vinerys-test@gmail.com` a trimis emailul de confirmare, iar cererea de resetare pe aceeași adresă emailul de resetare. Contul de test a fost șters.
 
