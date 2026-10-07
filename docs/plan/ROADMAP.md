@@ -217,6 +217,8 @@ Obiectiv: validăm înainte să construim; construim doar ce are cerere confirma
 
 > **Status 2026-10-07: deploy amânat.** Utilizatorul nu poate face momentan pașii de pe server și scope-ul `workflow`. Lucrul continuă local pe `fix/phase-0-stabilization` (commit-uri, fără push). Lipsa variabilelor MinIO pe server nu strică aplicația: proxy-ul de imagini dă 404 și upload-ul dă eroare, dar restul merge.
 
+**Infrastructură:** aplicația rulează pe un **Raspberry Pi 5 cu CasaOS** (container Docker din Docker Hub, actualizat de Watchtower). Variabilele de mediu le setează utilizatorul manual, în CasaOS.
+
 **Înainte de merge:**
 - [x] `gh auth refresh -h github.com -s workflow` (făcut 2026-10-07)
 - [x] CI verde pe PR [#119](https://github.com/marickian-git/Vinerys/pull/119) (`fix/phase-0-stabilization` → `main`), run 37640810282
