@@ -23,7 +23,7 @@ multi-limbă și, la final, aplicație mobilă în App Store / Google Play.
 Obiectiv: aplicația actuală funcționează corect și sigur; avem plasă de siguranță (CI, teste) pentru refactor.
 Detalii probleme: vezi `AUDIT.md`.
 
-### 0.1 Bug-uri critice `✅` (cod gata, test manual pe DB locală rămas — vezi 0.3)
+### 0.1 Bug-uri critice `✅` (testat la rulare 2026-10-07; GitHub #1–#5)
 - [x] Consum sticlă: server action cu tranzacție + `WineLog` (înlocuiește ruta Clerk stricată) — B1
 - [x] Șterge `app/api/wines/*` (cod Clerk mort) — B2
 - [x] Schimbare parolă prin `auth.api.changePassword` cu headers — B3
@@ -210,7 +210,9 @@ Obiectiv: validăm înainte să construim; construim doar ce are cerere confirma
 
 ## Corespondență GitHub Project
 
-Proiectul GitHub **Vinerys** (#5, 86 itemi, toți `Todo`) acoperă în mare Fazele 0–4 și 6. ID-urile se mapează astfel:
+Proiectul GitHub **Vinerys** (project #5) are acum **117 issues în repo-ul `marickian-git/Vinerys`**, grupate pe milestone-uri M0–M14.
+Issue-urile originale erau create greșit în repo-ul `fotbal-genius`. Le-am recreat în Vinerys și le-am închis pe cele vechi, cu link către cele noi.
+Convenție: commit-urile menționează ID-ul issue-ului (ex. `fixes #6`). ID-urile se mapează astfel:
 
 | Roadmap | GitHub Project |
 |---|---|
@@ -224,8 +226,8 @@ Proiectul GitHub **Vinerys** (#5, 86 itemi, toți `Todo`) acoperă în mare Faze
 | 4.x | CELLAR-*, AI-004…010, SOCIAL-*, RO-*, INT-* |
 | 6.x | PWA-001…004 |
 
-**Lipsesc din GitHub Project** (de propus): i18n (1.4), AI găzduit + cote (1.5), entitatea Cellar multi-tip + API v1 (1.1/1.2), design bazat pe date (2.0/2.1), navigație + ecrane noi (2.3/2.4), „Ce bem diseară?” (scor urgență 3.1, deschide sticla 3.4), toată Faza 5 (business), Expo + store (6.2–6.4), DB locală dev (B15), B11–B14.
-**Duplicate în GitHub Project:** „CELLAR-003” apare de 2 ori (al doilea e de fapt CELLAR-004), „CELLAR-005” de 2 ori.
+Adăugate pe 2026-10-07 (#81–#117): SEC-010/011, BUG-006, ARCH-008, DATA-008/009, AI-012/013, DESIGN-001…009 (M10), I18N-001…004 (M11), HOME-001…006 (M12), BIZ-001…007 (M13), MOB-001…003 (M14).
+Mapare suplimentară: 1.4 → M11 · 2.0–2.4 → M10 · 3.x → M12 · 5.x → M13 · 6.2–6.4 → M14.
 
 ## Decizii
 

@@ -13,6 +13,34 @@
 
 ---
 
+## 2026-10-07 — GitHub Project reorganizat + test la rulare 0.1
+
+**Făcut:**
+- Backup complet al DB-ului de producție: `../vinerys-backups/vinerys-20261007-145846.dump` (2 useri, 36 vinuri, 28 loguri, 4 agenți).
+- GitHub: issue-urile Vinerys erau create în repo-ul `fotbal-genius` (#45–#130). Transferul privat → public nu e permis, așa că le-am recreat în `marickian-git/Vinerys` (#1–#80) cu labels și milestones M0–M9. Titlurile greșite („Milestone N”) au primit titlul corect, iar duplicatele (CELLAR-003/005, ARCH-001) au fost sărite. Originalele sunt închise cu link spre noul issue și scoase din proiect.
+- Am adăugat 37 de issues noi (#81–#117) și milestone-urile M10–M14 (design bazat pe date, i18n, „Ce bem diseară?”, business, mobile).
+- BUG-001…005 (#1–#5) sunt „In Progress”, cu comentariu despre branch.
+- Test la rulare 0.1 cu un user de test pe DB-ul real:
+  - consum 2 → 1 → 0 cu status `CONSUMED` și `consumptionDate`; al 3-lea consum e refuzat corect;
+  - favorit logat; statisticile exclud vinul `CONSUMED`;
+  - parola greșită dă mesaj corect, iar cea corectă se schimbă și login-ul cu parola nouă merge.
+  - Userul de test a fost șters; numărătorile din DB sunt identice cu cele de dinainte.
+
+**Decizii:**
+- Commit-uri libere, push rar (push pe `main` = deploy automat). Pot lucra pe DB-ul de producție, dar fără pierderi de date: backup înainte de operații riscante, teste doar cu useri de test.
+- Issue-urile rămân „In Progress” până ajung pe `main`, apoi trec pe „Done”.
+
+**Învățat / capcane:**
+- Backup și interogări fără pg_dump local: `docker run --rm postgres:17-alpine pg_dump -Fc "$DATABASE_URL"` (serverul e PostgreSQL 17.4).
+- Test local: `NEXT_PUBLIC_APP_URL=http://localhost:3100/crama BETTER_AUTH_URL=http://localhost:3100 BASE_URL=/crama npx next dev -p 3100`. Sign-up: `POST /crama/api/auth/sign-up/email` cu header `Origin`.
+- Server actions din curl: header `Next-Action: <id>`, cu id-ul luat din `.next/dev/server/**/server-reference-manifest.json`. Argumentele merg ca JSON. Pentru FormData: câmpuri `1_<nume>`, iar câmpul rădăcină `0=["$K1"]` trebuie trimis **ultimul** (busboy rezolvă referința la momentul parsării).
+- Share URL-ul `…/crama/crama/<id>` e corect: basePath `/crama` + ruta `/crama/[shareId]`. Merită totuși redenumită ruta publică (ex. `/c/<id>`) la restilizare.
+
+**Rămas / next:**
+- 0.2 Securitate (SEC-001…009).
+
+---
+
 ## 2026-10-07 — 0.1 Bug-uri critice
 
 **Făcut** (branch `fix/phase-0-stabilization`, fără commit):
