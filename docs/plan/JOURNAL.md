@@ -13,6 +13,20 @@
 
 ---
 
+## 2026-10-08 — Verificare GitHub: migrarea din fotbal-genius, statusuri
+
+**Făcut:**
+- Am verificat migrarea issue-urilor Vinerys create inițial în `fotbal-genius` (#45–#130, mutate pe 07.10).
+  - Toate au comentariul „Mutat în …”, sunt închise acolo și au ieșit din proiectul FotbalGenius.
+  - 6 n-au fost mutate intenționat: 4 descrieri de milestone, devenite M0–M14, și 2 duplicate.
+  - Vinerys are 120 de issue-uri, toate în proiectul #5 și cu milestone. În fotbal-genius nu a rămas nimic de-al Vinerys.
+- Proiect: #86 DATA-009 → Done (era deja închis), #90 DESIGN-002 → In Progress.
+- Push pe `feat/phase-2-design` (branch non-main, fără deploy).
+
+**Rămas / next:** alegerea direcției vizuale (D1). Apoi confirmarea deploy-ului pe Pi, iar cele 25 de issue-uri din Faza 0 trec pe Done și se închid.
+
+---
+
 ## 2026-10-07 — Merge Faza 0 + machete de design (DESIGN-002)
 
 **Făcut:**
