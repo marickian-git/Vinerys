@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { createWine, updateWine } from "@/utils/actions";
+import { createWine, getCellarLocations, updateWine } from "@/utils/actions";
+import { CANONICAL_COUNTRIES } from "@/utils/normalize";
 import toast from "react-hot-toast";
 import ImageUpload from "@/components/wines/ImageUpload";
 import ScanLabelButton from "@/components/wines/ScanLabelButton";
@@ -118,6 +119,11 @@ const defaultForm = {
 };
 
 export default function WineForm({ wine = null }) {
+  // Locațiile deja folosite, pentru autocomplete (DATA-010)
+  const [locations, setLocations] = useState([]);
+  useEffect(() => {
+    getCellarLocations().then(setLocations).catch(() => {});
+  }, []);
   const router = useRouter();
   const isEdit = !!wine;
 
@@ -765,9 +771,13 @@ export default function WineForm({ wine = null }) {
               <input
                 className="wf-input"
                 placeholder="ex. Franța, România"
+                list="wf-countries"
                 value={form.country}
                 onChange={(e) => set("country", e.target.value)}
               />
+              <datalist id="wf-countries">
+                {CANONICAL_COUNTRIES.map((country) => <option key={country} value={country} />)}
+              </datalist>
             </div>
             <div className="wf-field">
               <label className="wf-label">Regiune</label>
@@ -1047,9 +1057,13 @@ export default function WineForm({ wine = null }) {
               <input
                 className="wf-input"
                 placeholder="ex. Raft A, Rândul 3"
+                list="wf-locations"
                 value={form.cellarLocation}
                 onChange={(e) => set("cellarLocation", e.target.value)}
               />
+              <datalist id="wf-locations">
+                {locations.map((location) => <option key={location} value={location} />)}
+              </datalist>
             </div>
             <div className="wf-field wf-full">
               <label className="wf-label">Fereastră optimă de consum</label>

@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { z } from "zod";
 import { parseWineForm } from "../schemas/wine";
+import { dedupeLocations, normalizeWineData } from "./normalize";
 import { CellarNameSchema, PasswordChangeSchema, ProfileInputSchema, firstIssueMessage } from "../schemas/account";
 import { AIAgentInputSchema } from "../schemas/ai";
 import prisma from "./db";
@@ -149,6 +150,21 @@ export async function getWines(filters = {}) {
   };
 }
 
+async function userLocations(userId) {
+  const rows = await prisma.wine.findMany({
+    where: { userId, cellarLocation: { not: null } },
+    select: { cellarLocation: true },
+    distinct: ['cellarLocation'],
+  });
+  return dedupeLocations(rows.map((row) => row.cellarLocation));
+}
+
+// Locațiile folosite deja, deduplicate (pentru autocomplete în formular)
+export async function getCellarLocations() {
+  const user = await getCurrentUser();
+  return userLocations(user.id);
+}
+
 export async function getWineCountries() {
   const user = await getCurrentUser();
   const results = await prisma.wine.findMany({
@@ -176,6 +192,7 @@ export async function createWine(formData) {
 
   const parsed = parseWineForm(formData);
   if (parsed.error) return { error: parsed.error };
+  parsed.data = normalizeWineData(parsed.data, { existingLocations: await userLocations(user.id) });
 
   const wine = await prisma.wine.create({
     data: { ...parsed.data, userId: user.id },
@@ -201,6 +218,7 @@ export async function updateWine(id, formData) {
 
   const parsed = parseWineForm(formData);
   if (parsed.error) return { error: parsed.error };
+  parsed.data = normalizeWineData(parsed.data, { existingLocations: await userLocations(user.id) });
 
   const updated = await prisma.wine.update({
     where: { id },

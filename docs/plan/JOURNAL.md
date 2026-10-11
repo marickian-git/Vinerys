@@ -34,6 +34,23 @@
 **Decizii:** schemele nu importă nimic de pe server, deci pot fi folosite și în componente client. Mesajele și limitele (timeout, retries, weight) sunt păstrate exact. Am adăugat o limită de mărime pentru `imageBase64` (15 MB) și validarea tipului MIME. Schemele de răspuns vin cu `/api/v1` (#84).
 **Învățat:** testul e2e de consum pica și pe `main`: după un consum, butonul rămânea pe „Confirmi?”, deci al doilea click consuma fără confirmare. Reparat separat în `fix(consume)`. Pentru e2e local în containerul cloud: Postgres 16 pe 5432 (`E2E_DATABASE_URL`) și Chromium din `/opt/pw-browsers` (config local, neversionat).
 
+### #120 DATA-010 Normalizare și vocabulare canonice
+**Făcut:** `utils/normalize.js`:
+- `cleanText`/`foldKey`;
+- 40 de țări canonice în română, cu aliasuri EN/fără diacritice;
+- locații deduplicate după forma existentă;
+- vocabular de ~100 de arome în 13 categorii (`AROMA_CATEGORIES`, `classifyAroma`), pentru roata de arome (#51) și AI;
+- `deriveColor`, `normalizeWineData`.
+
+`createWine`/`updateWine` normalizează la salvare. `WineForm` are autocomplete (`datalist`) pentru țări și locații (`getCellarLocations`). Scriptul `scripts/normalize-wines.mjs` rulează implicit în dry-run, iar cu `--apply` face întâi backup JSON (`backups/`, ignorat de git) și apoi tranzacția. Teste: `tests/unit/normalize.test.js` (18).
+
+**Decizii:**
+- Forma canonică a țărilor e în română („Republica Moldova”, „Statele Unite”). Aromele canonice sunt în română, cu litere mici.
+- Culoarea se derivă doar când e sigură: RED/WHITE/ROSE din tip, spumant/desert/fortifiat din soiuri. La soiuri mixte rămâne `null`.
+- Locația nouă preia scrierea deja existentă la utilizator. Între două variante, câștigă cea cu diacritice.
+
+**Next:** pe producție, `docker exec vinerys-app node scripts/normalize-wines.mjs` (dry-run), verificare, apoi `--apply`.
+
 ---
 
 ## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub

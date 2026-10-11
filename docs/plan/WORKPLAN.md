@@ -23,7 +23,7 @@ Consecințe pentru planul ăsta:
 | 1 | #76 | REFACTOR-005 Logging structurat | done | | Logger propriu fără dependențe (merge și în edge) în loc de pino: JSON în producție, secrete redactate, email mascat, `LOG_LEVEL`, latență per agent AI. Costul AI vine în #88 |
 | 2 | #75 | REFACTOR-004 Error handling standard | done | | `utils/errors.js`: `AppError` + coduri, `withApiHandler` (requestId, log, 500 generic) pe upload/export/ai-scan; actions aruncă AppError. Corpul JSON păstrează `error`, deci clienții existenți merg; se adaugă `code` + `requestId` |
 | 3 | #28 | ARCH-007 Scheme Zod comune | done | | `schemas/` (wine, account, ai): aceleași scheme pentru actions, `/api/ai-scan` și, pe viitor, formulare client și `/api/v1`. Mesajele de eroare au rămas identice. Response schemas: amânat la ARCH-008 (#84), când există un API public |
-| 4 | #120 | DATA-010 Normalizare și vocabulare | todo | | |
+| 4 | #120 | DATA-010 Normalizare și vocabulare | done | | `utils/normalize.js` + normalizare la salvare + `scripts/normalize-wines.mjs` (dry-run/backup/raport). Autocomplete: `datalist` pentru țări/locații (minim, fără restilizare). Culoarea derivată nu ghicește la spumant/desert cu soiuri mixte. **De rulat pe producție:** dry-run, apoi `--apply` |
 | 5 | #34 | DATA-006 Statistici prin agregări DB | todo | | |
 | — | | **Checkpoint 1** | | | |
 | 5b | nou | Teme propuse de Claude (2–3), ca opțiune de ales | todo | | Cerut de utilizator pe 11.10. Izolate în fișiere proprii ca să nu intre în conflict cu temele A–E de pe branch-ul local |
