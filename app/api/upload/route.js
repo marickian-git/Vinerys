@@ -6,26 +6,17 @@ import { auth } from '@/utils/auth';
 import { BUCKET, ensureBucket, getMinioClient, getPublicUrl } from '@/utils/minio';
 import { UPLOAD_FOLDERS } from '@/utils/storage';
 import { LIMITS, rateLimit, tooManyRequestsMessage } from '@/utils/rateLimit';
-import { createLogger, serializeError } from '@/utils/logger';
-
-const logger = createLogger('upload');
+import { AppError, rateLimited, unauthenticated, validationError, withApiHandler } from '@/utils/errors';
 
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB la intrare; după procesare rămân câteva sute de KB
 const MAX_DIMENSION = 2000;
 
-export async function POST(request) {
+export const POST = withApiHandler('upload', async (request) => {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user) {
-    return NextResponse.json({ error: 'Neautentificat' }, { status: 401 });
-  }
+  if (!session?.user) throw unauthenticated();
 
   const limited = rateLimit(`upload:${session.user.id}`, LIMITS.upload);
-  if (!limited.ok) {
-    return NextResponse.json(
-      { error: tooManyRequestsMessage(limited.retryAfter) },
-      { status: 429, headers: { 'Retry-After': String(limited.retryAfter) } },
-    );
-  }
+  if (!limited.ok) throw rateLimited(tooManyRequestsMessage(limited.retryAfter), limited.retryAfter);
 
   let file, folder;
   try {
@@ -33,18 +24,12 @@ export async function POST(request) {
     file = formData.get('file');
     folder = formData.get('folder')?.toString() || 'wines/labels';
   } catch {
-    return NextResponse.json({ error: 'Date invalide' }, { status: 400 });
+    throw validationError(undefined, 'Date invalide');
   }
 
-  if (!file || typeof file.arrayBuffer !== 'function') {
-    return NextResponse.json({ error: 'Niciun fișier primit' }, { status: 400 });
-  }
-  if (!UPLOAD_FOLDERS.includes(folder)) {
-    return NextResponse.json({ error: 'Destinație invalidă' }, { status: 400 });
-  }
-  if (file.size > MAX_SIZE) {
-    return NextResponse.json({ error: 'Fișierul e prea mare. Maximum 10MB.' }, { status: 400 });
-  }
+  if (!file || typeof file.arrayBuffer !== 'function') throw validationError(undefined, 'Niciun fișier primit');
+  if (!UPLOAD_FOLDERS.includes(folder)) throw validationError(undefined, 'Destinație invalidă');
+  if (file.size > MAX_SIZE) throw validationError(undefined, 'Fișierul e prea mare. Maximum 10MB.');
 
   // sharp verifică tipul real (nu doar extensia/MIME-ul declarat), elimină EXIF/GPS și normalizează la WebP
   let output;
@@ -56,7 +41,7 @@ export async function POST(request) {
       .webp({ quality: 82 })
       .toBuffer();
   } catch {
-    return NextResponse.json({ error: 'Fișierul nu este o imagine validă' }, { status: 400 });
+    throw validationError(undefined, 'Fișierul nu este o imagine validă');
   }
 
   const objectName = `${folder}/${session.user.id}_${Date.now()}_${randomBytes(6).toString('hex')}.webp`;
@@ -65,8 +50,7 @@ export async function POST(request) {
     await ensureBucket();
     await getMinioClient().putObject(BUCKET, objectName, output, output.length, { 'Content-Type': 'image/webp' });
   } catch (error) {
-    logger.error('storage error', { error: serializeError(error) });
-    return NextResponse.json({ error: 'Eroare la salvarea imaginii' }, { status: 500 });
+    throw new AppError('STORAGE_FAILED', { message: 'minio putObject failed', userMessage: 'Eroare la salvarea imaginii', cause: error });
   }
 
   return NextResponse.json({
@@ -76,4 +60,4 @@ export async function POST(request) {
     size: output.length,
     type: 'image/webp',
   });
-}
+});

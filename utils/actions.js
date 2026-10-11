@@ -15,6 +15,7 @@ import { shareUrlFor } from "./share";
 import { LIMITS, rateLimit, tooManyRequestsMessage } from "./rateLimit";
 import { listUserObjects, objectKeyFromUrl, removeObjects } from "./storage";
 import { createLogger, serializeError } from './logger';
+import { forbidden, notFound, unauthenticated } from './errors';
 
 const logger = createLogger('actions');
 
@@ -28,7 +29,7 @@ async function getCurrentUser() {
   });
 
   if (!session?.user) {
-    throw new Error("Neautentificat");
+    throw unauthenticated();
   }
 
   return session.user;
@@ -197,8 +198,8 @@ export async function getWineById(id) {
 
   const wine = await prisma.wine.findUnique({ where: { id } });
 
-  if (!wine) throw new Error("Vinul nu a fost găsit");
-  if (wine.userId !== user.id) throw new Error("Acces interzis");
+  if (!wine) throw notFound("Vinul nu a fost găsit");
+  if (wine.userId !== user.id) throw forbidden();
 
   return wine;
 }
@@ -251,8 +252,8 @@ export async function updateWine(id, formData) {
   const user = await getCurrentUser();
 
   const existing = await prisma.wine.findUnique({ where: { id } });
-  if (!existing) throw new Error("Vinul nu a fost găsit");
-  if (existing.userId !== user.id) throw new Error("Acces interzis");
+  if (!existing) throw notFound("Vinul nu a fost găsit");
+  if (existing.userId !== user.id) throw forbidden();
 
   const raw = Object.fromEntries(formData.entries());
 
@@ -304,8 +305,8 @@ export async function deleteWine(id) {
   const user = await getCurrentUser();
 
   const wine = await prisma.wine.findUnique({ where: { id } });
-  if (!wine) throw new Error("Vinul nu a fost găsit");
-  if (wine.userId !== user.id) throw new Error("Acces interzis");
+  if (!wine) throw notFound("Vinul nu a fost găsit");
+  if (wine.userId !== user.id) throw forbidden();
 
   // Log-ul rămâne după ștergere (wineId devine null prin onDelete: SetNull)
   await logWineAction({
@@ -325,7 +326,7 @@ export async function toggleFavorite(id) {
   const user = await getCurrentUser();
 
   const wine = await prisma.wine.findUnique({ where: { id } });
-  if (!wine || wine.userId !== user.id) throw new Error("Acces interzis");
+  if (!wine || wine.userId !== user.id) throw forbidden();
 
   await prisma.wine.update({
     where: { id },

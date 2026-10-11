@@ -3,6 +3,7 @@ import { headers } from 'next/headers';
 import { auth } from '@/utils/auth';
 import prisma from '@/utils/db';
 import { escapeHtml as h, escapeCsv } from '@/utils/escape';
+import { unauthenticated, validationError, withApiHandler } from '@/utils/errors';
 
 const TYPE_LABELS   = { RED: 'Roșu', WHITE: 'Alb', ROSE: 'Roze', SPARKLING: 'Spumant', DESSERT: 'Desert', FORTIFIED: 'Fortifiat' };
 const STATUS_LABELS = { IN_CELLAR: 'În pivniță', CONSUMED: 'Consumat', SOLD: 'Vândut', GIFTED: 'Dăruit' };
@@ -180,9 +181,9 @@ function toPDFHTML(wines, userName) {
 
 // ── Handler ────────────────────────────────────────────────────────────────
 
-export async function GET(request) {
+export const GET = withApiHandler('export', async (request) => {
   const user = await getUser();
-  if (!user) return NextResponse.json({ error: 'Neautentificat' }, { status: 401 });
+  if (!user) throw unauthenticated();
 
   const { searchParams } = new URL(request.url);
   const format = searchParams.get('format') ?? 'csv'; // csv | pdf
@@ -219,5 +220,5 @@ export async function GET(request) {
     });
   }
 
-  return NextResponse.json({ error: 'Format invalid' }, { status: 400 });
-}
+  throw validationError(undefined, 'Format invalid');
+});

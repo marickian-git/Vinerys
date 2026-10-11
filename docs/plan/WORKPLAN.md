@@ -21,7 +21,7 @@ Consecințe pentru planul ăsta:
 | # | Issue | Titlu | Status | Commit | Note / interpretare |
 |---|---|---|---|---|---|
 | 1 | #76 | REFACTOR-005 Logging structurat | done | | Logger propriu fără dependențe (merge și în edge) în loc de pino: JSON în producție, secrete redactate, email mascat, `LOG_LEVEL`, latență per agent AI. Costul AI vine în #88 |
-| 2 | #75 | REFACTOR-004 Error handling standard | todo | | |
+| 2 | #75 | REFACTOR-004 Error handling standard | done | | `utils/errors.js`: `AppError` + coduri, `withApiHandler` (requestId, log, 500 generic) pe upload/export/ai-scan; actions aruncă AppError. Corpul JSON păstrează `error`, deci clienții existenți merg; se adaugă `code` + `requestId` |
 | 3 | #28 | ARCH-007 Scheme Zod comune | todo | | |
 | 4 | #120 | DATA-010 Normalizare și vocabulare | todo | | |
 | 5 | #34 | DATA-006 Statistici prin agregări DB | todo | | |

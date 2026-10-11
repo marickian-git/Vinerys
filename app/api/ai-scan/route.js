@@ -1,14 +1,12 @@
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
-import { randomUUID } from 'node:crypto';
 import { auth } from '@/utils/auth';
 import prisma from '@/utils/db';
 import { analyzeWineLabelEnsemble, AI_PROVIDERS } from '@/utils/aiProviders';
 import { decryptSecret } from '@/utils/aiSecrets';
 import { LIMITS, rateLimit, tooManyRequestsMessage } from '@/utils/rateLimit';
-import { createLogger, serializeError } from '@/utils/logger';
-
-const logger = createLogger('ai-scan');
+import { serializeError } from '@/utils/logger';
+import { notFound, rateLimited, unauthenticated, validationError, withApiHandler } from '@/utils/errors';
 
 function publicProviderErrors(items = []) {
   return items.map(({ raw, parsed, normalized, ...item }) => item);
@@ -23,23 +21,16 @@ function providerStatusFor(item) {
 }
 
 
-export async function POST(request) {
+export const POST = withApiHandler('ai-scan', async (request, { log: baseLog, requestId }) => {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user) {
-    return NextResponse.json({ error: 'Neautentificat' }, { status: 401 });
-  }
+  if (!session?.user) throw unauthenticated();
 
   const limited = rateLimit(`ai-scan:${session.user.id}`, LIMITS.aiScan);
-  if (!limited.ok) {
-    return NextResponse.json(
-      { error: tooManyRequestsMessage(limited.retryAfter) },
-      { status: 429, headers: { 'Retry-After': String(limited.retryAfter) } },
-    );
-  }
+  if (!limited.ok) throw rateLimited(tooManyRequestsMessage(limited.retryAfter), limited.retryAfter);
 
-  const operationId = randomUUID();
+  const operationId = requestId;
   const startedAt = Date.now();
-  const log = logger.child({ requestId: operationId, userId: session.user.id });
+  const log = baseLog.child({ userId: session.user.id });
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: {
@@ -50,9 +41,7 @@ export async function POST(request) {
       },
     },
   });
-  if (!user) {
-    return NextResponse.json({ error: 'Utilizator negăsit' }, { status: 404 });
-  }
+  if (!user) throw notFound('Utilizator negăsit');
 
   let imageBase64, mimeType;
   try {
@@ -60,12 +49,10 @@ export async function POST(request) {
     imageBase64 = body.imageBase64;
     mimeType = body.mimeType || 'image/jpeg';
   } catch {
-    return NextResponse.json({ error: 'Date invalide (imageBase64 lipsă)' }, { status: 400 });
+    throw validationError(undefined, 'Date invalide (imageBase64 lipsă)');
   }
 
-  if (!imageBase64) {
-    return NextResponse.json({ error: 'Lipsește imaginea (imageBase64)' }, { status: 400 });
-  }
+  if (!imageBase64) throw validationError(undefined, 'Lipsește imaginea (imageBase64)');
 
   // Un agent cu cheie care nu se poate decripta (ex. secret schimbat) e sărit, nu blochează scanarea
   const agents = user.aiAgents.flatMap((agent) => {
@@ -76,9 +63,7 @@ export async function POST(request) {
       return [];
     }
   });
-  if (!agents.length) {
-    return NextResponse.json({ error: 'Configurează cel puțin un agent AI activ în Setări → AI.' }, { status: 400 });
-  }
+  if (!agents.length) throw validationError(undefined, 'Configurează cel puțin un agent AI activ în Setări → AI.');
 
   let scanResult;
   try {
@@ -112,6 +97,7 @@ export async function POST(request) {
     });
     return NextResponse.json({
       error: 'Scanarea nu a putut fi finalizată. Verifică agenții AI configurați.',
+      code: 'AI_FAILED',
       operationId,
       providerErrors: publicProviderErrors(err.providerErrors || []),
     }, { status: 502 });
@@ -167,4 +153,4 @@ export async function POST(request) {
     data: scanResult.result,
     wine: null,
   });
-}
+});

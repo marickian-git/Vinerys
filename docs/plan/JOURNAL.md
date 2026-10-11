@@ -24,6 +24,11 @@
 **Decizii:** fără pino. Un logger de ~90 de linii fără dependențe merge și în `proxy.ts` (edge) și nu cere `serverExternalPackages`. Formatul e JSON pe stdout în producție, ușor de citit cu `docker logs` sau de trimis mai departe (Loki).
 **Învățat:** regex-ul de redactare e ancorat la final de cheie (`apiKey`, `accessToken`), ca `inputTokens`/`outputTokens` (#88) să nu fie ascunse.
 
+### #75 REFACTOR-004 Error handling standard
+**Făcut:** `utils/errors.js` cu `AppError` (cod → status + mesaj pentru utilizator), fabricile `unauthenticated/forbidden/notFound/validationError/rateLimited`, `toPublicError`, `actionError` (pentru actions care întorc `{ error }`) și `withApiHandler(scope, handler)`. Rutele `upload`, `export` și `ai-scan` sunt înfășurate: aruncă erori tipizate, primesc `log` + `requestId` în context și pun `x-request-id` pe răspuns. Server actions aruncă `AppError`. Teste: `tests/unit/errors.test.js`.
+**Decizii:** corpul răspunsului păstrează câmpul `error` (string), deci clienții existenți nu se schimbă. Se adaugă `code` (pentru UI/i18n) și `requestId` (pentru suport). Erorile neprevăzute nu-și expun niciodată mesajul tehnic.
+**Rămas:** formularele (`WineForm` etc.) pot folosi `code` pentru mesaje traduse când vine I18N-002.
+
 ---
 
 ## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub
