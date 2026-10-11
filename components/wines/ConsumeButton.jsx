@@ -21,6 +21,8 @@ export default function ConsumeButton({ wineId, currentQuantity }) {
       const result = await consumeWine(wineId, 1);
       if (result?.success) {
         toast.success('O sticlă consumată 🍷');
+        // Următorul consum cere din nou confirmare
+        setConfirm(false);
         router.refresh();
       } else {
         toast.error(result?.error || 'Eroare la consum');
