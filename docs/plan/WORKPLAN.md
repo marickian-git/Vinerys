@@ -20,11 +20,11 @@ Consecințe pentru planul ăsta:
 
 | # | Issue | Titlu | Status | Commit | Note / interpretare |
 |---|---|---|---|---|---|
-| 1 | #76 | REFACTOR-005 Logging structurat | done | | Logger propriu fără dependențe (merge și în edge) în loc de pino: JSON în producție, secrete redactate, email mascat, `LOG_LEVEL`, latență per agent AI. Costul AI vine în #88 |
-| 2 | #75 | REFACTOR-004 Error handling standard | done | | `utils/errors.js`: `AppError` + coduri, `withApiHandler` (requestId, log, 500 generic) pe upload/export/ai-scan; actions aruncă AppError. Corpul JSON păstrează `error`, deci clienții existenți merg; se adaugă `code` + `requestId` |
-| 3 | #28 | ARCH-007 Scheme Zod comune | done | | `schemas/` (wine, account, ai): aceleași scheme pentru actions, `/api/ai-scan` și, pe viitor, formulare client și `/api/v1`. Mesajele de eroare au rămas identice. Response schemas: amânat la ARCH-008 (#84), când există un API public |
-| 4 | #120 | DATA-010 Normalizare și vocabulare | done | | `utils/normalize.js` + normalizare la salvare + `scripts/normalize-wines.mjs` (dry-run/backup/raport). Autocomplete: `datalist` pentru țări/locații (minim, fără restilizare). Culoarea derivată nu ghicește la spumant/desert cu soiuri mixte. **De rulat pe producție:** dry-run, apoi `--apply` |
-| 5 | #34 | DATA-006 Statistici prin agregări DB | done | | `groupBy`/`aggregate`/SQL în DB în loc de încărcarea tuturor vinurilor. Pentru fereastra de consum se încarcă doar vinurile `IN_CELLAR`. `getCurrentUser` cu `cache()` (o citire a sesiunii pe request). Forma răspunsului e identică |
+| 1 | #76 | REFACTOR-005 Logging structurat | done | `97b5362` | Logger propriu fără dependențe (merge și în edge) în loc de pino: JSON în producție, secrete redactate, email mascat, `LOG_LEVEL`, latență per agent AI. Costul AI vine în #88 |
+| 2 | #75 | REFACTOR-004 Error handling standard | done | `72f0041` | `utils/errors.js`: `AppError` + coduri, `withApiHandler` (requestId, log, 500 generic) pe upload/export/ai-scan; actions aruncă AppError. Corpul JSON păstrează `error`, deci clienții existenți merg; se adaugă `code` + `requestId` |
+| 3 | #28 | ARCH-007 Scheme Zod comune | done | `9f72baa` | `schemas/` (wine, account, ai): aceleași scheme pentru actions, `/api/ai-scan` și, pe viitor, formulare client și `/api/v1`. Mesajele de eroare au rămas identice. Response schemas: amânat la ARCH-008 (#84), când există un API public |
+| 4 | #120 | DATA-010 Normalizare și vocabulare | done | `133e1b6` | `utils/normalize.js` + normalizare la salvare + `scripts/normalize-wines.mjs` (dry-run/backup/raport). Autocomplete: `datalist` pentru țări/locații (minim, fără restilizare). Culoarea derivată nu ghicește la spumant/desert cu soiuri mixte. **De rulat pe producție:** dry-run, apoi `--apply` |
+| 5 | #34 | DATA-006 Statistici prin agregări DB | done | `3503414` | `groupBy`/`aggregate`/SQL în DB în loc de încărcarea tuturor vinurilor. Pentru fereastra de consum se încarcă doar vinurile `IN_CELLAR`. `getCurrentUser` cu `cache()` (o citire a sesiunii pe request). Forma răspunsului e identică |
 | — | | **Checkpoint 1** | | | |
 | 5b | nou | Teme propuse de Claude (2–3), ca opțiune de ales | todo | | Cerut de utilizator pe 11.10. Izolate în fișiere proprii ca să nu intre în conflict cu temele A–E de pe branch-ul local |
 | 6 | #43 | AI-008 Cache scanări (hash imagine) | todo | | |
@@ -55,4 +55,12 @@ Consecințe pentru planul ăsta:
 
 ## Checkpoint-uri
 
-_(se completează la fiecare 5 issue-uri)_
+### Checkpoint 1 — 2026-10-11
+
+- **Terminate (5):** #76 logging structurat, #75 erori standard, #28 scheme Zod, #120 normalizare, #34 statistici în DB. În plus, un bug găsit pe drum: `fix(consume)` (`d3fd874`, după un consum reușit butonul rămânea pe „Confirmi?”).
+- **Teste:** 105 unit (erau 58), e2e 8/8 local (Postgres 16 + Chromium din container), lint 0 erori (1 warning existent în `ImageUpload`), typecheck curat.
+- **Probleme:**
+  - Munca de design de pe mașina utilizatorului nu e pe GitHub (vezi sus).
+  - Testul e2e de consum pica și pe `main`; reparat.
+- **Rămase:** rândurile 5b–15.
+- **Merge:** PR spre `main` după CI verde (aprobat de utilizator pe 11.10: merge periodic, PR-uri mici). Pe producție nu e nicio migrație. `scripts/normalize-wines.mjs` se rulează manual (dry-run, apoi `--apply`).
