@@ -39,4 +39,6 @@ export const ScanRequestSchema = z.object({
     .min(1, 'Lipsește imaginea (imageBase64)')
     .max(15_000_000, 'Imaginea e prea mare'),
   mimeType: z.string().regex(/^image\/[\w.+-]+$/, 'Tip de imagine invalid').default('image/jpeg'),
+  // true = ignoră cache-ul (rescanare cerută explicit)
+  force: z.boolean().default(false),
 });

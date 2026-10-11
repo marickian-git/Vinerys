@@ -27,7 +27,7 @@ Consecințe pentru planul ăsta:
 | 5 | #34 | DATA-006 Statistici prin agregări DB | done | `3503414` | `groupBy`/`aggregate`/SQL în DB în loc de încărcarea tuturor vinurilor. Pentru fereastra de consum se încarcă doar vinurile `IN_CELLAR`. `getCurrentUser` cu `cache()` (o citire a sesiunii pe request). Forma răspunsului e identică |
 | — | | **Checkpoint 1** | | | |
 | 5b | #125 | DESIGN-012 Teme noi F · G · H (de ales) | done | | Cerut pe 11.10. Machete: [canvas](https://claude.ai/artifact/1boBd3tvqZ8k9eXU1BLoMv). Tokeni: `docs/design/proposed-themes.tokens.json` + test AA. Integrarea în app așteaptă alegerea ta și sistemul A–E publicat. Issue-ul rămâne deschis |
-| 6 | #43 | AI-008 Cache scanări (hash imagine) | todo | | |
+| 6 | #43 | AI-008 Cache scanări (hash imagine) | done | | Cache după SHA-256 pe octeții imaginii (tabela `scan_cache`, migrație nouă), doar pentru identificări cu încredere ≥ 0.6, expiră după 180 de zile, `force: true` ocolește cache-ul. Fără hash perceptual (risc de potriviri greșite între ani). Entitățile canonice Wine/Producer rămân la modelul de date (#29–#33, RO-001) |
 | 7 | #88 | AI-013 Tracking cost AI | todo | | |
 | 8 | #111 | BIZ-004 GDPR: export date + pagini legale | todo | | |
 | 9 | #64 | INT-001 Import CSV Vivino | todo | | |

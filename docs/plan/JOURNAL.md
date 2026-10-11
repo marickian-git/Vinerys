@@ -70,6 +70,15 @@ Tokenii sunt în `docs/design/proposed-themes.tokens.json`, iar `tests/unit/prop
 **Învățat:** testul a prins teracota din F (`#B5543A`, 4.45:1 pe suprafață). Am închis-o la `#A4482F`.
 **Decizii:** canvas-ul cu temele A–E nu poate fi citit din sesiune (nu e partajat), deci temele sunt construite de la zero, cu tokeni semantici ușor de mapat. Integrarea în aplicație așteaptă alegerea utilizatorului.
 
+### #43 AI-008 Cache pentru scanări
+**Făcut:** model `ScanCache` (`scan_cache`) + migrația `20261011235305_scan_cache`. `utils/scanCache.js` (`hashImage`, `isCacheable`, `findCachedScan`, `storeScan`). În `/api/ai-scan` cache-ul se verifică înaintea agenților, deci un hit merge și fără agenți configurați. Răspunsul are `cached: true/false`, iar `force: true` rescanează. Scanarea din cache se scrie tot în `wine_log` (`cached: true`).
+**Decizii:**
+- Cache global, nu per utilizator: rezultatul e generic (eticheta), nu se salvează imaginea.
+- Hash exact, nu perceptual: două poze ale aceluiași producător cu ani diferiți ar da potriviri greșite.
+- Se cache-uiesc doar identificările cu încredere ≥ 0.6. TTL 180 de zile.
+
+**Rămas:** buton „Rescanează” în UI (trimite `force: true`) la restilizarea scanării (DESIGN-007). Baza canonică de vinuri ține de modelul de date nou.
+
 ---
 
 ## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub

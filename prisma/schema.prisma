@@ -192,6 +192,22 @@ model WineLog {
   @@map("wine_log")
 }
 
+// Cache pentru scanările AI (AI-008): aceeași imagine nu mai costă un apel AI.
+// Nu păstrează imaginea, doar hash-ul ei și rezultatul generic (identificare + îmbogățire).
+model ScanCache {
+  id         String    @id @default(cuid())
+  imageHash  String    @unique
+  result     Json
+  providers  String[]
+  confidence Float
+  hits       Int       @default(0)
+  createdAt  DateTime  @default(now())
+  lastHitAt  DateTime?
+
+  @@index([createdAt])
+  @@map("scan_cache")
+}
+
 // ─────────────────────────────────────────
 // ENUM-URI
 // ─────────────────────────────────────────
