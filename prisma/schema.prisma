@@ -31,6 +31,7 @@ model User {
   wines         Wine[]
   wineLogs      WineLog[]
   aiAgents      AIAgent[]
+  aiUsage       AIUsage[]
 
 
   @@map("user")
@@ -206,6 +207,28 @@ model ScanCache {
 
   @@index([createdAt])
   @@map("scan_cache")
+}
+
+// Consum AI per apel (AI-013): tokeni, cost estimat, latență. Agregat în Setări per lună / agent.
+model AIUsage {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agentId      String?
+  provider     String
+  model        String?
+  operation    String
+  inputTokens  Int?
+  outputTokens Int?
+  costUsd      Float?
+  latencyMs    Int?
+  success      Boolean
+  requestId    String?
+  createdAt    DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([agentId])
+  @@map("ai_usage")
 }
 
 // ─────────────────────────────────────────

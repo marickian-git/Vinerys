@@ -80,6 +80,15 @@ export function normalizeEnrichment(raw, identity) {
     };
 }
 
+// Tokenii raportați de provider (Gemini, Anthropic, OpenAI-compatibil); null când lipsesc
+export function readUsage(data) {
+    const gemini = data?.usageMetadata;
+    if (gemini) return { inputTokens: gemini.promptTokenCount ?? null, outputTokens: gemini.candidatesTokenCount ?? null };
+    const usage = data?.usage;
+    if (usage) return { inputTokens: usage.input_tokens ?? usage.prompt_tokens ?? null, outputTokens: usage.output_tokens ?? usage.completion_tokens ?? null };
+    return { inputTokens: null, outputTokens: null };
+}
+
 async function requestJson(url, headers, body, timeoutMs, method = 'POST') {
     const response = await fetch(url, {
         method,
@@ -167,12 +176,12 @@ async function callProviderWithModel(agent, prompt, imageBase64 = null, mimeType
         const parts = [{ text: prompt }];
         if (imageBase64) parts.push({ inline_data: { mime_type: mimeType, data: imageBase64 } });
         const data = await requestJson(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, { 'Content-Type': 'application/json', 'x-goog-api-key': agent.apiKey }, { contents: [{ parts }], generationConfig: { temperature: 0.1, maxOutputTokens: 1800 } }, options.timeoutMs);
-        return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        return { text: data.candidates?.[0]?.content?.parts?.[0]?.text || '', model, usage: readUsage(data) };
     }
     if (agent.provider === 'claude') {
         const content = imageBase64 ? [{ type: 'image', source: { type: 'base64', media_type: mimeType, data: imageBase64 } }, { type: 'text', text: prompt }] : [{ type: 'text', text: prompt }];
         const data = await requestJson('https://api.anthropic.com/v1/messages', { 'Content-Type': 'application/json', 'x-api-key': agent.apiKey, 'anthropic-version': '2023-06-01' }, { model: options.model || 'claude-3-5-sonnet-20241022', max_tokens: 1800, messages: [{ role: 'user', content }] }, options.timeoutMs);
-        return data.content?.[0]?.text || '';
+        return { text: data.content?.[0]?.text || '', model: options.model || 'claude-3-5-sonnet-20241022', usage: readUsage(data) };
     }
     const definition = getProviderDefinition(agent.provider);
     const baseUrl = agent.baseUrl || definition.baseUrl;
@@ -199,7 +208,7 @@ async function callProviderWithModel(agent, prompt, imageBase64 = null, mimeType
     const content = [{ type: 'text', text: prompt }];
     if (imageBase64) content.push({ type: 'image_url', image_url: { url: `data:${mimeType};base64,${imageBase64}` } });
     const data = await requestJson(url, { 'Content-Type': 'application/json', Authorization: `Bearer ${agent.apiKey}` }, { model, max_tokens: 1800, messages: [{ role: 'user', content }] }, options.timeoutMs);
-    return data.choices?.[0]?.message?.content || '';
+    return { text: data.choices?.[0]?.message?.content || '', model, usage: readUsage(data) };
 }
 
 async function callProvider(agent, prompt, imageBase64, mimeType) {
@@ -222,12 +231,12 @@ async function withRetry(agent, prompt, imageBase64, mimeType, normalizeResult) 
     const startedAt = Date.now();
     for (let attempt = 0; attempt <= (agent.maxRetries ?? 1); attempt += 1) {
         try {
-            const raw = await callProvider(agent, prompt, imageBase64, mimeType);
+            const { text: raw, usage, model } = await callProvider(agent, prompt, imageBase64, mimeType);
             const parsed = parseJson(raw);
             const result = normalizeResult(parsed);
             const latencyMs = Date.now() - startedAt;
-            logger.info('agent call ok', { provider: agent.provider, model: agent.model || null, latencyMs, attempts: attempt + 1 });
-            return { raw, parsed, result, latencyMs, resultStatus: normalizeResult === normalizeIdentification ? identityResultStatus(result) : 'USEFUL' };
+            logger.info('agent call ok', { provider: agent.provider, model, latencyMs, attempts: attempt + 1, ...usage });
+            return { raw, parsed, result, latencyMs, usage, model, resultStatus: normalizeResult === normalizeIdentification ? identityResultStatus(result) : 'USEFUL' };
         } catch (error) {
             lastError = error;
             logger.warn('agent call failed', { provider: agent.provider, model: agent.model || null, latencyMs: Date.now() - startedAt, attempt: attempt + 1, error: serializeError(error) });
@@ -285,6 +294,23 @@ export async function analyzeWineLabel(imageBase64, mimeType, provider, apiKey, 
     return response.result;
 }
 
+// O linie de consum per apel de agent (AI-013), reușit sau nu
+function usageEntry(operation, agent, settledItem) {
+    const value = settledItem.status === 'fulfilled' ? settledItem.value : null;
+    return {
+        operation,
+        agentId: agent.id || null,
+        provider: agent.provider,
+        model: value?.model || agent.model || null,
+        billingType: agent.billingType || null,
+        pricing: agent.metadata?.pricing || null,
+        inputTokens: value?.usage?.inputTokens ?? null,
+        outputTokens: value?.usage?.outputTokens ?? null,
+        latencyMs: value?.latencyMs ?? null,
+        success: Boolean(value),
+    };
+}
+
 export async function analyzeWineLabelEnsemble(imageBase64, mimeType, agents = [], { providers = ENSEMBLE_DEFAULT_PROVIDERS, maxRetries = 1 } = {}) {
     if (!imageBase64 || imageBase64.length < 100 || !mimeType?.startsWith('image/')) throw new Error('Imagine invalidă');
     const configured = Array.isArray(agents) ? agents : Object.entries(agents).map(([provider, apiKey]) => ({ provider, apiKey }));
@@ -313,6 +339,7 @@ export async function analyzeWineLabelEnsemble(imageBase64, mimeType, agents = [
     if (!successful.length) {
         const error = new Error('IDENTIFICATION_FAILED: niciun provider nu a returnat o identificare utilă');
         error.providerErrors = [...errors, ...emptyResults];
+        error.usage = settled.map((item, index) => usageEntry('scan_identify', usable[index], item));
         throw error;
     }
 
@@ -345,6 +372,10 @@ export async function analyzeWineLabelEnsemble(imageBase64, mimeType, agents = [
         errors: [...errors, ...emptyResults],
         enrichmentErrors: enrichmentSettled.filter((item) => item.status === 'rejected').map((item, index) => ({ provider: successful[index].provider, providerStatus: item.reason?.providerStatus || 'ERROR', error: item.reason?.message || 'Enrichment failed' })),
         providerDebug,
+        usage: [
+            ...settled.map((item, index) => usageEntry('scan_identify', usable[index], item)),
+            ...enrichmentSettled.map((item, index) => usageEntry('scan_enrich', successful[index].agent, item)),
+        ],
         agentTimings: responses.map((item) => ({ provider: item.provider, latencyMs: item.latencyMs })),
         emptyResults,
     };

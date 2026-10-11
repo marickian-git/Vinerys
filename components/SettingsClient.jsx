@@ -8,6 +8,7 @@ import { updatePassword, deleteAccount } from "@/utils/actions";
 import toast from "react-hot-toast";
 import ShareLinkSection from "@/components/ShareLinkSection";
 import AISettingsSection from "@/components/AISettingsSection";
+import AIUsageSummary from "@/components/AIUsageSummary";
 import EmailVerificationBanner from "@/components/EmailVerificationBanner";
 
 export default function SettingsClient({
@@ -18,6 +19,7 @@ export default function SettingsClient({
   aiProvider,
   aiAgents,
   aiProviders,
+  aiUsage,
 }) {
   const router = useRouter();
   const [passwordForm, setPasswordForm] = useState({
@@ -195,6 +197,12 @@ export default function SettingsClient({
               initialAgents={aiAgents}
               providers={aiProviders}
             />
+          </div>
+
+          {/* Consum AI (AI-013) */}
+          <div className="set-card">
+            <div className="set-card-title">📊 Consum AI</div>
+            <AIUsageSummary usage={aiUsage} />
           </div>
 
           {/* Partajare colecție */}

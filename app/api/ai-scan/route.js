@@ -8,6 +8,7 @@ import { LIMITS, rateLimit, tooManyRequestsMessage } from '@/utils/rateLimit';
 import { serializeError } from '@/utils/logger';
 import { ScanRequestSchema } from '@/schemas/ai';
 import { findCachedScan, hashImage, storeScan } from '@/utils/scanCache';
+import { estimateCostUsd } from '@/utils/aiPricing';
 import { notFound, rateLimited, unauthenticated, validationError, withApiHandler } from '@/utils/errors';
 
 function publicProviderErrors(items = []) {
@@ -24,6 +25,30 @@ function providerStatusFor(item) {
 
 
 // Istoricul scanărilor (wine_log SCAN_AI); o eroare aici nu blochează răspunsul
+// AI-013: o linie per apel de agent, cu tokeni și cost estimat
+async function recordUsage(userId, requestId, entries = [], log) {
+  if (!entries.length) return;
+  try {
+    await prisma.aIUsage.createMany({
+      data: entries.map((entry) => ({
+        userId,
+        requestId,
+        agentId: entry.agentId,
+        provider: entry.provider,
+        model: entry.model,
+        operation: entry.operation,
+        inputTokens: entry.inputTokens,
+        outputTokens: entry.outputTokens,
+        costUsd: estimateCostUsd(entry),
+        latencyMs: entry.latencyMs,
+        success: entry.success,
+      })),
+    });
+  } catch (err) {
+    log.error('ai usage write failed', { error: serializeError(err) });
+  }
+}
+
 async function logScan(userId, details, log) {
   try {
     await prisma.wineLog.create({
@@ -127,6 +152,7 @@ export const POST = withApiHandler('ai-scan', async (request, { log: baseLog, re
         lastCheckedAt: new Date(),
       },
     })));
+    await recordUsage(user.id, operationId, err.usage, log);
     log.error('scan failed', {
       error: serializeError(err),
       durationMs: Date.now() - startedAt,
@@ -158,6 +184,7 @@ export const POST = withApiHandler('ai-scan', async (request, { log: baseLog, re
     aiResult: scanResult.result,
   }, log);
 
+  await recordUsage(user.id, operationId, scanResult.usage, log);
   await storeScan(prisma, imageHash, scanResult).catch((err) => {
     log.warn('scan cache write failed', { error: serializeError(err) });
   });

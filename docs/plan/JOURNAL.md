@@ -79,6 +79,19 @@ Tokenii sunt în `docs/design/proposed-themes.tokens.json`, iar `tests/unit/prop
 
 **Rămas:** buton „Rescanează” în UI (trimite `force: true`) la restilizarea scanării (DESIGN-007). Baza canonică de vinuri ține de modelul de date nou.
 
+### #88 AI-013 Tracking cost AI
+**Făcut:**
+- `readUsage` citește tokenii din răspunsurile Gemini, Anthropic și OpenAI-compatibil. `withRetry` întoarce `usage` + `model`, iar ensemble-ul întoarce `usage[]` per apel de agent (și la eșec, pe `error.usage`).
+- Model `AIUsage` (`ai_usage`, migrația `20261011235442_ai_usage`, cascade la ștergerea contului).
+- `utils/aiPricing.js` (`priceFor`, `estimateCostUsd`).
+- `getAIUsageSummary()`: pe lună, pe agent, plus platforma pentru ADMIN.
+- Card „Consum AI” în Setări (`components/AIUsageSummary.jsx`).
+- Teste: `tests/unit/aiUsage.test.js`.
+
+**Decizii:** prețurile nu sunt hardcodate, fiindcă se schimbă des și nu le pot verifica. Sursele sunt `agent.metadata.pricing` și `AI_PRICING_JSON` (model exact sau cel mai lung prefix), iar tier-ul gratuit înseamnă 0. Fără preț, costul rămâne `null`, dar tokenii se salvează oricum.
+
+**Next:** UI pentru prețuri per agent în formularul de agent (split AISettingsSection, #74). Cotele per utilizator (AI-012) se pot construi direct peste `ai_usage`.
+
 ---
 
 ## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub

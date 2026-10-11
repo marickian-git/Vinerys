@@ -28,7 +28,7 @@ Consecințe pentru planul ăsta:
 | — | | **Checkpoint 1** | | | |
 | 5b | #125 | DESIGN-012 Teme noi F · G · H (de ales) | done | | Cerut pe 11.10. Machete: [canvas](https://claude.ai/artifact/1boBd3tvqZ8k9eXU1BLoMv). Tokeni: `docs/design/proposed-themes.tokens.json` + test AA. Integrarea în app așteaptă alegerea ta și sistemul A–E publicat. Issue-ul rămâne deschis |
 | 6 | #43 | AI-008 Cache scanări (hash imagine) | done | | Cache după SHA-256 pe octeții imaginii (tabela `scan_cache`, migrație nouă), doar pentru identificări cu încredere ≥ 0.6, expiră după 180 de zile, `force: true` ocolește cache-ul. Fără hash perceptual (risc de potriviri greșite între ani). Entitățile canonice Wine/Producer rămân la modelul de date (#29–#33, RO-001) |
-| 7 | #88 | AI-013 Tracking cost AI | todo | | |
+| 7 | #88 | AI-013 Tracking cost AI | done | | Tabela `ai_usage` (migrație): o linie per apel de agent (identificare + îmbogățire), cu tokeni, cost, latență și succes. Costul se ia din prețuri configurate (`agent.metadata.pricing` sau `AI_PRICING_JSON`), nu hardcodate. Card „Consum AI” în Setări; adminul vede și totalul platformei |
 | 8 | #111 | BIZ-004 GDPR: export date + pagini legale | todo | | |
 | 9 | #64 | INT-001 Import CSV Vivino | todo | | |
 | 10 | #65 | INT-002 Import CSV CellarTracker | todo | | |

@@ -1,7 +1,7 @@
 import { headers } from 'next/headers';
 import { auth } from '@/utils/auth';
 import prisma from '@/utils/db';
-import { getAIAgents, getAIProviderCatalog } from '@/utils/actions';
+import { getAIAgents, getAIProviderCatalog, getAIUsageSummary } from '@/utils/actions';
 import SettingsClient from '@/components/SettingsClient';
 import { shareUrlFor } from '@/utils/share';
 
@@ -19,6 +19,7 @@ export default async function SettingsPage() {
   const aiProvider = user?.aiProvider || 'gemini';
   const aiAgents = await getAIAgents();
   const aiProviders = await getAIProviderCatalog();
+  const aiUsage = await getAIUsageSummary().catch(() => null);
 
-  return <SettingsClient email={session?.user?.email} emailVerified={Boolean(session?.user?.emailVerified)} shareUrl={shareUrl} shareEnabled={shareEnabled} aiProvider={aiProvider} aiAgents={aiAgents} aiProviders={aiProviders} />;
+  return <SettingsClient email={session?.user?.email} emailVerified={Boolean(session?.user?.emailVerified)} shareUrl={shareUrl} shareEnabled={shareEnabled} aiProvider={aiProvider} aiAgents={aiAgents} aiProviders={aiProviders} aiUsage={aiUsage} />;
 }

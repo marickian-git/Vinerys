@@ -702,3 +702,55 @@ export async function deleteAIAgent(id) {
   revalidatePath('/settings');
   return { success: true };
 }
+
+// ─────────────────────────────────────────
+// CONSUM AI (AI-013)
+// ─────────────────────────────────────────
+
+// Rezumat pe ultimele 6 luni: per lună și per agent pentru utilizator; adminul vede și totalul platformei
+export async function getAIUsageSummary() {
+  const user = await getCurrentUser();
+  const since = new Date(new Date().getFullYear(), new Date().getMonth() - 5, 1);
+
+  const [byMonth, byAgent, agents, platform] = await Promise.all([
+    prisma.$queryRaw`
+      SELECT date_trunc('month', "createdAt") AS month,
+             COUNT(*)::int AS calls,
+             COALESCE(SUM("inputTokens"), 0)::int AS "inputTokens",
+             COALESCE(SUM("outputTokens"), 0)::int AS "outputTokens",
+             SUM("costUsd")::float8 AS "costUsd",
+             COUNT(*) FILTER (WHERE NOT "success")::int AS failures
+      FROM "ai_usage" WHERE "userId" = ${user.id} AND "createdAt" >= ${since}
+      GROUP BY 1 ORDER BY 1 DESC`,
+    prisma.aIUsage.groupBy({
+      by: ['agentId', 'provider'],
+      where: { userId: user.id, createdAt: { gte: since } },
+      _count: { _all: true },
+      _sum: { inputTokens: true, outputTokens: true, costUsd: true },
+      _avg: { latencyMs: true },
+    }),
+    prisma.aIAgent.findMany({ where: { userId: user.id }, select: { id: true, name: true } }),
+    user.role === 'ADMIN'
+      ? prisma.$queryRaw`
+          SELECT date_trunc('month', "createdAt") AS month, COUNT(DISTINCT "userId")::int AS users,
+                 COUNT(*)::int AS calls, SUM("costUsd")::float8 AS "costUsd"
+          FROM "ai_usage" WHERE "createdAt" >= ${since} GROUP BY 1 ORDER BY 1 DESC`
+      : Promise.resolve(null),
+  ]);
+
+  const agentNames = new Map(agents.map((agent) => [agent.id, agent.name]));
+  return {
+    byMonth: byMonth.map((row) => ({ ...row, month: new Date(row.month).toISOString().slice(0, 7) })),
+    byAgent: byAgent.map((row) => ({
+      agentId: row.agentId,
+      name: agentNames.get(row.agentId) ?? `${row.provider} (șters)`,
+      provider: row.provider,
+      calls: row._count._all,
+      inputTokens: row._sum.inputTokens ?? 0,
+      outputTokens: row._sum.outputTokens ?? 0,
+      costUsd: row._sum.costUsd,
+      avgLatencyMs: row._avg.latencyMs == null ? null : Math.round(row._avg.latencyMs),
+    })).sort((a, b) => b.calls - a.calls),
+    platform: platform?.map((row) => ({ ...row, month: new Date(row.month).toISOString().slice(0, 7) })) ?? null,
+  };
+}
