@@ -13,6 +13,19 @@
 
 ---
 
+## 2026-10-11 — Sesiune autonomă (WORKPLAN.md)
+
+> O intrare pentru toată sesiunea; fiecare issue are un paragraf (Făcut / Decizii / Învățat). Ordinea și statusul sunt în `WORKPLAN.md`.
+
+**Constatare:** commit-urile de design (`f19c454`…`d354b61`: teme A–E, `components/ui/`, navigație, `utils/urgency.js`, Acasă nou) nu sunt pe GitHub. Le am doar pe mașina utilizatorului, așa că lucrez pe issue-uri server-side ca să nu intru în conflict.
+
+### #76 REFACTOR-005 Logging structurat
+**Făcut:** `utils/logger.js` (`createLogger(scope).child({...})`, `redact`, `serializeError`, `requestIdFrom`). Toate `console.*` din API, `utils/actions.js`, `aiProviders`, `storage`, `email` trec prin el. Scanarea AI loghează `requestId` (= `operationId`), `userId`, latența per agent și per scanare. Teste: `tests/unit/logger.test.js`.
+**Decizii:** fără pino. Un logger de ~90 de linii fără dependențe merge și în `proxy.ts` (edge) și nu cere `serverExternalPackages`. Formatul e JSON pe stdout în producție, ușor de citit cu `docker logs` sau de trimis mai departe (Loki).
+**Învățat:** regex-ul de redactare e ancorat la final de cheie (`apiKey`, `accessToken`), ca `inputTokens`/`outputTokens` (#88) să nu fie ascunse.
+
+---
+
 ## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub
 
 **Făcut:**

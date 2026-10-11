@@ -11,7 +11,8 @@ Issue-urile #22, #91, #103 sunt închise, iar #102/#122 au comentarii care citea
 sistemul de teme A–E, `components/ui/`, navigația nouă, `utils/urgency.js`, `utils/wineColor.js`, noul ecran Acasă și sortarea după urgență.
 
 Consecințe pentru planul ăsta:
-- **Sar peste toate issue-urile de design/UI** care ar reface ce există deja local: temele (#122) sunt deja 5, alese în D1. Nu creez alte teme, ar fi duplicat și conflict sigur.
+- **Sar peste issue-urile de design/UI** care ar reface ce există deja local (#122 etc.).
+- **Excepție (cerută pe 11.10):** creez 2–3 teme noi ca opțiune de ales (rândul 5b), izolate în fișiere proprii, ușor de mutat peste sistemul de tokeni A–E când acesta ajunge pe GitHub.
 - Prefer issue-uri **server-side / fișiere noi**, ca merge-ul cu branch-ul tău local să fie ușor.
 - **Acțiune pentru tine:** `git push origin feat/phase-2-design` de pe mașina ta. După aceea, issue-urile de design pot fi reluate.
 
@@ -19,12 +20,13 @@ Consecințe pentru planul ăsta:
 
 | # | Issue | Titlu | Status | Commit | Note / interpretare |
 |---|---|---|---|---|---|
-| 1 | #76 | REFACTOR-005 Logging structurat | todo | | |
+| 1 | #76 | REFACTOR-005 Logging structurat | done | | Logger propriu fără dependențe (merge și în edge) în loc de pino: JSON în producție, secrete redactate, email mascat, `LOG_LEVEL`, latență per agent AI. Costul AI vine în #88 |
 | 2 | #75 | REFACTOR-004 Error handling standard | todo | | |
 | 3 | #28 | ARCH-007 Scheme Zod comune | todo | | |
 | 4 | #120 | DATA-010 Normalizare și vocabulare | todo | | |
 | 5 | #34 | DATA-006 Statistici prin agregări DB | todo | | |
 | — | | **Checkpoint 1** | | | |
+| 5b | nou | Teme propuse de Claude (2–3), ca opțiune de ales | todo | | Cerut de utilizator pe 11.10. Izolate în fișiere proprii ca să nu intre în conflict cu temele A–E de pe branch-ul local |
 | 6 | #43 | AI-008 Cache scanări (hash imagine) | todo | | |
 | 7 | #88 | AI-013 Tracking cost AI | todo | | |
 | 8 | #111 | BIZ-004 GDPR: export date + pagini legale | todo | | |

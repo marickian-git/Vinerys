@@ -6,6 +6,9 @@ import prisma from '@/utils/db';
 import { analyzeWineLabelEnsemble, AI_PROVIDERS } from '@/utils/aiProviders';
 import { decryptSecret } from '@/utils/aiSecrets';
 import { LIMITS, rateLimit, tooManyRequestsMessage } from '@/utils/rateLimit';
+import { createLogger, serializeError } from '@/utils/logger';
+
+const logger = createLogger('ai-scan');
 
 function publicProviderErrors(items = []) {
   return items.map(({ raw, parsed, normalized, ...item }) => item);
@@ -36,6 +39,7 @@ export async function POST(request) {
 
   const operationId = randomUUID();
   const startedAt = Date.now();
+  const log = logger.child({ requestId: operationId, userId: session.user.id });
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: {
@@ -68,7 +72,7 @@ export async function POST(request) {
     try {
       return [{ ...agent, apiKey: decryptSecret(agent.encryptedApiKey) }];
     } catch {
-      console.error(`[scan:${operationId}] agent ${agent.id}: cheia nu poate fi decriptată`);
+      log.error('agent key cannot be decrypted', { agentId: agent.id, provider: agent.provider });
       return [];
     }
   });
@@ -78,7 +82,7 @@ export async function POST(request) {
 
   let scanResult;
   try {
-    console.info(`[scan:${operationId}] starting ${agents.length} agents`);
+    log.info('scan started', { agents: agents.length, providers: agents.map((agent) => agent.provider) });
     scanResult = await analyzeWineLabelEnsemble(imageBase64, mimeType, agents, { providers: [] });
     await Promise.all(scanResult.successfulAgentIds.map((id) => prisma.aIAgent.updateMany({
       where: { id, userId: user.id },
@@ -101,7 +105,11 @@ export async function POST(request) {
         lastCheckedAt: new Date(),
       },
     })));
-    console.error(`[scan:${operationId}] AI error:`, err.message, err.providerErrors || '');
+    log.error('scan failed', {
+      error: serializeError(err),
+      durationMs: Date.now() - startedAt,
+      providerErrors: publicProviderErrors(err.providerErrors || []),
+    });
     return NextResponse.json({
       error: 'Scanarea nu a putut fi finalizată. Verifică agenții AI configurați.',
       operationId,
@@ -137,12 +145,18 @@ export async function POST(request) {
       },
     });
   } catch (err) {
-    console.error('[scan] Error logging scan action:', err);
+    log.error('wine log write failed', { error: serializeError(err) });
   }
 
-  if (process.env.NODE_ENV !== 'production') console.info(`[scan:${operationId}] RAW -> PARSED -> NORMALIZED -> AGGREGATED`, JSON.stringify(scanResult.providerDebug));
-
-  console.info(`[scan:${operationId}] completed in ${Date.now() - startedAt}ms; identity=${scanResult.result.confidence?.identity ?? 'unknown'} drinkingWindow=${scanResult.result.drinkFrom ?? 'unknown'}-${scanResult.result.drinkUntil ?? 'unknown'}`);
+  log.debug('provider pipeline', { providerDebug: scanResult.providerDebug });
+  log.info('scan completed', {
+    durationMs: Date.now() - startedAt,
+    providers: scanResult.sources,
+    agentTimings: scanResult.agentTimings,
+    identityConfidence: scanResult.result.confidence?.identity ?? null,
+    drinkFrom: scanResult.result.drinkFrom ?? null,
+    drinkUntil: scanResult.result.drinkUntil ?? null,
+  });
 
   return NextResponse.json({
     success: true,

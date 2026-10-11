@@ -6,6 +6,9 @@ import { auth } from '@/utils/auth';
 import { BUCKET, ensureBucket, getMinioClient, getPublicUrl } from '@/utils/minio';
 import { UPLOAD_FOLDERS } from '@/utils/storage';
 import { LIMITS, rateLimit, tooManyRequestsMessage } from '@/utils/rateLimit';
+import { createLogger, serializeError } from '@/utils/logger';
+
+const logger = createLogger('upload');
 
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB la intrare; după procesare rămân câteva sute de KB
 const MAX_DIMENSION = 2000;
@@ -62,7 +65,7 @@ export async function POST(request) {
     await ensureBucket();
     await getMinioClient().putObject(BUCKET, objectName, output, output.length, { 'Content-Type': 'image/webp' });
   } catch (error) {
-    console.error('[upload] storage error:', error.message);
+    logger.error('storage error', { error: serializeError(error) });
     return NextResponse.json({ error: 'Eroare la salvarea imaginii' }, { status: 500 });
   }
 

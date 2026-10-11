@@ -14,6 +14,9 @@ import { listProviderModels } from "./aiProviders";
 import { shareUrlFor } from "./share";
 import { LIMITS, rateLimit, tooManyRequestsMessage } from "./rateLimit";
 import { listUserObjects, objectKeyFromUrl, removeObjects } from "./storage";
+import { createLogger, serializeError } from './logger';
+
+const logger = createLogger('actions');
 
 // ─────────────────────────────────────────
 // HELPER - obține userul curent
@@ -55,7 +58,7 @@ async function logWineAction({ wineId, userId, action, details }) {
     await prisma.wineLog.create({ data: { wineId, userId, action, details } });
   } catch (error) {
     // Istoricul nu trebuie să blocheze acțiunea principală
-    console.error(`[wine-log] ${action} failed:`, error.message);
+    logger.error('wine log write failed', { action, wineId, userId, error: serializeError(error) });
   }
 }
 
@@ -484,7 +487,7 @@ export async function updatePassword(formData) {
     });
   } catch (error) {
     if (error?.body?.code === 'INVALID_PASSWORD') return { error: 'Parola curentă e incorectă' };
-    console.error('[password] change failed:', error?.body?.code || error?.message);
+    logger.error('password change failed', { userId: user.id, code: error?.body?.code ?? null, error: serializeError(error) });
     return { error: 'Eroare la schimbarea parolei' };
   }
 
@@ -496,7 +499,7 @@ export async function deleteAccount() {
 
   // Imaginile se listează înainte, ca să nu rămână fișiere orfane după ștergerea contului
   const imageKeys = await listUserObjects(user.id).catch((error) => {
-    console.error('[account] list images failed:', error.message);
+    logger.error('list images failed', { userId: user.id, error: serializeError(error) });
     return [];
   });
 

@@ -1,4 +1,7 @@
 import { BUCKET, getMinioClient } from './minio';
+import { createLogger, serializeError } from './logger';
+
+const logger = createLogger('storage');
 
 export const UPLOAD_FOLDERS = ['wines/labels', 'wines/bottles', 'avatars'];
 
@@ -32,7 +35,7 @@ export async function removeObjects(keys) {
   try {
     await getMinioClient().removeObjects(BUCKET, unique);
   } catch (error) {
-    console.error('[storage] remove failed:', error.message);
+    logger.error('remove failed', { keys: keys.length, error: serializeError(error) });
   }
 }
 

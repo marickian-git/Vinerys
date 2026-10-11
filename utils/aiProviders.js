@@ -1,6 +1,9 @@
 const VALID_TYPES = ['RED', 'WHITE', 'ROSE', 'SPARKLING', 'DESSERT', 'FORTIFIED'];
 import { AI_PROVIDER_REGISTRY, getProviderDefinition } from './aiProviderRegistry';
 import { validateProviderBaseUrl } from './aiUrlSecurity';
+import { createLogger, serializeError } from './logger';
+
+const logger = createLogger('ai');
 const CURRENT_YEAR = new Date().getFullYear();
 const IDENTIFICATION_PROMPT = `You are identifying a wine from a label image. Return only valid JSON.
 Focus on what is visible or strongly supported by the label. Do not guess missing facts.
@@ -158,7 +161,7 @@ async function discoverVisionModel(agent) {
 
 async function callProviderWithModel(agent, prompt, imageBase64 = null, mimeType = null, modelOverride) {
     const options = { model: agent.model, timeoutMs: agent.timeoutMs || 20000 };
-    if (process.env.NODE_ENV !== 'production') console.info('[ai-debug] request', { provider: agent.provider, model: modelOverride || options.model || null, vision: Boolean(imageBase64), mimeType: mimeType || null, imageBytes: imageBase64?.length || 0, prompt: prompt.slice(0, 180) });
+    logger.debug('request', { provider: agent.provider, model: modelOverride || options.model || null, vision: Boolean(imageBase64), mimeType: mimeType || null, imageBytes: imageBase64?.length || 0, prompt: prompt.slice(0, 180) });
     if (agent.provider === 'gemini') {
         const model = modelOverride || options.model || 'gemini-3.6-flash';
         const parts = [{ text: prompt }];
@@ -216,14 +219,18 @@ async function callProvider(agent, prompt, imageBase64, mimeType) {
 
 async function withRetry(agent, prompt, imageBase64, mimeType, normalizeResult) {
     let lastError;
+    const startedAt = Date.now();
     for (let attempt = 0; attempt <= (agent.maxRetries ?? 1); attempt += 1) {
         try {
             const raw = await callProvider(agent, prompt, imageBase64, mimeType);
             const parsed = parseJson(raw);
             const result = normalizeResult(parsed);
-            return { raw, parsed, result, resultStatus: normalizeResult === normalizeIdentification ? identityResultStatus(result) : 'USEFUL' };
+            const latencyMs = Date.now() - startedAt;
+            logger.info('agent call ok', { provider: agent.provider, model: agent.model || null, latencyMs, attempts: attempt + 1 });
+            return { raw, parsed, result, latencyMs, resultStatus: normalizeResult === normalizeIdentification ? identityResultStatus(result) : 'USEFUL' };
         } catch (error) {
             lastError = error;
+            logger.warn('agent call failed', { provider: agent.provider, model: agent.model || null, latencyMs: Date.now() - startedAt, attempt: attempt + 1, error: serializeError(error) });
             if (error.status === 429 || error.providerStatus === 'RATE_LIMITED') break;
             if (attempt < (agent.maxRetries ?? 1)) await new Promise((resolve) => setTimeout(resolve, 500 * 2 ** attempt));
         }
@@ -303,7 +310,6 @@ export async function analyzeWineLabelEnsemble(imageBase64, mimeType, agents = [
         error: item.reason?.message || 'Eroare necunoscută',
     } : null).filter(Boolean);
     const providerDebug = [...responses.map((item) => ({ provider: item.provider, model: item.agent.model || null, httpStatus: 200, providerStatus: 'SUCCESS', resultStatus: item.resultStatus, raw: item.raw, parsed: item.parsed, normalized: item.result })), ...errors];
-    if (process.env.NODE_ENV !== 'production') console.info('[ai-debug] provider pipeline', JSON.stringify(providerDebug));
     if (!successful.length) {
         const error = new Error('IDENTIFICATION_FAILED: niciun provider nu a returnat o identificare utilă');
         error.providerErrors = [...errors, ...emptyResults];
@@ -339,6 +345,7 @@ export async function analyzeWineLabelEnsemble(imageBase64, mimeType, agents = [
         errors: [...errors, ...emptyResults],
         enrichmentErrors: enrichmentSettled.filter((item) => item.status === 'rejected').map((item, index) => ({ provider: successful[index].provider, providerStatus: item.reason?.providerStatus || 'ERROR', error: item.reason?.message || 'Enrichment failed' })),
         providerDebug,
+        agentTimings: responses.map((item) => ({ provider: item.provider, latencyMs: item.latencyMs })),
         emptyResults,
     };
 }
