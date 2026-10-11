@@ -6,6 +6,7 @@ import { analyzeWineLabelEnsemble, AI_PROVIDERS } from '@/utils/aiProviders';
 import { decryptSecret } from '@/utils/aiSecrets';
 import { LIMITS, rateLimit, tooManyRequestsMessage } from '@/utils/rateLimit';
 import { serializeError } from '@/utils/logger';
+import { ScanRequestSchema } from '@/schemas/ai';
 import { notFound, rateLimited, unauthenticated, validationError, withApiHandler } from '@/utils/errors';
 
 function publicProviderErrors(items = []) {
@@ -43,16 +44,12 @@ export const POST = withApiHandler('ai-scan', async (request, { log: baseLog, re
   });
   if (!user) throw notFound('Utilizator negăsit');
 
-  let imageBase64, mimeType;
-  try {
-    const body = await request.json();
-    imageBase64 = body.imageBase64;
-    mimeType = body.mimeType || 'image/jpeg';
-  } catch {
+  const body = await request.json().catch(() => {
     throw validationError(undefined, 'Date invalide (imageBase64 lipsă)');
-  }
-
-  if (!imageBase64) throw validationError(undefined, 'Lipsește imaginea (imageBase64)');
+  });
+  const parsedBody = ScanRequestSchema.safeParse(body ?? {});
+  if (!parsedBody.success) throw validationError(undefined, parsedBody.error.issues[0]?.message);
+  const { imageBase64, mimeType } = parsedBody.data;
 
   // Un agent cu cheie care nu se poate decripta (ex. secret schimbat) e sărit, nu blochează scanarea
   const agents = user.aiAgents.flatMap((agent) => {

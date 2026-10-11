@@ -5,6 +5,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { z } from "zod";
+import { parseWineForm } from "../schemas/wine";
+import { CellarNameSchema, PasswordChangeSchema, ProfileInputSchema, firstIssueMessage } from "../schemas/account";
+import { AIAgentInputSchema } from "../schemas/ai";
 import prisma from "./db";
 import { auth } from "./auth";
 import { decryptSecret, encryptSecret } from "./aiSecrets";
@@ -81,42 +84,6 @@ async function releaseImages(urls) {
   }
   await removeObjects(keys);
 }
-
-// ─────────────────────────────────────────
-// VALIDARE - schema Zod pentru vin
-// ─────────────────────────────────────────
-
-const WineSchema = z.object({
-  name: z.string().min(1, "Numele este obligatoriu"),
-  producer: z.string().optional(),
-  country: z.string().optional(),
-  region: z.string().optional(),
-  subregion: z.string().optional(),
-  type: z.enum(["RED", "WHITE", "ROSE", "SPARKLING", "DESSERT", "FORTIFIED"]),
-  color: z.enum(["RED", "WHITE", "ROSE", "ORANGE"]).optional(),
-  vintage: z.coerce.number().min(1800).max(new Date().getFullYear()).optional(),
-  grapeVarieties: z.array(z.string()).default([]),
-  alcoholPercentage: z.coerce.number().min(0).max(100).optional(),
-  quantity: z.coerce.number().min(0).default(1),
-  cellarLocation: z.string().optional(),
-  purchaseDate: z.coerce.date().optional(),
-  purchasePrice: z.coerce.number().min(0).optional(),
-  estimatedValue: z.coerce.number().min(0).optional(),
-  rating: z.coerce.number().min(1).max(5).optional(),
-  tastingNotes: z.string().optional(),
-  servingTemperature: z.string().optional(),
-  foodPairing: z.array(z.string()).default([]),
-  agingPotential: z.string().optional(),
-  aromaProfile: z.array(z.string()).default([]),
-  drinkFrom: z.coerce.number().min(1900).max(2100).optional().nullable(),
-  drinkUntil: z.coerce.number().min(1900).max(2100).optional().nullable(),
-  bottleSize: z.string().default("0.75L"),
-  bottleImageUrl: z.string().url().optional().or(z.literal("")),
-  labelImageUrl: z.string().url().optional().or(z.literal("")),
-  isFavorite: z.coerce.boolean().default(false),
-  consumptionDate: z.coerce.date().optional(),
-  status: z.enum(["IN_CELLAR", "CONSUMED", "SOLD", "GIFTED"]).default("IN_CELLAR"),
-});
 
 // ─────────────────────────────────────────
 // WINES - CRUD
@@ -207,34 +174,11 @@ export async function getWineById(id) {
 export async function createWine(formData) {
   const user = await getCurrentUser();
 
-  const raw = Object.fromEntries(formData.entries());
-
-  const grapeVarieties = raw.grapeVarieties ? JSON.parse(raw.grapeVarieties) : [];
-  const foodPairing = raw.foodPairing ? JSON.parse(raw.foodPairing) : [];
-  const aromaProfile = raw.aromaProfile ? JSON.parse(raw.aromaProfile) : [];
-
-  const parsed = WineSchema.safeParse({
-    ...raw,
-    grapeVarieties,
-    foodPairing,
-    aromaProfile,
-    drinkFrom: raw.drinkFrom ? parseInt(raw.drinkFrom) : undefined,
-    drinkUntil: raw.drinkUntil ? parseInt(raw.drinkUntil) : undefined,
-  });
-
-  if (!parsed.success) {
-    return { error: parsed.error.flatten().fieldErrors };
-  }
+  const parsed = parseWineForm(formData);
+  if (parsed.error) return { error: parsed.error };
 
   const wine = await prisma.wine.create({
-    data: {
-      ...parsed.data,
-      userId: user.id,
-      bottleImageUrl: parsed.data.bottleImageUrl || null,
-      labelImageUrl: parsed.data.labelImageUrl || null,
-      drinkFrom: parsed.data.drinkFrom ?? null,
-      drinkUntil: parsed.data.drinkUntil ?? null,
-    },
+    data: { ...parsed.data, userId: user.id },
   });
 
   await logWineAction({
@@ -255,34 +199,12 @@ export async function updateWine(id, formData) {
   if (!existing) throw notFound("Vinul nu a fost găsit");
   if (existing.userId !== user.id) throw forbidden();
 
-  const raw = Object.fromEntries(formData.entries());
-
-  const grapeVarieties = raw.grapeVarieties ? JSON.parse(raw.grapeVarieties) : [];
-  const foodPairing = raw.foodPairing ? JSON.parse(raw.foodPairing) : [];
-  const aromaProfile = raw.aromaProfile ? JSON.parse(raw.aromaProfile) : [];
-
-  const parsed = WineSchema.safeParse({
-    ...raw,
-    grapeVarieties,
-    foodPairing,
-    aromaProfile,
-    drinkFrom: raw.drinkFrom ? parseInt(raw.drinkFrom) : undefined,
-    drinkUntil: raw.drinkUntil ? parseInt(raw.drinkUntil) : undefined,
-  });
-
-  if (!parsed.success) {
-    return { error: parsed.error.flatten().fieldErrors };
-  }
+  const parsed = parseWineForm(formData);
+  if (parsed.error) return { error: parsed.error };
 
   const updated = await prisma.wine.update({
     where: { id },
-    data: {
-      ...parsed.data,
-      bottleImageUrl: parsed.data.bottleImageUrl || null,
-      labelImageUrl: parsed.data.labelImageUrl || null,
-      drinkFrom: parsed.data.drinkFrom ?? null,
-      drinkUntil: parsed.data.drinkUntil ?? null,
-    },
+    data: parsed.data,
   });
 
   await releaseImages(
@@ -444,12 +366,12 @@ export async function getProfile() {
 
 export async function updateProfile(formData) {
   const user = await getCurrentUser();
-  const name = formData.get('name')?.toString().trim();
-  const image = formData.get('image')?.toString().trim() || null;
-
-  if (!name || name.length < 2) {
-    return { error: { name: ['Numele trebuie să aibă minim 2 caractere'] } };
-  }
+  const parsed = ProfileInputSchema.safeParse({
+    name: formData.get('name')?.toString() ?? '',
+    image: formData.get('image')?.toString(),
+  });
+  if (!parsed.success) return { error: z.flattenError(parsed.error).fieldErrors };
+  const { name, image } = parsed.data;
 
   const previous = await prisma.user.findUnique({ where: { id: user.id }, select: { image: true } });
   await prisma.user.update({
@@ -464,19 +386,13 @@ export async function updateProfile(formData) {
 
 export async function updatePassword(formData) {
   const user = await getCurrentUser();
-  const currentPassword = formData.get('currentPassword')?.toString();
-  const newPassword = formData.get('newPassword')?.toString();
-  const confirmPassword = formData.get('confirmPassword')?.toString();
-
-  if (!currentPassword || !newPassword || !confirmPassword) {
-    return { error: 'Completează toate câmpurile' };
-  }
-  if (newPassword.length < 8) {
-    return { error: 'Parola nouă trebuie să aibă minim 8 caractere' };
-  }
-  if (newPassword !== confirmPassword) {
-    return { error: 'Parolele nu coincid' };
-  }
+  const parsed = PasswordChangeSchema.safeParse({
+    currentPassword: formData.get('currentPassword')?.toString(),
+    newPassword: formData.get('newPassword')?.toString(),
+    confirmPassword: formData.get('confirmPassword')?.toString(),
+  });
+  if (!parsed.success) return { error: firstIssueMessage(parsed.error) };
+  const { currentPassword, newPassword } = parsed.data;
 
   const limited = rateLimit(`password:${user.id}`, LIMITS.passwordChange);
   if (!limited.ok) return { error: tooManyRequestsMessage(limited.retryAfter) };
@@ -639,13 +555,9 @@ export async function getAdvancedStats() {
 export async function updateCellarName(name) {
   const user = await getCurrentUser();
 
-  const trimmed = name?.toString().trim();
-  if (!trimmed || trimmed.length < 1) {
-    return { error: 'Numele nu poate fi gol' };
-  }
-  if (trimmed.length > 50) {
-    return { error: 'Maxim 50 de caractere' };
-  }
+  const parsed = CellarNameSchema.safeParse(name?.toString());
+  if (!parsed.success) return { error: firstIssueMessage(parsed.error) };
+  const trimmed = parsed.data;
 
   await prisma.user.update({
     where: { id: user.id },
@@ -709,15 +621,14 @@ export async function getAIAgents() {
 
 export async function saveAIAgent(input) {
   const user = await getCurrentUser();
-  const name = input?.name?.toString().trim();
-  const provider = input?.provider?.toString();
-  const model = input?.model?.toString().trim();
-  if (!name || name.length > 80) return { error: 'Numele agentului este obligatoriu și are maximum 80 de caractere' };
+  const parsedInput = AIAgentInputSchema.safeParse(input ?? {});
+  if (!parsedInput.success) return { error: firstIssueMessage(parsedInput.error) };
+  input = parsedInput.data;
+  const { name, provider, model } = input;
   if (!isKnownProvider(provider)) return { error: 'Provider AI invalid' };
-  if (!model) return { error: 'Model ID este obligatoriu. Poți introduce manual modelul.' };
 
   const definition = getProviderDefinition(provider);
-  let baseUrl = input.baseUrl?.toString().trim() || definition.baseUrl || null;
+  let baseUrl = input.baseUrl || definition.baseUrl || null;
   if (provider === 'openai-compatible' && !baseUrl) return { error: 'Base URL este obligatoriu pentru providerul custom' };
   if (baseUrl && (provider === 'openai-compatible' || input.providerType === 'custom')) {
     try {
@@ -730,19 +641,19 @@ export async function saveAIAgent(input) {
   const values = {
     name,
     provider,
-    providerType: input.providerType?.toString() || definition.type,
+    providerType: input.providerType || definition.type,
     baseUrl,
     model,
-    billingType: input.billingType?.toString() || definition.billingType || 'UNKNOWN',
+    billingType: input.billingType || definition.billingType || 'UNKNOWN',
     capabilities: input.capabilities || definition.capabilities || {},
     metadata: input.metadata || null,
     enabled: input.enabled !== false,
-    priority: Math.max(0, Number(input.priority) || 0),
-    timeoutMs: Math.min(60000, Math.max(3000, Number(input.timeoutMs) || 20000)),
-    maxRetries: Math.min(3, Math.max(0, Number(input.maxRetries) || 1)),
-    weight: Math.min(10, Math.max(0.1, Number(input.weight) || 1)),
+    priority: input.priority,
+    timeoutMs: input.timeoutMs,
+    maxRetries: input.maxRetries,
+    weight: input.weight,
   };
-  const apiKey = input.apiKey?.toString().trim();
+  const apiKey = input.apiKey;
 
   if (input.id) {
     const existing = await prisma.aIAgent.findFirst({ where: { id: input.id, userId: user.id } });

@@ -29,6 +29,11 @@
 **Decizii:** corpul răspunsului păstrează câmpul `error` (string), deci clienții existenți nu se schimbă. Se adaugă `code` (pentru UI/i18n) și `requestId` (pentru suport). Erorile neprevăzute nu-și expun niciodată mesajul tehnic.
 **Rămas:** formularele (`WineForm` etc.) pot folosi `code` pentru mesaje traduse când vine I18N-002.
 
+### #28 ARCH-007 Scheme Zod comune
+**Făcut:** `schemas/wine.js` (`WineInputSchema`, enum-uri, `parseWineForm`), `schemas/account.js` (profil, parolă, nume pivniță), `schemas/ai.js` (`AIAgentInputSchema`, `ScanRequestSchema`). `utils/actions.js` și `/api/ai-scan` le folosesc în loc de validări scrise de mână. Teste: `tests/unit/schemas.test.js`. E2E 8/8 local.
+**Decizii:** schemele nu importă nimic de pe server, deci pot fi folosite și în componente client. Mesajele și limitele (timeout, retries, weight) sunt păstrate exact. Am adăugat o limită de mărime pentru `imageBase64` (15 MB) și validarea tipului MIME. Schemele de răspuns vin cu `/api/v1` (#84).
+**Învățat:** testul e2e de consum pica și pe `main`: după un consum, butonul rămânea pe „Confirmi?”, deci al doilea click consuma fără confirmare. Reparat separat în `fix(consume)`. Pentru e2e local în containerul cloud: Postgres 16 pe 5432 (`E2E_DATABASE_URL`) și Chromium din `/opt/pw-browsers` (config local, neversionat).
+
 ---
 
 ## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub
