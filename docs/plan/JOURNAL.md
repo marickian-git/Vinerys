@@ -60,6 +60,16 @@
 
 **Învățat:** tabela `Wine` n-are `@@map`, deci în SQL brut se scrie `"Wine"` cu coloane camelCase. `wine_log` e mapată.
 
+### #125 DESIGN-012 Teme noi F · G · H (cerut de utilizator)
+**Făcut:** am propus 3 teme pe structura D, ca [canvas](https://claude.ai/artifact/1boBd3tvqZ8k9eXU1BLoMv) cu ecranul Acasă pe mobil:
+- **F** Piatră și mușchi (Fraunces + Public Sans);
+- **G** Amurg în vie (DM Serif Display + Figtree);
+- **H** Ie, cu motiv popular (Alegreya).
+
+Tokenii sunt în `docs/design/proposed-themes.tokens.json`, iar `tests/unit/proposedThemes.test.js` verifică contrastul AA pe toate perechile text/fundal.
+**Învățat:** testul a prins teracota din F (`#B5543A`, 4.45:1 pe suprafață). Am închis-o la `#A4482F`.
+**Decizii:** canvas-ul cu temele A–E nu poate fi citit din sesiune (nu e partajat), deci temele sunt construite de la zero, cu tokeni semantici ușor de mapat. Integrarea în aplicație așteaptă alegerea utilizatorului.
+
 ---
 
 ## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub

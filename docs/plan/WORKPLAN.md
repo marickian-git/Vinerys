@@ -26,7 +26,7 @@ Consecințe pentru planul ăsta:
 | 4 | #120 | DATA-010 Normalizare și vocabulare | done | `133e1b6` | `utils/normalize.js` + normalizare la salvare + `scripts/normalize-wines.mjs` (dry-run/backup/raport). Autocomplete: `datalist` pentru țări/locații (minim, fără restilizare). Culoarea derivată nu ghicește la spumant/desert cu soiuri mixte. **De rulat pe producție:** dry-run, apoi `--apply` |
 | 5 | #34 | DATA-006 Statistici prin agregări DB | done | `3503414` | `groupBy`/`aggregate`/SQL în DB în loc de încărcarea tuturor vinurilor. Pentru fereastra de consum se încarcă doar vinurile `IN_CELLAR`. `getCurrentUser` cu `cache()` (o citire a sesiunii pe request). Forma răspunsului e identică |
 | — | | **Checkpoint 1** | | | |
-| 5b | nou | Teme propuse de Claude (2–3), ca opțiune de ales | todo | | Cerut de utilizator pe 11.10. Izolate în fișiere proprii ca să nu intre în conflict cu temele A–E de pe branch-ul local |
+| 5b | #125 | DESIGN-012 Teme noi F · G · H (de ales) | done | | Cerut pe 11.10. Machete: [canvas](https://claude.ai/artifact/1boBd3tvqZ8k9eXU1BLoMv). Tokeni: `docs/design/proposed-themes.tokens.json` + test AA. Integrarea în app așteaptă alegerea ta și sistemul A–E publicat. Issue-ul rămâne deschis |
 | 6 | #43 | AI-008 Cache scanări (hash imagine) | todo | | |
 | 7 | #88 | AI-013 Tracking cost AI | todo | | |
 | 8 | #111 | BIZ-004 GDPR: export date + pagini legale | todo | | |
@@ -63,4 +63,4 @@ Consecințe pentru planul ăsta:
   - Munca de design de pe mașina utilizatorului nu e pe GitHub (vezi sus).
   - Testul e2e de consum pica și pe `main`; reparat.
 - **Rămase:** rândurile 5b–15.
-- **Merge:** PR spre `main` după CI verde (aprobat de utilizator pe 11.10: merge periodic, PR-uri mici). Pe producție nu e nicio migrație. `scripts/normalize-wines.mjs` se rulează manual (dry-run, apoi `--apply`).
+- **Merge:** PR #124 rămâne deschis și strânge toate issue-urile sesiunii. Utilizatorul a cerut pe 11.10 deploy-uri rare, deci un singur merge la final, după CI verde. Pe producție nu e nicio migrație. `scripts/normalize-wines.mjs` se rulează manual (dry-run, apoi `--apply`).
