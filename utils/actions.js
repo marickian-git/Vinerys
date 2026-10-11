@@ -4,9 +4,11 @@ import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
+import { cache } from "react";
 import { z } from "zod";
 import { parseWineForm } from "../schemas/wine";
 import { dedupeLocations, normalizeWineData } from "./normalize";
+import { countsBy, monthlySeries, nearMaturityWines, overdueWines } from "./stats";
 import { CellarNameSchema, PasswordChangeSchema, ProfileInputSchema, firstIssueMessage } from "../schemas/account";
 import { AIAgentInputSchema } from "../schemas/ai";
 import prisma from "./db";
@@ -23,11 +25,19 @@ import { forbidden, notFound, unauthenticated } from './errors';
 
 const logger = createLogger('actions');
 
+const STATS_WINE_SELECT = {
+  id: true, name: true, producer: true, country: true, type: true, rating: true,
+  purchasePrice: true, estimatedValue: true, quantity: true, purchaseDate: true, vintage: true,
+  agingPotential: true, drinkFrom: true, drinkUntil: true, status: true,
+  labelImageUrl: true, bottleImageUrl: true,
+};
+
 // ─────────────────────────────────────────
 // HELPER - obține userul curent
 // ─────────────────────────────────────────
 
-async function getCurrentUser() {
+// cache(): o singură citire a sesiunii pe request, chiar dacă pagina apelează mai multe acțiuni (DATA-006)
+const getCurrentUser = cache(async () => {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -37,7 +47,7 @@ async function getCurrentUser() {
   }
 
   return session.user;
-}
+});
 
 // ─────────────────────────────────────────
 // HELPER - istoric acțiuni (WineLog)
@@ -335,31 +345,26 @@ export async function consumeWine(id, quantity = 1) {
 
 export async function getDashboardStats() {
   const user = await getCurrentUser();
+  const where = { userId: user.id };
 
-  const wines = await prisma.wine.findMany({
-    where: { userId: user.id },
-    select: { type: true, status: true, quantity: true, estimatedValue: true },
-  });
+  // Agregări în DB, fără să încărcăm vinurile în memorie (DATA-006).
+  // Sticle și valoare = doar ce e fizic în pivniță; valoarea e per sticlă × cantitate.
+  const [byTypeRows, byStatusRows, bottles, [value]] = await Promise.all([
+    prisma.wine.groupBy({ by: ['type'], where, _count: { _all: true } }),
+    prisma.wine.groupBy({ by: ['status'], where, _count: { _all: true } }),
+    prisma.wine.aggregate({ where: { ...where, status: 'IN_CELLAR' }, _sum: { quantity: true } }),
+    prisma.$queryRaw`
+      SELECT COALESCE(SUM("estimatedValue" * "quantity"), 0)::float8 AS total
+      FROM "Wine" WHERE "userId" = ${user.id} AND "status" = 'IN_CELLAR'`,
+  ]);
 
-  // Sticle și valoare = doar ce e fizic în pivniță; valoarea e per sticlă × cantitate
-  const inCellar = wines.filter(w => w.status === 'IN_CELLAR');
-  const totalBottles = inCellar.reduce((sum, w) => sum + (w.quantity ?? 0), 0);
-  const totalValue = inCellar.reduce((sum, w) => sum + (w.estimatedValue ?? 0) * (w.quantity ?? 0), 0);
-
-  const byType = wines.reduce((acc, w) => {
-    acc[w.type] = (acc[w.type] ?? 0) + 1;
-    return acc;
-  }, {});
-
-  const byStatus = wines.reduce((acc, w) => {
-    acc[w.status] = (acc[w.status] ?? 0) + 1;
-    return acc;
-  }, {});
+  const byType = countsBy(byTypeRows, 'type');
+  const byStatus = countsBy(byStatusRows, 'status');
 
   return {
-    totalBottles,
-    totalValue,
-    totalWines: wines.length,
+    totalBottles: bottles._sum.quantity ?? 0,
+    totalValue: Number(value?.total ?? 0),
+    totalWines: Object.values(byType).reduce((sum, count) => sum + count, 0),
     byType,
     byStatus,
   };
@@ -452,123 +457,45 @@ export async function deleteAccount() {
 
 export async function getAdvancedStats() {
   const user = await getCurrentUser();
-  const wines = await prisma.wine.findMany({
-    where: { userId: user.id },
-    select: {
-      id: true,
-      name: true,
-      producer: true,
-      country: true,
-      type: true,
-      rating: true,
-      purchasePrice: true,
-      estimatedValue: true,
-      quantity: true,
-      purchaseDate: true,
-      vintage: true,
-      agingPotential: true,
-      drinkFrom: true,
-      drinkUntil: true,
-      status: true,
-      labelImageUrl: true,
-      bottleImageUrl: true,
-    },
-  });
-
-  const topWines = wines
-    .filter(w => w.rating != null)
-    .sort((a, b) => b.rating - a.rating)
-    .slice(0, 5);
-
-  const byCountry = wines.reduce((acc, w) => {
-    if (!w.country) return acc;
-    acc[w.country] = (acc[w.country] ?? 0) + 1;
-    return acc;
-  }, {});
-
+  const where = { userId: user.id };
+  const withPrice = { ...where, purchasePrice: { gt: 0 } };
   const now = new Date();
   const currentYear = now.getFullYear();
+  const since = new Date(now.getFullYear(), now.getMonth() - 11, 1);
 
-  const monthlyData = [];
-  for (let i = 11; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const label = d.toLocaleDateString('ro-RO', { month: 'short', year: '2-digit' });
-    const count = wines.filter(w => {
-      if (!w.purchaseDate) return false;
-      const pd = new Date(w.purchaseDate);
-      return pd.getFullYear() === d.getFullYear() && pd.getMonth() === d.getMonth();
-    }).length;
-    monthlyData.push({ label, count });
-  }
-
-  const withPrice = wines.filter(w => w.purchasePrice != null && w.purchasePrice > 0);
-  const prices = withPrice.map(w => w.purchasePrice);
-  const avgPrice = prices.length > 0 ? prices.reduce((a, b) => a + b, 0) / prices.length : 0;
-  const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
-  const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
-  const mostExpensive = [...withPrice].sort((a, b) => b.purchasePrice - a.purchasePrice)[0] ?? null;
-
-  // ── VINURI DEPĂȘITE (trecut de vârf) — drinkUntil < currentYear ──
-  const overdueWines = wines
-    .filter(w => {
-      if (w.status !== 'IN_CELLAR') return false;
-      if (w.drinkUntil != null) return w.drinkUntil < currentYear;
-      // fallback: agingPotential cu an maxim în trecut
-      if (w.agingPotential) {
-        const match = w.agingPotential.match(/(\d{4})/g);
-        if (match) {
-          const maxYear = Math.max(...match.map(Number));
-          return maxYear < currentYear;
-        }
-      }
-      return false;
-    })
-    .map(w => {
-      const drinkFrom = w.drinkFrom ?? null;
-      const drinkUntil = w.drinkUntil ?? null;
-      return { ...w, drinkFrom, drinkUntil };
-    })
-    .sort((a, b) => (a.drinkUntil ?? 0) - (b.drinkUntil ?? 0)); // cele mai vechi primele
-
-  // ── VINURI ÎN FEREASTRĂ sau aproape (nearMaturity) ──
-  const nearMaturity = wines
-    .filter(w => {
-      if (w.status !== 'IN_CELLAR') return false;
-      if (w.drinkFrom != null || w.drinkUntil != null) {
-        const until = w.drinkUntil ?? w.drinkFrom;
-        const from = w.drinkFrom ?? w.drinkUntil;
-        // În fereastră SAU urmează în 3 ani (și nu e depășit)
-        return until >= currentYear && from <= currentYear + 3;
-      }
-      if (!w.agingPotential) return false;
-      const match = w.agingPotential.match(/(\d{4})/g);
-      if (!match) return false;
-      const readyYear = Math.min(...match.map(Number));
-      return readyYear >= currentYear && readyYear <= currentYear + 3;
-    })
-    .map(w => {
-      let readyYear;
-      if (w.drinkFrom != null || w.drinkUntil != null) {
-        readyYear = w.drinkFrom ?? w.drinkUntil;
-      } else {
-        const match = w.agingPotential.match(/(\d{4})/g);
-        readyYear = Math.min(...match.map(Number));
-      }
-      return { ...w, readyYear };
-    })
-    .sort((a, b) => a.readyYear - b.readyYear)
-    .slice(0, 5);
+  const [topWines, countryRows, monthlyRows, priceAgg, mostExpensive, cellarWines] = await Promise.all([
+    prisma.wine.findMany({
+      where: { ...where, rating: { not: null } },
+      orderBy: [{ rating: 'desc' }, { createdAt: 'asc' }],
+      take: 5,
+      select: STATS_WINE_SELECT,
+    }),
+    prisma.wine.groupBy({ by: ['country'], where: { ...where, country: { not: null } }, _count: { _all: true } }),
+    prisma.$queryRaw`
+      SELECT date_trunc('month', "purchaseDate") AS month, COUNT(*)::int AS count
+      FROM "Wine"
+      WHERE "userId" = ${user.id} AND "purchaseDate" >= ${since}
+      GROUP BY 1`,
+    prisma.wine.aggregate({ where: withPrice, _avg: { purchasePrice: true }, _max: { purchasePrice: true }, _min: { purchasePrice: true } }),
+    prisma.wine.findFirst({ where: withPrice, orderBy: { purchasePrice: 'desc' }, select: STATS_WINE_SELECT }),
+    // Doar vinurile din pivniță, cu câmpurile necesare ferestrei de consum
+    prisma.wine.findMany({ where: { ...where, status: 'IN_CELLAR' }, select: STATS_WINE_SELECT }),
+  ]);
 
   return {
     topWines,
-    byCountry,
-    monthlyData,
-    priceStats: { avg: avgPrice, max: maxPrice, min: minPrice, mostExpensive },
-    nearMaturity,
-    overdueWines, // ← NOU
+    byCountry: countsBy(countryRows, 'country'),
+    monthlyData: monthlySeries(monthlyRows, now),
+    priceStats: {
+      avg: priceAgg._avg.purchasePrice ?? 0,
+      max: priceAgg._max.purchasePrice ?? 0,
+      min: priceAgg._min.purchasePrice ?? 0,
+      mostExpensive,
+    },
+    nearMaturity: nearMaturityWines(cellarWines, currentYear),
+    overdueWines: overdueWines(cellarWines, currentYear),
   };
 }
-
 
 export async function updateCellarName(name) {
   const user = await getCurrentUser();

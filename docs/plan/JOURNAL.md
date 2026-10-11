@@ -51,6 +51,15 @@
 
 **Next:** pe producție, `docker exec vinerys-app node scripts/normalize-wines.mjs` (dry-run), verificare, apoi `--apply`.
 
+### #34 DATA-006 Statistici prin agregări DB
+**Făcut:**
+- `getDashboardStats`: 2× `groupBy`, `aggregate` și un `SUM(estimatedValue × quantity)` în SQL.
+- `getAdvancedStats`: top 5 după rating cu `take`, țări prin `groupBy`, lunile prin `date_trunc`, prețuri prin `aggregate`. Doar fereastra de consum mai citește rânduri, și numai pe cele `IN_CELLAR`.
+- Logica pură e în `utils/stats.js` (`overdueWines`, `nearMaturityWines`, `monthlySeries`, `countsBy`), cu teste.
+- `getCurrentUser` e înfășurat în `cache()` din React, deci dashboard-ul citește sesiunea o singură dată, nu de 4 ori.
+
+**Învățat:** tabela `Wine` n-are `@@map`, deci în SQL brut se scrie `"Wine"` cu coloane camelCase. `wine_log` e mapată.
+
 ---
 
 ## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub
