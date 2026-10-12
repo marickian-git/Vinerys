@@ -26,6 +26,8 @@ import {
 } from "../server/wines";
 import { createTastingForUser, listTastings, syncWineRating, tastingData } from "../server/tastings";
 import { similarInCellar, tasteProfileFor } from "../server/taste";
+import { parseSommelierReply, runSommelier } from "../server/sommelier";
+import { runTool } from "../server/sommelierTools";
 import { predictPreference } from "./tasteProfile";
 import { foodToWinePrompt, heuristicMatch, normalizeFoodPicks, pairingCandidates, rankPicks } from "./foodToWine";
 import { auth } from "./auth";
@@ -966,4 +968,41 @@ export async function suggestWinesForDish(dish) {
   // Fără AI (sau AI indisponibil): asocierile salvate pe fiecare vin
   const picks = wines.map((wine) => ({ id: wine.id, ...heuristicMatch(text, wine) }));
   return { source: 'saved', dish: text, results: rankPicks(picks, wines, { taste }), aiUnavailable: choice.error ? choice.message : null };
+}
+
+// ─────────────────────────────────────────
+// SOMMELIER CONVERSAȚIONAL (AI-001)
+// ─────────────────────────────────────────
+
+const SommelierMessages = z.array(z.object({
+  role: z.enum(['user', 'assistant']),
+  content: z.string().trim().min(1).max(1000),
+})).min(1).max(20);
+
+export async function askSommelier(messages) {
+  const user = await getCurrentUser();
+  const parsed = SommelierMessages.safeParse(messages);
+  if (!parsed.success || parsed.data.at(-1).role !== 'user') return { error: 'Mesaj invalid' };
+  const limited = rateLimit(`sommelier:${user.id}`, PAIRING_LIMIT);
+  if (!limited.ok) return { error: tooManyRequestsMessage(limited.retryAfter) };
+
+  const choice = await resolveTextAgents(user.id);
+  if (choice.error) return { error: choice.message };
+
+  const requestId = randomBytes(8).toString('hex');
+  const log = logger.child({ requestId, userId: user.id });
+  try {
+    const result = await runSommelier({
+      messages: parsed.data,
+      generate: (prompt) => generateWithAgents(choice.agents, prompt, parseSommelierReply, { operation: 'sommelier' }),
+      runTool: (name, args) => runTool(user.id, name, args),
+    });
+    await recordAIUsage(user.id, requestId, result.usage, log);
+    log.info('sommelier answered', { tools: result.tools, wines: result.wines.length });
+    return { answer: result.answer, wines: result.wines, tools: result.tools };
+  } catch (error) {
+    await recordAIUsage(user.id, requestId, error.usage, log);
+    log.warn('sommelier failed', { error: serializeError(error) });
+    return { error: 'Sommelierul nu a răspuns. Încearcă din nou.' };
+  }
 }

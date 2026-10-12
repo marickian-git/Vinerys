@@ -141,7 +141,7 @@ export default async function WinesPage({ searchParams }) {
           </div>
 
           <FollowUpBanner items={followUps} />
-          <p style={{ margin: '0 0 1rem', fontSize: '0.85rem' }}><Link href="/pairing" style={{ color: '#d97a95' }}>🍽️ Ce gătesc azi? Alege vinul după mâncare →</Link></p>
+          <p style={{ margin: '0 0 1rem', fontSize: '0.85rem' }}><Link href="/pairing" style={{ color: '#d97a95' }}>🍽️ Ce gătesc azi? Alege vinul după mâncare →</Link> · <Link href="/sommelier" style={{ color: '#d97a95' }}>🤵 Întreabă Sommelierul</Link></p>
           <WineFilters countries={countries} totalResults={total} />
           <SavedFilters initial={savedFilters} />
 

@@ -6,7 +6,7 @@ describe('openApiSpec', () => {
     const spec = openApiSpec('https://casa.ro/crama');
     expect(spec.servers[0].url).toBe('https://casa.ro/crama/api/v1');
     expect(spec.components.securitySchemes.bearer.scheme).toBe('bearer');
-    expect(Object.keys(spec.paths)).toEqual(['/me', '/wines', '/wines/{id}', '/wines/{id}/consume', '/wines/{id}/tastings', '/wines/{id}/pairing', '/stats']);
+    expect(Object.keys(spec.paths)).toEqual(['/me', '/wines', '/wines/{id}', '/wines/{id}/consume', '/wines/{id}/tastings', '/wines/{id}/pairing', '/sommelier', '/stats']);
   });
 
   it('toate $ref-urile există în components', () => {

@@ -192,7 +192,8 @@ async function callProviderWithModel(agent, prompt, imageBase64 = null, mimeType
     if (!modelOverride && agent.provider !== 'openai-compatible' && getProviderDefinition(agent.provider).supportsModelDiscovery) {
         const discovered = await listProviderModels(agent);
         const selected = discovered.find((item) => item.id === model);
-        if (selected && selected.imageInput === false) {
+        // Verificarea de imagini contează doar când trimitem o imagine (pairing/Sommelier sunt doar text)
+        if (imageBase64 && selected && selected.imageInput === false) {
             const error = new Error(`Modelul ${model} nu acceptă imagini`);
             error.status = 422;
             error.providerStatus = 'MODEL_UNAVAILABLE';

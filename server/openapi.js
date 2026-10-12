@@ -71,6 +71,13 @@ export function openApiSpec(serverUrl) {
         parameters: [idParam, { name: 'refresh', in: 'query', schema: { type: 'string', enum: ['1'] } }],
         get: { summary: '„Ce gătesc cu el?”: 3 preparate, temperatură, decantare (cache pe vin)', responses: { 200: { description: 'OK' }, ...errors } },
       },
+      '/sommelier': {
+        post: {
+          summary: 'Sommelier conversațional (caută în pivnița reală prin tool-uri)',
+          requestBody: json({ type: 'object', required: ['messages'], properties: { messages: { type: 'array', maxItems: 20, items: { type: 'object', properties: { role: { type: 'string', enum: ['user', 'assistant'] }, content: { type: 'string', maxLength: 1000 } } } } } }),
+          responses: { 200: { description: 'OK', ...json({ type: 'object', properties: { answer: { type: 'string' }, wines: { type: 'array', items: { type: 'object' } }, tools: { type: 'array', items: { type: 'string' } } } }) }, ...errors },
+        },
+      },
       '/stats': { get: { summary: 'Statistici pivniță', responses: { 200: { description: 'OK', ...json(ref('Stats')) }, ...errors } } },
     },
   };

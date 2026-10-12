@@ -337,6 +337,21 @@ Pe pagina vinului apare secțiunea „Jurnal de degustare”. Pagina `/tastings`
 Plus `describeTools()` (textul pentru prompt) și `runTool(userId, name, args)` (validare Zod; erorile devin mesaje, nu excepții). Teste unit pentru validare. Verificat ad-hoc pe DB-ul local: căutare, detalii, izolare (alt utilizator primește „Acces interzis”), preferințe.
 **Decizii:** protocol JSON propriu în loc de tool calling nativ. Agenții pot fi Gemini, Claude sau OpenAI-compatibil, fiecare cu alt format; un singur protocol text merge cu toți și cu ensemble-ul existent. Rezultatele sunt compacte (fără URL-uri de imagini sau ID-uri interne inutile), ca promptul să rămână mic.
 
+### #36 AI-001 Sommelier conversațional
+**Făcut:**
+- `server/sommelier.js`:
+  - `sommelierPrompt`: reguli „nu inventa vinuri”, prioritate pentru cele urgente, limita de preț și tipul cerut, plus tool-urile și conversația;
+  - `parseSommelierReply`;
+  - `seenWines`;
+  - `runSommelier` (maximum 4 apeluri de tool, apoi răspuns forțat; erorile tool-urilor ajung la model ca rezultat).
+- Acțiunea `askSommelier` (validare Zod a istoricului, rate limit, agenți proprii sau platforma cu cotă, `ai_usage` cu `operation: 'sommelier'`).
+- UI `/sommelier` (`SommelierChat`, `role="log"`, întrebări de pornire, chip-uri cu vinurile recomandate). Linkuri din Pivniță și Profil. `POST /api/v1/sommelier` + OpenAPI.
+- Teste unit (bucla cu generator și tool-uri simulate) + e2e (fără agenți: mesaj clar).
+- **Verificat cap-coadă:** server local cu `PLATFORM_AI_AGENTS` spre un LLM fals OpenAI-compatibil. Modelul cere `getAvailableBottles`, tool-ul citește DB-ul real, iar răspunsul conține doar vinul real (id-ul inventat e eliminat). `ai_usage` are 2 linii `sommelier/platform`.
+
+**Bug reparat pe drum:** `callProviderWithModel` respingea modelele marcate fără suport de imagini și pentru cererile doar text. Acum verificarea se face doar când se trimite o imagine.
+**Decizii:** istoricul conversației stă în browser și se trimite la fiecare întrebare (maximum 20 de mesaje). Nu e nevoie de tabel până nu se cere continuarea pe alt dispozitiv.
+
 ---
 
 ## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub
