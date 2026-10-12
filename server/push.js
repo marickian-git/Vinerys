@@ -2,6 +2,9 @@
 import webpush from 'web-push';
 import prisma from '../utils/db';
 import { buildDigest } from '../utils/digest';
+import { buildWeekendPlan, weekendNotification } from '../utils/weekendPlan';
+import { tasteProfileFor } from './taste';
+import { predictPreference } from '../utils/tasteProfile';
 import { configuredAppURL } from '../utils/appPath';
 import { createLogger, serializeError } from '../utils/logger';
 
@@ -70,5 +73,34 @@ export async function sendMonthlyDigests({ now = new Date(), send } = {}) {
     } else report.skipped += 1;
   }
   logger.info('monthly digests', report);
+  return report;
+}
+
+// HOME-006: planul de weekend pentru un utilizator (afișat în Sommelier și în Plan)
+export async function weekendPlanFor(userId, now = new Date()) {
+  const [wines, { profile }] = await Promise.all([
+    prisma.wine.findMany({ where: { userId, status: 'IN_CELLAR', quantity: { gt: 0 } } }),
+    tasteProfileFor(userId, { recommendations: 0 }),
+  ]);
+  const taste = (wine) => (profile.evidence ? predictPreference(wine, profile).score : 0.5);
+  return buildWeekendPlan(wines, { now, taste });
+}
+
+// Vineri: „Weekendul ăsta: deschide X, merge cu Y” (o dată pe weekend)
+export async function sendWeekendPlans({ now = new Date(), send } = {}) {
+  const users = await prisma.user.findMany({ where: { pushSubscriptions: { some: {} } }, select: { id: true } });
+  const report = { users: users.length, sent: 0, skipped: 0 };
+  for (const { id } of users) {
+    const notification = weekendNotification(await weekendPlanFor(id, now), now);
+    if (!notification || await prisma.notificationLog.findUnique({ where: { userId_key: { userId: id, key: notification.key } } })) {
+      report.skipped += 1;
+      continue;
+    }
+    if (await sendToUser(id, notification, send ? { send } : undefined)) {
+      await prisma.notificationLog.create({ data: { userId: id, key: notification.key } });
+      report.sent += 1;
+    } else report.skipped += 1;
+  }
+  logger.info('weekend plans', report);
   return report;
 }

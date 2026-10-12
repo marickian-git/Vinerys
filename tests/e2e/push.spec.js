@@ -14,4 +14,6 @@ test('notificări: fără VAPID sunt dezactivate elegant; cron-ul cere secretul'
   const ok = await request.post(`${BASE}/api/cron/digest`, { headers: { Authorization: 'Bearer e2e-cron-secret' } });
   expect(ok.status()).toBe(200);
   expect(await ok.json()).toMatchObject({ sent: 0 });
+  const weekend = await request.post(`${BASE}/api/cron/digest?kind=weekend`, { headers: { Authorization: 'Bearer e2e-cron-secret' } });
+  expect(await weekend.json()).toMatchObject({ sent: 0 });
 });

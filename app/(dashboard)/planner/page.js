@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { getConsumptionPlan } from '@/utils/actions';
+import { getConsumptionPlan, getWeekendPlan } from '@/utils/actions';
+import WeekendPlan from '@/components/WeekendPlan';
 
 export const metadata = { title: 'Plan de consum — Vinerys' };
 
@@ -12,7 +13,7 @@ const TYPE_DOT = { RED: '#8b1a2e', WHITE: '#e6d79a', ROSE: '#e8a0a0', SPARKLING:
 
 // CELLAR-006: câte sticle să deschizi în fiecare an, ca niciuna să nu treacă de vârf
 export default async function PlannerPage() {
-  const plan = await getConsumptionPlan();
+  const [plan, weekend] = await Promise.all([getConsumptionPlan(), getWeekendPlan()]);
   const max = Math.max(1, ...plan.years.map((y) => y.bottles));
   const total = plan.years.reduce((sum, y) => sum + y.bottles, 0) + (plan.later?.bottles ?? 0);
   const thisYear = plan.years[0];
@@ -28,6 +29,11 @@ export default async function PlannerPage() {
             : <>Nimic urgent în {thisYear.year}. </>}
           Planul împarte cele {total} sticle cu fereastră cunoscută pe anii în care sunt bune de băut.
         </p>
+
+        <section aria-labelledby="weekend" style={{ margin: '1.5rem 0' }}>
+          <h2 id="weekend" style={{ fontSize: '1.1rem', fontWeight: 500, margin: '0 0 0.6rem' }}>Weekendul ăsta</h2>
+          <WeekendPlan plan={weekend} />
+        </section>
 
         <div role="img" aria-label="Sticle de deschis pe an" style={{ display: 'grid', gridTemplateColumns: `repeat(${plan.years.length}, minmax(0, 1fr))`, gap: 6, alignItems: 'end', height: 110, margin: '1.5rem 0 0.4rem' }}>
           {plan.years.map((y) => (

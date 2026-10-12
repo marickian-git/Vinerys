@@ -389,6 +389,23 @@ Plus `describeTools()` (textul pentru prompt) și `runTool(userId, name, args)` 
 
 **De făcut de utilizator:** `npx web-push generate-vapid-keys`, apoi `VAPID_*` + `CRON_SECRET` în CasaOS și un cron lunar cu `curl` (comanda e în `.env.example`).
 
+### #107 HOME-006 Plan de weekend
+**Făcut:**
+- `utils/weekendPlan.js`:
+  - `weekendStart`: vinerea curentă sau cea trecută, în weekend;
+  - `weekKey`;
+  - `buildWeekendPlan`: scor 0.7 urgență + 0.3 gust, cel mult două vinuri de același tip, mâncare din `foodPairing[0]`, temperatură;
+  - `weekendNotification`.
+- `server/push.js` (`weekendPlanFor`, `sendWeekendPlans`); cron-ul acceptă `?kind=weekend`.
+- `WeekendPlan` pe `/sommelier` („Planul weekendului”, după machetă) și pe `/planner`.
+- Teste unit + e2e (planner, cron weekend).
+
+**Decizii:**
+- Fără AI: planul trebuie să apară instant și gratuit la fiecare deschidere.
+- „Planul construit din conversație” (comentariul din issue) poate veni ca tool al Sommelierului (`setWeekendPlan`) când se salvează planul.
+
+**Învățat:** pentru date în fusul orar local se folosește formatul local, nu `toISOString()`, care mută ziua în fusurile din fața UTC.
+
 ---
 
 ## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub

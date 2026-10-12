@@ -71,6 +71,16 @@ Același flux. Branch-ul a fost repornit din `main` (`137957e`). Un singur merge
 | 31 | #59 | SOCIAL-003 Wishlist și liste publice | done | `390fbaf` | Liste (`wine_list` + `wine_list_item`, migrație): wishlist, recomandări, cadouri. Elementele vin din pivniță sau sunt vinuri noi, cu notă și link spre magazin. Fiecare listă poate fi publică prin link (`/l/<id>`, fără cont, noindex). Cadouri: vizitatorul rezervă cu numele, proprietarul vede doar „rezervat” (surpriza rămâne), iar „cumpărat” se bifează. Exportul GDPR include listele |
 | 32 | #53 | CELLAR-007 Notificări push | done | `9769d4d` | Web Push (VAPID, `web-push`), cu migrație pentru abonamente + jurnal anti-dubluri. Service worker separat `push-sw.js` (fără cache). Activare din Setări. Rezumat lunar: trecute de vârf / ies anul acesta / intră anul acesta, cu link spre vin sau plan. Trimis de `POST /api/cron/digest` (`CRON_SECRET`), rulat de un cron extern. Abonamentele expirate se șterg. Dezactivat elegant fără chei VAPID. Plan de weekend (#107) poate folosi același canal |
 
+## Lot 4 — 2026-10-12 (după PR #127)
+
+| # | Issue | Titlu | Status | Commit | Note / interpretare |
+|---|---|---|---|---|---|
+| 33 | #107 | HOME-006 Plan de weekend | done | | Plan de weekend (vineri / sâmbătă / duminică): cele mai urgente sticle, apoi gustul (#46), cel mult două de același tip, cu mâncare, temperatură și locație. Apare în Sommelier („Planul weekendului”, ca în machetă) și pe `/planner`. Notificarea de vineri vine prin `/api/cron/digest?kind=weekend` (o dată pe weekend). Fără AI. Construirea planului din conversație rămâne pentru o versiune viitoare |
+| 34 | #42 | AI-007 Adăugare vocală | todo | | |
+| 35 | #38 | AI-003 Pairing din fotografie | todo | | |
+| 36 | #44 | AI-009 Progres scanare (SSE) | todo | | |
+| 37 | #78 | REFACTOR-007 Accesibilitate | todo | | |
+
 ## Sărite (cu motiv)
 
 | Issue | Motiv |

@@ -28,6 +28,7 @@ import { createTastingForUser, listTastings, syncWineRating, tastingData } from 
 import { similarInCellar, tasteProfileFor } from "../server/taste";
 import { parseSommelierReply, runSommelier } from "../server/sommelier";
 import { valueReportFor } from "../server/valuation";
+import { weekendPlanFor } from "../server/push";
 import { addItem, createList, deleteList, listsFor, removeItem, reserveItem, togglePurchased, updateList } from "../server/lists";
 import { ListInputSchema, ListItemInputSchema, ReserveSchema } from "../schemas/list";
 import { runTool } from "../server/sommelierTools";
@@ -1094,4 +1095,13 @@ export async function reserveGift(shareId, itemId, name) {
   if (!ok) return { error: 'Cadoul a fost deja rezervat de altcineva.' };
   revalidatePath(`/l/${shareId}`);
   return { success: true };
+}
+
+// ─────────────────────────────────────────
+// PLAN DE WEEKEND (HOME-006)
+// ─────────────────────────────────────────
+
+export async function getWeekendPlan() {
+  const user = await getCurrentUser();
+  return weekendPlanFor(user.id);
 }
