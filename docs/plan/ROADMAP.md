@@ -63,14 +63,14 @@ Detalii probleme: vezi `AUDIT.md`.
 Obiectiv: structura care susține design nou, multi-limbă, business și mobile fără rescrieri ulterioare.
 
 ### 1.1 Strat de servicii + API `🟨` (scheme Zod comune gata, #28)
-- [ ] `server/` cu servicii pe domenii (wines, cellars, ai, media, stats) — logică pură, testabilă
-- [ ] Server actions devin wrapper-e subțiri peste servicii
-- [ ] API REST `/api/v1/*` peste aceleași servicii (pentru aplicația mobilă), auth prin bearer token
+- [~] `server/` cu servicii pe domenii: wines, tastings, media, fx, api (12.10); rămân ai, stats, cellars
+- [~] Server actions devin wrapper-e subțiri peste servicii (vinuri și degustări gata)
+- [x] API REST `/api/v1/*` peste aceleași servicii, auth prin bearer token, OpenAPI (#84)
 - [ ] Migrare treptată JS → TypeScript (începând cu `server/` și `utils/`)
 
 ### 1.2 Model de date nou `⬜`
 - [ ] `Cellar` (tip: `HOME` / `VENUE` / `WINERY`) + `CellarMember` (roluri: owner/editor/viewer)
-- [ ] Separare `Wine` (eticheta) / `Bottle` (exemplar: preț, locație, dată) / `Tasting` (degustare: notă, rating, mâncare, poze)
+- [~] Separare `Wine` / `Bottle` / `Tasting`: `Tasting` gata (#31, aditiv); `Bottle` așteaptă decizia (#30)
 - [ ] `Event` log ca sursă de adevăr pentru istoric și statistici
 - [ ] Migrare date existente fără pierderi + script de verificare
 - [x] Normalizare și vocabulare canonice: țări, locații, arome, culoare derivată — DATA-010 (#120)
@@ -83,12 +83,12 @@ Obiectiv: structura care susține design nou, multi-limbă, business și mobile 
 ### 1.4 Multi-limbă (i18n) `⬜`
 - [ ] `next-intl`, limbi inițiale **RO + EN** (structură pregătită pentru altele)
 - [ ] Extragere texte hardcodate în fișiere de mesaje
-- [ ] Formatare locală: date, numere, **monedă (RON/EUR/…)** per utilizator
+- [~] Formatare locală: **monedă per utilizator** gata (#35, `formatMoney` cu Intl); datele/numerele per limbă vin cu next-intl
 - [ ] Enum-uri traduse (tip, status), AI răspunde în limba utilizatorului
 - [ ] Selector limbă în setări + detecție automată
 
 ### 1.5 AI găzduit `⬜`
-- [ ] Chei de platformă + cote per utilizator (necesar pentru utilizatori obișnuiți / business)
+- [x] Chei de platformă + cote per utilizator (#87)
 - [ ] BYO keys rămâne opțiune avansată
 - [x] Cache după hash imagine (#43); baza canonică de vinuri rămâne la modelul de date nou
 - [ ] Structured outputs native unde providerul suportă
@@ -156,7 +156,7 @@ Obiectiv: în 10 secunde știi ce sticlă să deschizi și cu ce mâncare.
 - [ ] 3.1 **Scor de urgență** (trecut de vârf > iese anul ăsta > la vârf > intră curând) + secțiunea „De băut curând”
 - [x] 3.2 **Vin → mâncare**: „Ce gătesc cu el?” — 3 preparate, temperatură servire, decantare (#104)
 - [ ] 3.3 **Mâncare → vin**: „Ce gătesc azi?” (text / voce / poză) → top 3 sticle din pivniță, scor = potrivire × urgență, cu explicație
-- [ ] 3.4 **Deschide sticla** → consum cu un tap → follow-up a doua zi (rating, notă, poză masă)
+- [x] 3.4 **Deschide sticla** → consum cu un tap (QR) → follow-up „Cum a fost?” (#106, #48)
 - [ ] 3.5 **Notificări push**: plan de weekend, vinuri care intră/ies din fereastră
 - [ ] 3.6 **Profil de gust** din ratinguri → recomandări personalizate
 - [ ] 3.7 **Sommelier conversațional** (chat cu tool-uri peste pivnița reală)
@@ -166,9 +166,9 @@ Obiectiv: în 10 secunde știi ce sticlă să deschizi și cu ce mâncare.
 ## Faza 4 — Colecționar avansat  `⬜`
 
 - [ ] 4.1 Hartă vizuală pivniță (rafturi, drag & drop, „unde e sticla X?”)
-- [ ] 4.2 Etichete QR per sticlă → scan = consum / detalii
-- [ ] 4.3 Planificator de consum pe ani + curbă de maturitate
-- [ ] 4.4 Valoare și ROI, multi-monedă, raport PDF pentru asigurare
+- [x] 4.2 Etichete QR per sticlă → scan = consum / detalii (#48; per vin până la modelul Bottle)
+- [~] 4.3 Planificator de consum pe ani (#52); curba de maturitate vine cu designul (#93)
+- [~] 4.4 Multi-monedă gata (#35); valoare în timp / ROI rămâne (#54)
 - [x] 4.5 Căutare fuzzy (`pg_trgm`) + limbaj natural + filtre salvate (#55)
 - [x] 4.6 Import Vivino / CellarTracker / CSV generic (#64, #65)
 - [ ] 4.7 Scanare raft (mai multe sticle) / bon / factură
