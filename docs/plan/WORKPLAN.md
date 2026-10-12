@@ -62,11 +62,11 @@ Același flux. Branch-ul a fost repornit din `main` (`137957e`). Un singur merge
 
 | # | Issue | Titlu | Status | Commit | Note / interpretare |
 |---|---|---|---|---|---|
-| 26 | #46 | AI-011 Profil de gust | done | | Profil explicabil, fără ML: fiecare vin votează pentru trăsăturile lui (tip, soiuri, țară, regiune, categorii de arome), ponderat cu cât ți-a plăcut (rating, degustări, favorit, sticle consumate). Pe Profil: preferințe + ce să eviți + „Din pivniță, pe gustul tău” cu % și motive. Pe pagina vinului: „Asemănătoare din pivniță” |
-| 27 | #105 | HOME-004 Mâncare → vin | done | | Pagina `/pairing` „Ce gătesc azi?” (text + exemple): top 3 sticle din pivniță, scor = potrivire × urgență × gust (#46), cu explicație. Cu AI: agenții proprii sau ai platformei, validat ca să nu inventeze vinuri. Fără AI: asocierile salvate pe vin (`foodPairing`, completat la 100% la scanare). Vocea (AI-007) și poza (AI-003) rămân în issue-urile lor. Importul CSV citește acum și asocierile |
-| 28 | #37 | AI-002 Tool-uri AI peste colecție | done | | `server/sommelierTools.js`: searchWines (limbaj natural + filtre), getWine, getAvailableBottles (după urgență), getUserPreferences (profilul #46). Argumente validate cu Zod, executate doar pe datele utilizatorului, rezultate compacte. Protocol JSON independent de provider (Gemini, Claude și OpenAI-compatibil au formate diferite de tool calling). Verificat pe DB local, inclusiv izolarea între utilizatori |
-| 29 | #36 | AI-001 Sommelier conversațional | done | | Chat `/sommelier` + `POST /api/v1/sommelier`. Bucla agent (`server/sommelier.js`): maximum 4 apeluri de tool (#37), apoi răspuns. Recomandă doar vinuri apărute în rezultatele tool-urilor (id-urile inventate sunt eliminate), respectă prețul și tipul cerut, explică. Verificat cap-coadă cu un LLM fals local + DB real. Istoricul conversației stă în browser (fără tabel). Fix: modelele fără imagini nu mai sunt respinse la cererile doar text |
-| 30 | #54 | CELLAR-008 Istoric de preț și ROI | done | | Tabela `wine_valuation` (migrație cu backfill: valoarea curentă devine primul punct). Se scrie la creare, la import și la schimbarea valorii sau monedei. Pe pagina vinului: sparkline + ROI. Pagina `/value`: valoare, cost, câștig, ROI, top câștiguri/pierderi, în moneda utilizatorului. `/value/report`: raport printabil/PDF pentru asigurare. Fără prețuri de piață automate (nu există o sursă publică) |
+| 26 | #46 | AI-011 Profil de gust | done | `326dd53` | Profil explicabil, fără ML: fiecare vin votează pentru trăsăturile lui (tip, soiuri, țară, regiune, categorii de arome), ponderat cu cât ți-a plăcut (rating, degustări, favorit, sticle consumate). Pe Profil: preferințe + ce să eviți + „Din pivniță, pe gustul tău” cu % și motive. Pe pagina vinului: „Asemănătoare din pivniță” |
+| 27 | #105 | HOME-004 Mâncare → vin | done | `638bcb3` | Pagina `/pairing` „Ce gătesc azi?” (text + exemple): top 3 sticle din pivniță, scor = potrivire × urgență × gust (#46), cu explicație. Cu AI: agenții proprii sau ai platformei, validat ca să nu inventeze vinuri. Fără AI: asocierile salvate pe vin (`foodPairing`, completat la 100% la scanare). Vocea (AI-007) și poza (AI-003) rămân în issue-urile lor. Importul CSV citește acum și asocierile |
+| 28 | #37 | AI-002 Tool-uri AI peste colecție | done | `6a926a0` | `server/sommelierTools.js`: searchWines (limbaj natural + filtre), getWine, getAvailableBottles (după urgență), getUserPreferences (profilul #46). Argumente validate cu Zod, executate doar pe datele utilizatorului, rezultate compacte. Protocol JSON independent de provider (Gemini, Claude și OpenAI-compatibil au formate diferite de tool calling). Verificat pe DB local, inclusiv izolarea între utilizatori |
+| 29 | #36 | AI-001 Sommelier conversațional | done | `6ddee97` | Chat `/sommelier` + `POST /api/v1/sommelier`. Bucla agent (`server/sommelier.js`): maximum 4 apeluri de tool (#37), apoi răspuns. Recomandă doar vinuri apărute în rezultatele tool-urilor (id-urile inventate sunt eliminate), respectă prețul și tipul cerut, explică. Verificat cap-coadă cu un LLM fals local + DB real. Istoricul conversației stă în browser (fără tabel). Fix: modelele fără imagini nu mai sunt respinse la cererile doar text |
+| 30 | #54 | CELLAR-008 Istoric de preț și ROI | done | `12c1b79` | Tabela `wine_valuation` (migrație cu backfill: valoarea curentă devine primul punct). Se scrie la creare, la import și la schimbarea valorii sau monedei. Pe pagina vinului: sparkline + ROI. Pagina `/value`: valoare, cost, câștig, ROI, top câștiguri/pierderi, în moneda utilizatorului. `/value/report`: raport printabil/PDF pentru asigurare. Fără prețuri de piață automate (nu există o sursă publică) |
 | — | | **Checkpoint 6** | | | |
 | 31 | #59 | SOCIAL-003 Wishlist și liste publice | todo | | |
 | 32 | #53 | CELLAR-007 Notificări push | todo | | |
@@ -159,4 +159,13 @@ Același flux. Branch-ul a fost repornit din `main` (`137957e`). Un singur merge
 - **Dependență nouă:** `qrcode`.
 - **Env nou (opțional):** `PLATFORM_AI_AGENTS`, `AI_QUOTA_SCANS`, `AI_QUOTA_TEXT`, `FX_RATES_JSON`.
 - **Merge:** un singur PR pentru tot lotul 2 (deploy rar).
+
+### Checkpoint 6 — 2026-10-12
+
+- **Terminate (5):** #46 profil de gust, #105 „Ce gătesc azi?”, #37 tool-uri AI, #36 Sommelier conversațional, #54 valoare și ROI.
+- **Lotul 2** e în `main` (PR #126, `7e6e08c`).
+- **Teste:** 233 unit, e2e 28/28. Sommelierul e verificat cap-coadă cu un LLM fals local, pe DB-ul real.
+- **Bug reparat:** modelele fără suport de imagini erau respinse și la cererile doar text.
+- **Migrație nouă:** `wine_valuation`, cu backfill.
+- **Rămase în lotul 3:** #59, #53.
 
