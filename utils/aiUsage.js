@@ -19,9 +19,22 @@ export async function recordAIUsage(userId, requestId, entries = [], log) {
         costUsd: estimateCostUsd(entry),
         latencyMs: entry.latencyMs,
         success: entry.success,
+        source: entry.source ?? 'byo',
       })),
     });
   } catch (error) {
     log?.error('ai usage write failed', { error: serializeError(error) });
   }
+}
+
+// AI-012: câte cereri pe cheile platformei a făcut utilizatorul luna aceasta (o cerere = un requestId)
+const OPERATIONS = { scan: ['scan_identify'], text: ['pairing', 'sommelier'] };
+
+export async function platformRequestsThisMonth(userId, kind, since) {
+  const rows = await prisma.aIUsage.findMany({
+    where: { userId, source: 'platform', operation: { in: OPERATIONS[kind] }, createdAt: { gte: since } },
+    distinct: ['requestId'],
+    select: { requestId: true },
+  });
+  return rows.length;
 }

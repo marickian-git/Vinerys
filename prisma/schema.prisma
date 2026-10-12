@@ -273,10 +273,13 @@ model AIUsage {
   latencyMs    Int?
   success      Boolean
   requestId    String?
+  // AI-012: "byo" = cheia utilizatorului, "platform" = cheile platformei (intră în cotă)
+  source       String   @default("byo")
   createdAt    DateTime @default(now())
 
   @@index([userId, createdAt])
   @@index([agentId])
+  @@index([userId, source, operation, createdAt])
   @@map("ai_usage")
 }
 

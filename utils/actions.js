@@ -25,7 +25,8 @@ import { getProviderDefinition, isKnownProvider, listProviderDefinitions } from 
 import { validateProviderBaseUrl } from "./aiUrlSecurity";
 import { generateWithAgents, listProviderModels } from "./aiProviders";
 import { normalizePairing, pairingKey, pairingPrompt } from "./pairing";
-import { recordAIUsage } from "./aiUsage";
+import { platformRequestsThisMonth, recordAIUsage } from "./aiUsage";
+import { chooseAgents, monthStart, platformAgents, quotaFor, quotaMessage } from "./platformAI";
 import { shareUrlFor } from "./share";
 import { LIMITS, rateLimit, tooManyRequestsMessage } from "./rateLimit";
 import { listUserObjects, objectKeyFromUrl, removeObjects } from "./storage";
@@ -806,6 +807,15 @@ export async function getAIUsageSummary() {
   ]);
 
   const agentNames = new Map(agents.map((agent) => [agent.id, agent.name]));
+  // AI-012: cota lunară pe cheile platformei (doar dacă platforma are chei configurate)
+  const role = (await prisma.user.findUnique({ where: { id: user.id }, select: { role: true } }))?.role;
+  const quotas = platformAgents().length
+    ? await Promise.all(['scan', 'text'].map(async (kind) => ({
+        kind,
+        used: await platformRequestsThisMonth(user.id, kind, monthStart()),
+        limit: quotaFor({ role }, kind),
+      })))
+    : null;
   return {
     byMonth: byMonth.map((row) => ({ ...row, month: new Date(row.month).toISOString().slice(0, 7) })),
     byAgent: byAgent.map((row) => ({
@@ -819,6 +829,7 @@ export async function getAIUsageSummary() {
       avgLatencyMs: row._avg.latencyMs == null ? null : Math.round(row._avg.latencyMs),
     })).sort((a, b) => b.calls - a.calls),
     platform: platform?.map((row) => ({ ...row, month: new Date(row.month).toISOString().slice(0, 7) })) ?? null,
+    quotas: quotas?.map((q) => ({ ...q, limit: Number.isFinite(q.limit) ? q.limit : null })) ?? null,
   };
 }
 
@@ -901,12 +912,16 @@ export async function getWinePairing(wineId, { refresh = false } = {}) {
       return [];
     }
   });
-  if (!agents.length) return { error: 'Configurează un agent AI în Setări ca să primești sugestii.' };
+  const platform = platformAgents();
+  const quota = quotaFor(await prisma.user.findUnique({ where: { id: user.id }, select: { role: true } }), 'text');
+  const used = agents.length || !platform.length ? 0 : await platformRequestsThisMonth(user.id, 'text', monthStart());
+  const choice = chooseAgents({ ownAgents: agents, platform, used, quota });
+  if (choice.error) return { error: quotaMessage(choice.error, quota) };
 
   const requestId = randomBytes(8).toString('hex');
   const log = logger.child({ requestId, userId: user.id, wineId });
   try {
-    const { result, usage, provider } = await generateWithAgents(agents, pairingPrompt(wine), normalizePairing, { operation: 'pairing' });
+    const { result, usage, provider } = await generateWithAgents(choice.agents, pairingPrompt(wine), normalizePairing, { operation: 'pairing' });
     await recordAIUsage(user.id, requestId, usage, log);
     const pairing = { ...result, provider, generatedAt: new Date().toISOString() };
     await prisma.wine.update({ where: { id: wine.id }, data: { pairing, pairingKey: key } });

@@ -330,6 +330,7 @@ function usageEntry(operation, agent, settledItem) {
         outputTokens: value?.usage?.outputTokens ?? null,
         latencyMs: value?.latencyMs ?? null,
         success: Boolean(value),
+        source: agent.source || 'byo',
     };
 }
 

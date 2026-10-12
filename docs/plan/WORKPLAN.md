@@ -53,7 +53,7 @@ Același flux. Branch-ul a fost repornit din `main` (`137957e`). Un singur merge
 | — | | **Checkpoint 4** | | | |
 | 21 | #52 | CELLAR-006 Planificator de consum | done | | Pagina `/planner`: sticlele din pivniță împărțite uniform pe anii ferestrei (orizont de 10 ani), cu cele depășite în anul curent marcate și cele aflate în ultimul an. Vinurile fără fereastră sunt listate separat, cu link de editare. Fallback pe anii din `agingPotential`. Planul e calculat, nu salvat; „assign bottles to years” manual vine cu modelul Bottle (#30) |
 | 22 | #48 | CELLAR-002 QR per sticlă | done | | QR per vin (o etichetă pentru fiecare sticlă, până la 48) pe `/wines/[id]/labels` (printabil, SVG inline), cu link „Etichete QR” pe pagina vinului. Scanarea deschide `/q/[id]`: „Deschid o sticlă” consumă dintr-un singur tap, apoi „Notează cum a fost”. QR-ul unic per sticlă vine cu modelul Bottle (#30). Dependență nouă: `qrcode` |
-| 23 | #87 | AI-012 Chei de platformă + cote | todo | | |
+| 23 | #87 | AI-012 Chei de platformă + cote | done | | `PLATFORM_AI_AGENTS` (JSON în env) pentru cei fără chei proprii; cote lunare per utilizator (`AI_QUOTA_SCANS` = 20, `AI_QUOTA_TEXT` = 50, admin nelimitat), numărate din `ai_usage.source = platform` (migrație). Cheile proprii au prioritate și nu consumă cotă. Peste cotă: mesaj clar + 429. Cota apare în cardul „Consum AI”. Planurile Free/Pro vin cu BIZ-005 (#112) |
 | 24 | #84 | ARCH-008 API REST /api/v1 | todo | | |
 | 25 | #35 | DATA-007 Multi-currency | todo | | |
 | — | | **Checkpoint 5** + merge | | | |

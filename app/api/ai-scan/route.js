@@ -8,7 +8,8 @@ import { LIMITS, rateLimit, tooManyRequestsMessage } from '@/utils/rateLimit';
 import { serializeError } from '@/utils/logger';
 import { ScanRequestSchema } from '@/schemas/ai';
 import { findCachedScan, hashImage, storeScan } from '@/utils/scanCache';
-import { recordAIUsage } from '@/utils/aiUsage';
+import { platformRequestsThisMonth, recordAIUsage } from '@/utils/aiUsage';
+import { chooseAgents, monthStart, platformAgents, quotaFor, quotaMessage } from '@/utils/platformAI';
 import { notFound, rateLimited, unauthenticated, validationError, withApiHandler } from '@/utils/errors';
 
 function publicProviderErrors(items = []) {
@@ -54,6 +55,7 @@ export const POST = withApiHandler('ai-scan', async (request, { log: baseLog, re
     where: { id: session.user.id },
     select: {
       id: true,
+      role: true,
       aiAgents: {
         where: { enabled: true },
         orderBy: [{ priority: 'asc' }, { createdAt: 'asc' }],
@@ -101,12 +103,21 @@ export const POST = withApiHandler('ai-scan', async (request, { log: baseLog, re
       return [];
     }
   });
-  if (!agents.length) throw validationError(undefined, 'Configurează cel puțin un agent AI activ în Setări → AI.');
+  // AI-012: cheile proprii au prioritate; altfel cheile platformei, în limita cotei lunare
+  const platform = platformAgents();
+  const used = agents.length || !platform.length ? 0 : await platformRequestsThisMonth(user.id, 'scan', monthStart());
+  const quota = quotaFor(user, 'scan');
+  const choice = chooseAgents({ ownAgents: agents, platform, used, quota });
+  if (choice.error) {
+    throw choice.error === 'QUOTA_EXCEEDED'
+      ? rateLimited(quotaMessage(choice.error, quota))
+      : validationError(undefined, quotaMessage(choice.error, quota));
+  }
 
   let scanResult;
   try {
-    log.info('scan started', { agents: agents.length, providers: agents.map((agent) => agent.provider) });
-    scanResult = await analyzeWineLabelEnsemble(imageBase64, mimeType, agents, { providers: [] });
+    log.info('scan started', { agents: choice.agents.length, source: choice.source, providers: choice.agents.map((agent) => agent.provider) });
+    scanResult = await analyzeWineLabelEnsemble(imageBase64, mimeType, choice.agents, { providers: [] });
     await Promise.all(scanResult.successfulAgentIds.map((id) => prisma.aIAgent.updateMany({
       where: { id, userId: user.id },
       data: { lastStatus: 'Healthy', lastError: null, lastCheckedAt: new Date() },

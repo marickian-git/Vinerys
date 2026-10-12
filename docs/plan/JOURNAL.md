@@ -258,6 +258,19 @@ Pe pagina vinului apare secțiunea „Jurnal de degustare”. Pagina `/tastings`
 
 **Învățat:** cu `loading.jsx`, `notFound()` dintr-o pagină trimisă în flux întoarce status 200 cu conținutul 404. Testele verifică conținutul, nu statusul.
 
+### #87 AI-012 AI găzduit: chei de platformă + cote
+**Făcut:**
+- `utils/platformAI.js` (`platformAgents` din `PLATFORM_AI_AGENTS`, `quotaFor`, `chooseAgents`, `quotaMessage`, `monthStart`).
+- `ai_usage.source` (`byo`/`platform`), cu migrația `ai_usage_source` și un index nou. `platformRequestsThisMonth` numără requestId-uri distincte.
+- `/api/ai-scan` și `getWinePairing` aleg agenții: întâi cei proprii, apoi platforma cât mai e cotă. Peste cotă dau 429 (scan) sau mesaj de eroare (pairing), cu sugestia de a adăuga o cheie proprie.
+- Cardul „Consum AI” arată „Scanări incluse luna asta: X / 20”.
+- `.env.example` documentat. Teste: `tests/unit/platformAI.test.js`.
+
+**Decizii:**
+- Cheile platformei stau în env, nu în DB: nu sunt ale unui utilizator, iar rotația se face din CasaOS.
+- Cotele sunt pe rol (ADMIN nelimitat) până la planurile Free/Pro (#112).
+- Hit-urile din cache-ul de scanări (#43) nu consumă cotă, pentru că verificarea cache-ului e înaintea alegerii agenților.
+
 ---
 
 ## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub
