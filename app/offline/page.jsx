@@ -33,13 +33,13 @@ export default function OfflinePage() {
           font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 300;
           color: #f5e6e8; margin-bottom: 0.75rem; line-height: 1.2;
         }
-        .off-title em { font-style: italic; color: rgba(196,69,105,0.8); }
+        .off-title em { font-style: italic; color: #d97a95; }
         .off-divider {
           width: 60px; height: 1px; margin: 0 auto 1.5rem;
           background: linear-gradient(to right, transparent, rgba(196,69,105,0.35), transparent);
         }
         .off-sub {
-          font-size: 0.85rem; color: rgba(245,230,232,0.28);
+          font-size: 0.85rem; color: rgba(245,230,232,0.6);
           font-weight: 300; line-height: 1.75; margin-bottom: 2.5rem;
         }
         .off-btn {
@@ -54,7 +54,7 @@ export default function OfflinePage() {
         .off-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(196,69,105,0.35); }
         .off-quote {
           margin-top: 3rem; font-family: 'Cormorant Garamond', serif;
-          font-size: 0.9rem; font-style: italic; color: rgba(245,230,232,0.1);
+          font-size: 0.9rem; font-style: italic; color: rgba(245,230,232,0.6);
         }
       `}</style>
 

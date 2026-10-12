@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import WineForm from '@/components/wines/WineForm';
+import VoiceAdd from '@/components/wines/VoiceAdd';
 
 export const metadata = {
   title: 'Adaugă vin — Vinerys',
@@ -30,7 +31,7 @@ export default function AddWinePage() {
           font-size: 0.75rem;
           text-transform: uppercase;
           letter-spacing: 0.12em;
-          color: rgba(245,230,232,0.35);
+          color: rgba(245,230,232,0.6);
           text-decoration: none;
           margin-bottom: 2rem;
           transition: color 0.2s;
@@ -42,7 +43,7 @@ export default function AddWinePage() {
           font-size: 0.7rem;
           text-transform: uppercase;
           letter-spacing: 0.2em;
-          color: #c44569;
+          color: #d97a95;
           font-weight: 400;
           margin-bottom: 0.4rem;
         }
@@ -56,7 +57,7 @@ export default function AddWinePage() {
         }
         .add-subtitle {
           font-size: 0.82rem;
-          color: rgba(245,230,232,0.35);
+          color: rgba(245,230,232,0.6);
           font-weight: 300;
           margin-top: 0.5rem;
           letter-spacing: 0.04em;
@@ -91,8 +92,10 @@ export default function AddWinePage() {
             <p className="add-eyebrow">Colecție nouă</p>
             <h1 className="add-title">Adaugă un vin</h1>
             <p className="add-subtitle">Completează detaliile pentru a adăuga vinul în pivnița ta digitală</p>
-            <p className="add-subtitle">Ai o listă în Vivino, CellarTracker sau Excel? <Link href="/wines/import" style={{ color: "#d97a95" }}>Importă din CSV</Link></p>
+            <p className="add-subtitle">Ai o listă în Vivino, CellarTracker sau Excel? <Link href="/wines/import" style={{ color: "#d97a95", textDecoration: "underline" }}>Importă din CSV</Link></p>
           </div>
+
+          <VoiceAdd />
 
           <div className="add-divider" />
 

@@ -23,7 +23,7 @@ function getStatus(drinkFrom, drinkUntil) {
       icon: '🔴',
       label: 'Trecut de vârf',
       sub: `Optim era până în ${drinkUntil}`,
-      color: 'rgba(220,80,80,0.9)',
+      color: '#e06b6b',
       bg: 'rgba(220,80,80,0.08)',
       border: 'rgba(220,80,80,0.2)',
     };
@@ -39,7 +39,7 @@ function getStatus(drinkFrom, drinkUntil) {
     sub: yearsLeft <= 0
       ? 'Ultimul an recomandat'
       : `Încă ${yearsLeft} ${yearsLeft === 1 ? 'an' : 'ani'}`,
-    color: 'rgba(85,196,78,0.9)',
+    color: '#6fbf6a',
     bg: 'rgba(85,196,78,0.08)',
     border: 'rgba(85,196,78,0.2)',
   };
@@ -101,15 +101,15 @@ export function DrinkWindowCard({ drinkFrom, drinkUntil }) {
             <div style={{ fontSize: '0.8rem', color: s.color, fontWeight: 500, letterSpacing: '0.05em' }}>
               {s.label}
             </div>
-            <div style={{ fontSize: '0.7rem', color: 'rgba(245,230,232,0.4)', marginTop: '0.1rem' }}>
+            <div style={{ fontSize: '0.7rem', color: 'rgba(245,230,232,0.6)', marginTop: '0.1rem' }}>
               {s.sub}
             </div>
           </div>
         </div>
         {drinkFrom && drinkUntil && (
-          <div style={{ fontSize: '0.75rem', color: 'rgba(245,230,232,0.5)', textAlign: 'right' }}>
+          <div style={{ fontSize: '0.75rem', color: 'rgba(245,230,232,0.6)', textAlign: 'right' }}>
             <span style={{ color: s.color }}>{drinkFrom}</span>
-            <span style={{ color: 'rgba(245,230,232,0.2)', margin: '0 0.3rem' }}>—</span>
+            <span style={{ color: 'rgba(245,230,232,0.6)', margin: '0 0.3rem' }}>—</span>
             <span style={{ color: s.color }}>{drinkUntil}</span>
           </div>
         )}
@@ -130,11 +130,11 @@ export function DrinkWindowCard({ drinkFrom, drinkUntil }) {
             }} />
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.35rem' }}>
-            <span style={{ fontSize: '0.62rem', color: 'rgba(245,230,232,0.25)' }}>{start}</span>
-            <span style={{ fontSize: '0.62rem', color: 'rgba(245,230,232,0.4)' }}>
+            <span style={{ fontSize: '0.62rem', color: 'rgba(245,230,232,0.6)' }}>{start}</span>
+            <span style={{ fontSize: '0.62rem', color: 'rgba(245,230,232,0.6)' }}>
               {currentYear} ({pct}%)
             </span>
-            <span style={{ fontSize: '0.62rem', color: 'rgba(245,230,232,0.25)' }}>{end}</span>
+            <span style={{ fontSize: '0.62rem', color: 'rgba(245,230,232,0.6)' }}>{end}</span>
           </div>
         </div>
       )}

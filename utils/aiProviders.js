@@ -192,7 +192,8 @@ async function callProviderWithModel(agent, prompt, imageBase64 = null, mimeType
     if (!modelOverride && agent.provider !== 'openai-compatible' && getProviderDefinition(agent.provider).supportsModelDiscovery) {
         const discovered = await listProviderModels(agent);
         const selected = discovered.find((item) => item.id === model);
-        if (selected && selected.imageInput === false) {
+        // Verificarea de imagini contează doar când trimitem o imagine (pairing/Sommelier sunt doar text)
+        if (imageBase64 && selected && selected.imageInput === false) {
             const error = new Error(`Modelul ${model} nu acceptă imagini`);
             error.status = 422;
             error.providerStatus = 'MODEL_UNAVAILABLE';
@@ -294,18 +295,20 @@ export async function analyzeWineLabel(imageBase64, mimeType, provider, apiKey, 
     return response.result;
 }
 
-// Un singur răspuns text (fără imagine): agenții se încearcă pe rând, după prioritate, până reușește unul.
-// Folosit de pairing (HOME-003). Întoarce rezultatul normalizat și consumul fiecărei încercări.
-export async function generateWithAgents(agents, prompt, normalize, { operation = 'text' } = {}) {
+// Un singur răspuns: agenții se încearcă pe rând, după prioritate, până reușește unul.
+// Folosit de pairing (HOME-003). Cu `image` ({ base64, mimeType }) rămân doar agenții care acceptă imagini (AI-003).
+// Întoarce rezultatul normalizat și consumul fiecărei încercări.
+export async function generateWithAgents(agents, prompt, normalize, { operation = 'text', image = null } = {}) {
     const usable = agents
         .filter((agent) => agent.enabled !== false && agent.apiKey?.trim() && AI_PROVIDERS[agent.provider] && !['Invalid credentials'].includes(agent.lastStatus))
+        .filter((agent) => !image || (agent.capabilities || getProviderDefinition(agent.provider).capabilities || {}).imageInput !== false)
         .sort((a, b) => (a.priority || 0) - (b.priority || 0));
     if (!usable.length) throw new Error('Niciun agent AI activ și configurat');
     const usage = [];
     let lastError;
     for (const agent of usable) {
         try {
-            const response = await withRetry({ ...agent, maxRetries: Math.min(agent.maxRetries ?? 1, 1) }, prompt, null, null, normalize);
+            const response = await withRetry({ ...agent, maxRetries: Math.min(agent.maxRetries ?? 1, 1) }, prompt, image?.base64 ?? null, image?.mimeType ?? null, normalize);
             usage.push(usageEntry(operation, agent, { status: 'fulfilled', value: response }));
             return { result: response.result, provider: agent.provider, usage };
         } catch (error) {
@@ -334,7 +337,9 @@ function usageEntry(operation, agent, settledItem) {
     };
 }
 
-export async function analyzeWineLabelEnsemble(imageBase64, mimeType, agents = [], { providers = ENSEMBLE_DEFAULT_PROVIDERS, maxRetries = 1 } = {}) {
+// AI-009: `onProgress` primește etapele (identify → agent × N → consensus → enrich) pentru progresul live (SSE)
+export async function analyzeWineLabelEnsemble(imageBase64, mimeType, agents = [], { providers = ENSEMBLE_DEFAULT_PROVIDERS, maxRetries = 1, onProgress = () => {} } = {}) {
+    const progress = (event) => { try { onProgress(event); } catch { /* progresul nu oprește scanarea */ } };
     if (!imageBase64 || imageBase64.length < 100 || !mimeType?.startsWith('image/')) throw new Error('Imagine invalidă');
     const configured = Array.isArray(agents) ? agents : Object.entries(agents).map(([provider, apiKey]) => ({ provider, apiKey }));
     const usable = configured.filter((agent) => {
@@ -345,7 +350,16 @@ export async function analyzeWineLabelEnsemble(imageBase64, mimeType, agents = [
             (!providers.length || providers.includes(agent.provider));
     }).sort((a, b) => (a.priority || 0) - (b.priority || 0));
     if (!usable.length) throw new Error('Niciun agent AI activ și configurat');
-    const settled = await Promise.allSettled(usable.map((agent) => withRetry({ ...agent, maxRetries: agent.maxRetries ?? maxRetries }, IDENTIFICATION_PROMPT, imageBase64, mimeType, normalizeIdentification).then((response) => ({ ...response, agent, provider: agent.provider, weight: Number(agent.weight) > 0 ? Number(agent.weight) : 1 }))));
+    progress({ stage: 'identify', providers: usable.map((agent) => agent.provider) });
+    const settled = await Promise.allSettled(usable.map((agent) => withRetry({ ...agent, maxRetries: agent.maxRetries ?? maxRetries }, IDENTIFICATION_PROMPT, imageBase64, mimeType, normalizeIdentification)
+        .then((response) => ({ ...response, agent, provider: agent.provider, weight: Number(agent.weight) > 0 ? Number(agent.weight) : 1 }))
+        .then((value) => {
+            progress({ stage: 'agent', provider: agent.provider, ok: value.resultStatus !== 'EMPTY', name: value.result?.name || null, latencyMs: value.latencyMs });
+            return value;
+        }, (error) => {
+            progress({ stage: 'agent', provider: agent.provider, ok: false });
+            throw error;
+        })));
     const responses = settled.filter((item) => item.status === 'fulfilled').map((item) => item.value);
     const successful = responses.filter((item) => item.resultStatus !== 'EMPTY');
     const emptyResults = responses.filter((item) => item.resultStatus === 'EMPTY').map((item) => ({ agentId: item.agent.id || null, provider: item.provider, model: item.agent.model || null, providerStatus: 'SUCCESS', resultStatus: 'EMPTY', raw: item.raw, parsed: item.parsed, normalized: item.result }));
@@ -370,6 +384,8 @@ export async function analyzeWineLabelEnsemble(imageBase64, mimeType, agents = [
     const identity = consensus(successful, identityFields);
     const identityConfidence = Object.entries(identity.fieldConfidence).filter(([field]) => ['name', 'producer', 'vintage', 'country', 'region'].includes(field)).reduce((sum, [, value]) => sum + value, 0) / 5;
     const hasIdentity = Boolean(identity.result.name || identity.result.producer);
+    progress({ stage: 'consensus', agents: successful.length, name: identity.result.name || null, confidence: Number(identityConfidence.toFixed(2)) });
+    if (hasIdentity) progress({ stage: 'enrich' });
     const enrichmentSettled = hasIdentity ? await Promise.allSettled(successful.map((item) => withRetry({ ...item.agent, maxRetries: item.agent.maxRetries ?? maxRetries }, ENRICHMENT_PROMPT(identity.result), null, null, (raw) => normalizeEnrichment(raw, identity.result)).then((response) => ({ ...response, provider: item.provider, weight: item.weight })))) : [];
     const enrichments = enrichmentSettled.filter((item) => item.status === 'fulfilled').map((item) => item.value);
     const enrichment = chooseEnrichment(enrichments);

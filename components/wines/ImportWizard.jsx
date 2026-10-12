@@ -10,7 +10,7 @@ const FIELD_LABELS = {
   name: 'Nume', producer: 'Producător', vintage: 'An', country: 'Țară', region: 'Regiune', subregion: 'Subregiune',
   type: 'Tip', color: 'Culoare', grapeVarieties: 'Soiuri', quantity: 'Cantitate', bottleSize: 'Mărime sticlă',
   purchasePrice: 'Preț achiziție', estimatedValue: 'Valoare estimată', purchaseDate: 'Data achiziției',
-  cellarLocation: 'Locație', rating: 'Rating', tastingNotes: 'Note', drinkFrom: 'Bea din', drinkUntil: 'Bea până',
+  cellarLocation: 'Locație', rating: 'Rating', tastingNotes: 'Note', drinkFrom: 'Bea din', drinkUntil: 'Bea până', foodPairing: 'Asocieri gastronomice',
 };
 const STATUS = { ok: ['Nou', '#7fc79a'], duplicate: ['Duplicat', '#e0b860'], error: ['Eroare', '#ff8f8f'] };
 

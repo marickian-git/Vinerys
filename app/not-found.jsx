@@ -42,13 +42,13 @@ export default function NotFound() {
           font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 300;
           color: #f5e6e8; margin-bottom: 0.75rem; line-height: 1.25;
         }
-        .nf-title em { font-style: italic; color: rgba(196,69,105,0.9); }
+        .nf-title em { font-style: italic; color: #d97a95; }
         .nf-divider {
           width: 60px; height: 1px; margin: 0 auto 1.5rem;
           background: linear-gradient(to right, transparent, rgba(196,69,105,0.4), transparent);
         }
         .nf-sub {
-          font-size: 0.85rem; color: rgba(245,230,232,0.28);
+          font-size: 0.85rem; color: rgba(245,230,232,0.6);
           font-weight: 300; line-height: 1.75; margin-bottom: 2.5rem;
         }
         .nf-actions {
@@ -68,7 +68,7 @@ export default function NotFound() {
         .nf-btn-ghost {
           display: inline-flex; align-items: center; gap: 0.45rem;
           padding: 0.75rem 1.5rem; background: transparent;
-          border: 1px solid rgba(196,69,105,0.2); color: rgba(245,230,232,0.45);
+          border: 1px solid rgba(196,69,105,0.2); color: rgba(245,230,232,0.6);
           text-decoration: none; border-radius: 10px; font-size: 0.8rem;
           letter-spacing: 0.1em; text-transform: uppercase; transition: all 0.2s;
         }
@@ -78,7 +78,7 @@ export default function NotFound() {
         }
         .nf-quote {
           font-family: 'Cormorant Garamond', serif; font-size: 0.92rem;
-          font-style: italic; color: rgba(245,230,232,0.12);
+          font-style: italic; color: rgba(245,230,232,0.6);
         }
       `}</style>
 

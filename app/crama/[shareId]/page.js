@@ -26,10 +26,10 @@ export default async function PublicCollectionPage({ params }) {
   if (!user) {
     return (
       <div style={{ minHeight: '100vh', background: '#0d0608', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'sans-serif' }}>
-        <div style={{ textAlign: 'center', color: 'rgba(245,230,232,0.4)' }}>
+        <div style={{ textAlign: 'center', color: 'rgba(245,230,232,0.6)' }}>
           <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🍷</div>
           <p>Această colecție nu există sau nu mai este disponibilă.</p>
-          <Link href="/" style={{ color: '#c44569', fontSize: '0.85rem', marginTop: '1rem', display: 'block' }}>← Vinerys</Link>
+          <Link href="/" style={{ color: '#d97a95', fontSize: '0.85rem', marginTop: '1rem', display: 'block' }}>← Vinerys</Link>
         </div>
       </div>
     );
@@ -72,7 +72,7 @@ export default async function PublicCollectionPage({ params }) {
         .pub-badge {
           display: inline-flex; align-items: center; gap: 0.4rem;
           font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.2em;
-          color: rgba(196,69,105,0.7); background: rgba(196,69,105,0.08);
+          color: #d97a95; background: rgba(196,69,105,0.08);
           border: 1px solid rgba(196,69,105,0.15); border-radius: 20px;
           padding: 0.3rem 0.8rem; margin-bottom: 1.25rem;
         }
@@ -82,7 +82,7 @@ export default async function PublicCollectionPage({ params }) {
           font-weight: 300; color: #f5e6e8; line-height: 1;
           letter-spacing: -0.02em; margin-bottom: 0.5rem;
         }
-        .pub-subtitle { font-size: 0.85rem; color: rgba(245,230,232,0.35); font-weight: 300; }
+        .pub-subtitle { font-size: 0.85rem; color: rgba(245,230,232,0.6); font-weight: 300; }
 
         /* Stats */
         .pub-stats {
@@ -94,7 +94,7 @@ export default async function PublicCollectionPage({ params }) {
           font-family: 'Cormorant Garamond', serif;
           font-size: 2rem; font-weight: 600; color: #f5e6e8; line-height: 1;
         }
-        .pub-stat-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.15em; color: rgba(245,230,232,0.3); margin-top: 0.3rem; }
+        .pub-stat-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.15em; color: rgba(245,230,232,0.6); margin-top: 0.3rem; }
 
         /* Type bars */
         .pub-types {
@@ -106,7 +106,7 @@ export default async function PublicCollectionPage({ params }) {
           padding: 0.3rem 0.75rem; border-radius: 20px;
           border: 1px solid rgba(255,255,255,0.06);
           background: rgba(255,255,255,0.02);
-          font-size: 0.72rem; color: rgba(245,230,232,0.5);
+          font-size: 0.72rem; color: rgba(245,230,232,0.6);
         }
         .pub-type-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 
@@ -119,9 +119,9 @@ export default async function PublicCollectionPage({ params }) {
         }
         .pub-section-title {
           font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.2em;
-          color: #c44569; font-weight: 400;
+          color: #d97a95; font-weight: 400;
         }
-        .pub-count { font-size: 0.68rem; color: rgba(245,230,232,0.25); }
+        .pub-count { font-size: 0.68rem; color: rgba(245,230,232,0.6); }
 
         .pub-grid {
           display: grid;
@@ -133,10 +133,10 @@ export default async function PublicCollectionPage({ params }) {
         .pub-footer {
           text-align: center; padding: 2rem;
           border-top: 1px solid rgba(196,69,105,0.08);
-          font-size: 0.72rem; color: rgba(245,230,232,0.2);
+          font-size: 0.72rem; color: rgba(245,230,232,0.6);
         }
-        .pub-footer a { color: rgba(196,69,105,0.5); text-decoration: none; }
-        .pub-footer a:hover { color: #c44569; }
+        .pub-footer a { color: #d97a95; text-decoration: none; }
+        .pub-footer a:hover { color: #d97a95; }
 
         /* Readonly overlay on cards — disable actions */
         .pub-grid a[href*="/wines/"] { pointer-events: none; }
@@ -196,7 +196,7 @@ export default async function PublicCollectionPage({ params }) {
           </div>
 
           {wines.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '4rem', color: 'rgba(245,230,232,0.2)', fontSize: '0.85rem' }}>
+            <div style={{ textAlign: 'center', padding: '4rem', color: 'rgba(245,230,232,0.6)', fontSize: '0.85rem' }}>
               Această colecție este goală momentan.
             </div>
           ) : (

@@ -25,6 +25,16 @@ import {
   listWines, toggleFavoriteForUser, updateWineForUser, userLocations,
 } from "../server/wines";
 import { createTastingForUser, listTastings, syncWineRating, tastingData } from "../server/tastings";
+import { similarInCellar, tasteProfileFor } from "../server/taste";
+import { parseSommelierReply, runSommelier } from "../server/sommelier";
+import { valueReportFor } from "../server/valuation";
+import { weekendPlanFor } from "../server/push";
+import { addItem, createList, deleteList, listsFor, removeItem, reserveItem, togglePurchased, updateList } from "../server/lists";
+import { ListInputSchema, ListItemInputSchema, ReserveSchema } from "../schemas/list";
+import { runTool } from "../server/sommelierTools";
+import { predictPreference } from "./tasteProfile";
+import { mergeVoiceResult, parseWineSpeech, voicePrompt } from "./voiceParse";
+import { dishFromPhotoPrompt, foodToWinePrompt, heuristicMatch, normalizeDish, normalizeFoodPicks, pairingCandidates, rankPicks } from "./foodToWine";
 import { auth } from "./auth";
 import { decryptSecret, encryptSecret } from "./aiSecrets";
 import { getProviderDefinition, isKnownProvider, listProviderDefinitions } from "./aiProviderRegistry";
@@ -33,7 +43,7 @@ import { generateWithAgents, listProviderModels } from "./aiProviders";
 import { normalizePairing, pairingKey, pairingPrompt } from "./pairing";
 import { platformRequestsThisMonth, recordAIUsage } from "./aiUsage";
 import { chooseAgents, monthStart, platformAgents, quotaFor, quotaMessage } from "./platformAI";
-import { shareUrlFor } from "./share";
+import { listShareUrlFor, shareUrlFor } from "./share";
 import { LIMITS, rateLimit, tooManyRequestsMessage } from "./rateLimit";
 import { listUserObjects, removeObjects } from "./storage";
 import { createLogger, serializeError } from './logger';
@@ -593,8 +603,14 @@ export async function importWines(rows, { source = 'csv' } = {}) {
     await prisma.$transaction(async (tx) => {
       const created = await tx.wine.createManyAndReturn({
         data: valid.map((wine) => ({ ...wine, userId: user.id })),
-        select: { id: true, name: true, quantity: true },
+        select: { id: true, name: true, quantity: true, estimatedValue: true, currency: true },
       });
+      const valued = created.filter((wine) => wine.estimatedValue != null);
+      if (valued.length) {
+        await tx.wineValuation.createMany({
+          data: valued.map((wine) => ({ wineId: wine.id, userId: user.id, value: wine.estimatedValue, currency: wine.currency, source: 'import' })),
+        });
+      }
       await tx.wineLog.createMany({
         data: created.map((wine) => ({
           wineId: wine.id,
@@ -617,6 +633,22 @@ export async function importWines(rows, { source = 'csv' } = {}) {
 
 const PAIRING_LIMIT = { limit: 20, windowMs: 10 * 60 * 1000 };
 
+// Agenții pentru un răspuns text: proprii, altfel ai platformei în limita cotei (AI-012)
+async function resolveAgents(userId, kind = 'text') {
+  const agents = (await prisma.aIAgent.findMany({ where: { userId, enabled: true } })).flatMap((agent) => {
+    try {
+      return [{ ...agent, apiKey: decryptSecret(agent.encryptedApiKey) }];
+    } catch {
+      return [];
+    }
+  });
+  const platform = platformAgents();
+  const quota = quotaFor(await prisma.user.findUnique({ where: { id: userId }, select: { role: true } }), kind);
+  const used = agents.length || !platform.length ? 0 : await platformRequestsThisMonth(userId, kind, monthStart());
+  const choice = chooseAgents({ ownAgents: agents, platform, used, quota });
+  return choice.error ? { error: choice.error, message: quotaMessage(choice.error, quota) } : choice;
+}
+
 // Răspunsul din cache dacă identitatea vinului nu s-a schimbat; altfel (sau la refresh) îl generează cu agenții AI
 export async function getWinePairing(wineId, { refresh = false } = {}) {
   const user = await getCurrentUser();
@@ -629,18 +661,8 @@ export async function getWinePairing(wineId, { refresh = false } = {}) {
   const limited = rateLimit(`pairing:${user.id}`, PAIRING_LIMIT);
   if (!limited.ok) return { error: tooManyRequestsMessage(limited.retryAfter) };
 
-  const agents = (await prisma.aIAgent.findMany({ where: { userId: user.id, enabled: true } })).flatMap((agent) => {
-    try {
-      return [{ ...agent, apiKey: decryptSecret(agent.encryptedApiKey) }];
-    } catch {
-      return [];
-    }
-  });
-  const platform = platformAgents();
-  const quota = quotaFor(await prisma.user.findUnique({ where: { id: user.id }, select: { role: true } }), 'text');
-  const used = agents.length || !platform.length ? 0 : await platformRequestsThisMonth(user.id, 'text', monthStart());
-  const choice = chooseAgents({ ownAgents: agents, platform, used, quota });
-  if (choice.error) return { error: quotaMessage(choice.error, quota) };
+  const choice = await resolveAgents(user.id);
+  if (choice.error) return { error: choice.message };
 
   const requestId = randomBytes(8).toString('hex');
   const log = logger.child({ requestId, userId: user.id, wineId });
@@ -903,4 +925,249 @@ export async function updateCurrency(currency) {
 export async function getUserCurrency() {
   const user = await getCurrentUser();
   return (await prisma.user.findUnique({ where: { id: user.id }, select: { currency: true } }))?.currency ?? DEFAULT_CURRENCY;
+}
+
+// ─────────────────────────────────────────
+// PROFIL DE GUST (AI-011)
+// ─────────────────────────────────────────
+
+export async function getTasteProfile() {
+  const user = await getCurrentUser();
+  return tasteProfileFor(user.id);
+}
+
+export async function getSimilarWines(wineId) {
+  const user = await getCurrentUser();
+  return similarInCellar(user.id, wineId);
+}
+
+// ─────────────────────────────────────────
+// „CE GĂTESC AZI?” — MÂNCARE → VIN (HOME-004)
+// ─────────────────────────────────────────
+
+export async function suggestWinesForDish(dish) {
+  const user = await getCurrentUser();
+  const text = dish?.toString().trim().slice(0, 200);
+  if (!text || text.length < 3) return { error: 'Scrie ce gătești (ex. „miel la cuptor cu rozmarin”)' };
+  const limited = rateLimit(`dish:${user.id}`, PAIRING_LIMIT);
+  if (!limited.ok) return { error: tooManyRequestsMessage(limited.retryAfter) };
+
+  const { profile } = await tasteProfileFor(user.id, { recommendations: 0 });
+  const taste = (wine) => (profile.evidence ? predictPreference(wine, profile).score : 0.5);
+  const wines = await prisma.wine.findMany({ where: { userId: user.id, status: 'IN_CELLAR', quantity: { gt: 0 } } });
+  if (!wines.length) return { error: 'Pivnița e goală: adaugă vinuri ca să primești sugestii.' };
+
+  const candidates = pairingCandidates(wines);
+  const choice = await resolveAgents(user.id);
+  if (!choice.error) {
+    const requestId = randomBytes(8).toString('hex');
+    const log = logger.child({ requestId, userId: user.id });
+    try {
+      const { result, usage } = await generateWithAgents(
+        choice.agents,
+        foodToWinePrompt(text, candidates),
+        (raw) => normalizeFoodPicks(raw, candidates.map((c) => c.id)),
+        { operation: 'pairing' },
+      );
+      await recordAIUsage(user.id, requestId, usage, log);
+      return { source: 'ai', dish: text, results: rankPicks(result.picks, wines, { taste }) };
+    } catch (error) {
+      await recordAIUsage(user.id, requestId, error.usage, log);
+      log.warn('dish pairing AI failed, using saved pairings', { error: serializeError(error) });
+    }
+  }
+  // Fără AI (sau AI indisponibil): asocierile salvate pe fiecare vin
+  const picks = wines.map((wine) => ({ id: wine.id, ...heuristicMatch(text, wine) }));
+  return { source: 'saved', dish: text, results: rankPicks(picks, wines, { taste }), aiUnavailable: choice.error ? choice.message : null };
+}
+
+// AI-003: poza farfuriei → felul de mâncare (agent cu imagini, cota de scanări); vinurile vin apoi din suggestWinesForDish
+const DISH_PHOTO_MAX = 2_000_000; // base64; clientul micșorează poza la ~1024 px
+
+export async function identifyDishFromPhoto(imageBase64, mimeType = 'image/jpeg') {
+  const user = await getCurrentUser();
+  if (typeof imageBase64 !== 'string' || imageBase64.length < 100 || !/^image\/(jpeg|png|webp)$/.test(mimeType)) return { error: 'Imagine invalidă' };
+  if (imageBase64.length > DISH_PHOTO_MAX) return { error: 'Poza e prea mare' };
+  const limited = rateLimit(`dish-photo:${user.id}`, PAIRING_LIMIT);
+  if (!limited.ok) return { error: tooManyRequestsMessage(limited.retryAfter) };
+
+  const choice = await resolveAgents(user.id, 'scan');
+  if (choice.error) return { error: choice.error === 'QUOTA_EXCEEDED' ? choice.message : 'Recunoașterea din poză are nevoie de un agent AI (Setări → AI). Poți scrie felul de mâncare mai jos.' };
+  const requestId = randomBytes(8).toString('hex');
+  const log = logger.child({ requestId, userId: user.id });
+  try {
+    const { result, usage } = await generateWithAgents(choice.agents, dishFromPhotoPrompt(), normalizeDish, { operation: 'dish_photo', image: { base64: imageBase64, mimeType } });
+    await recordAIUsage(user.id, requestId, usage, log);
+    return result;
+  } catch (error) {
+    await recordAIUsage(user.id, requestId, error.usage, log);
+    log.warn('dish photo failed', { error: serializeError(error) });
+    return { error: error.providerStatus === 'NOT_FOOD' ? 'Nu am recunoscut mâncare în poză. Încearcă una mai clară sau scrie felul.' : 'Nu am putut analiza poza. Încearcă din nou sau scrie felul de mâncare.' };
+  }
+}
+
+// ─────────────────────────────────────────
+// ADĂUGARE VOCALĂ (AI-007)
+// ─────────────────────────────────────────
+
+// Fraza dictată → câmpuri de vin; AI dacă există agenți (cu euristica drept completare), altfel doar euristica
+export async function parseWineText(input) {
+  const user = await getCurrentUser();
+  const text = input?.toString().trim().slice(0, 300);
+  if (!text || text.length < 3) return { error: 'Spune sau scrie ce ai cumpărat (ex. „6 Fetească Neagră 2021 de la Davino cu 80 lei”)' };
+  const limited = rateLimit(`voice:${user.id}`, PAIRING_LIMIT);
+  if (!limited.ok) return { error: tooManyRequestsMessage(limited.retryAfter) };
+
+  const heuristic = parseWineSpeech(text);
+  const choice = await resolveAgents(user.id);
+  if (!choice.error) {
+    const requestId = randomBytes(8).toString('hex');
+    const log = logger.child({ requestId, userId: user.id });
+    try {
+      const { result, usage } = await generateWithAgents(choice.agents, voicePrompt(text), (raw) => mergeVoiceResult(raw, heuristic), { operation: 'voice' });
+      await recordAIUsage(user.id, requestId, usage, log);
+      return { source: 'ai', text, wine: result };
+    } catch (error) {
+      await recordAIUsage(user.id, requestId, error.usage, log);
+      log.warn('voice parse AI failed, using heuristic', { error: serializeError(error) });
+    }
+  }
+  if (!heuristic.name) return { error: 'Nu am înțeles numele vinului. Încearcă din nou.' };
+  return { source: 'heuristic', text, wine: heuristic };
+}
+
+// Salvează vinul confirmat din previzualizare
+export async function quickAddWine(data) {
+  const user = await getCurrentUser();
+  const parsed = WineInputSchema.safeParse({ ...data, currency: isCurrency(data?.currency) ? data.currency : undefined });
+  if (!parsed.success) return { error: firstIssueMessage(parsed.error) };
+  const wine = await createWineForUser(user.id, parsed.data);
+  revalidatePath('/wines');
+  return { id: wine.id, name: wine.name };
+}
+
+// ─────────────────────────────────────────
+// SOMMELIER CONVERSAȚIONAL (AI-001)
+// ─────────────────────────────────────────
+
+const SommelierMessages = z.array(z.object({
+  role: z.enum(['user', 'assistant']),
+  content: z.string().trim().min(1).max(1000),
+})).min(1).max(20);
+
+export async function askSommelier(messages) {
+  const user = await getCurrentUser();
+  const parsed = SommelierMessages.safeParse(messages);
+  if (!parsed.success || parsed.data.at(-1).role !== 'user') return { error: 'Mesaj invalid' };
+  const limited = rateLimit(`sommelier:${user.id}`, PAIRING_LIMIT);
+  if (!limited.ok) return { error: tooManyRequestsMessage(limited.retryAfter) };
+
+  const choice = await resolveAgents(user.id);
+  if (choice.error) return { error: choice.message };
+
+  const requestId = randomBytes(8).toString('hex');
+  const log = logger.child({ requestId, userId: user.id });
+  try {
+    const result = await runSommelier({
+      messages: parsed.data,
+      generate: (prompt) => generateWithAgents(choice.agents, prompt, parseSommelierReply, { operation: 'sommelier' }),
+      runTool: (name, args) => runTool(user.id, name, args),
+    });
+    await recordAIUsage(user.id, requestId, result.usage, log);
+    log.info('sommelier answered', { tools: result.tools, wines: result.wines.length });
+    return { answer: result.answer, wines: result.wines, tools: result.tools };
+  } catch (error) {
+    await recordAIUsage(user.id, requestId, error.usage, log);
+    log.warn('sommelier failed', { error: serializeError(error) });
+    return { error: 'Sommelierul nu a răspuns. Încearcă din nou.' };
+  }
+}
+
+// ─────────────────────────────────────────
+// VALOARE ȘI ROI (CELLAR-008)
+// ─────────────────────────────────────────
+
+export async function getValueReport() {
+  const user = await getCurrentUser();
+  return valueReportFor(user.id);
+}
+
+export async function getWineValuations(wineId) {
+  const user = await getCurrentUser();
+  return prisma.wineValuation.findMany({ where: { wineId, userId: user.id }, orderBy: { recordedAt: 'asc' }, select: { value: true, currency: true, recordedAt: true, source: true } });
+}
+
+// ─────────────────────────────────────────
+// LISTE DE VINURI (SOCIAL-003)
+// ─────────────────────────────────────────
+
+export async function getLists() {
+  const user = await getCurrentUser();
+  const lists = await listsFor(user.id);
+  // Proprietarul unei liste de cadouri nu vede cine a rezervat (ar strica surpriza)
+  return lists.map((list) => ({
+    ...list,
+    shareUrl: listShareUrlFor(list.shareId),
+    items: list.items.map(({ reservedBy, ...item }) => ({ ...item, reserved: Boolean(item.reservedAt) })),
+  }));
+}
+
+export async function saveList(input, listId = null) {
+  const user = await getCurrentUser();
+  const parsed = ListInputSchema.safeParse(input ?? {});
+  if (!parsed.success) return { error: firstIssueMessage(parsed.error) };
+  const list = listId ? await updateList(user.id, listId, parsed.data) : await createList(user.id, parsed.data);
+  revalidatePath('/lists');
+  return { success: true, list };
+}
+
+export async function removeList(listId) {
+  const user = await getCurrentUser();
+  await deleteList(user.id, listId);
+  revalidatePath('/lists');
+  return { success: true };
+}
+
+export async function addToList(listId, input) {
+  const user = await getCurrentUser();
+  const parsed = ListItemInputSchema.safeParse(input ?? {});
+  if (!parsed.success) return { error: firstIssueMessage(parsed.error) };
+  const item = await addItem(user.id, listId, parsed.data);
+  revalidatePath('/lists');
+  return { success: true, item };
+}
+
+export async function removeFromList(itemId) {
+  const user = await getCurrentUser();
+  await removeItem(user.id, itemId);
+  revalidatePath('/lists');
+  return { success: true };
+}
+
+export async function toggleListItemPurchased(itemId) {
+  const user = await getCurrentUser();
+  await togglePurchased(user.id, itemId);
+  revalidatePath('/lists');
+  return { success: true };
+}
+
+// Public (fără cont): rezervarea unui cadou de pe o listă publică
+export async function reserveGift(shareId, itemId, name) {
+  const parsed = ReserveSchema.safeParse({ name });
+  if (!parsed.success) return { error: firstIssueMessage(parsed.error) };
+  const ip = (await headers()).get('x-real-ip') || (await headers()).get('x-forwarded-for')?.split(',')[0] || 'unknown';
+  if (!rateLimit(`reserve:${ip}`, { limit: 10, windowMs: 60 * 60 * 1000 }).ok) return { error: 'Prea multe rezervări. Încearcă mai târziu.' };
+  const ok = await reserveItem(shareId, itemId, parsed.data.name);
+  if (!ok) return { error: 'Cadoul a fost deja rezervat de altcineva.' };
+  revalidatePath(`/l/${shareId}`);
+  return { success: true };
+}
+
+// ─────────────────────────────────────────
+// PLAN DE WEEKEND (HOME-006)
+// ─────────────────────────────────────────
+
+export async function getWeekendPlan() {
+  const user = await getCurrentUser();
+  return weekendPlanFor(user.id);
 }

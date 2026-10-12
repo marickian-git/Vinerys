@@ -65,16 +65,16 @@ export default function ConsumeButton({ wineId, currentQuantity }) {
           min-width: 100px;
           background: transparent;
           border: 1px solid rgba(85, 196, 78, 0.2);
-          color: rgba(85, 196, 78, 0.6);
+          color: #6fbf6a;
         }
         .consume-btn:hover {
           background: rgba(85, 196, 78, 0.08);
           border-color: rgba(85, 196, 78, 0.4);
-          color: rgba(85, 196, 78, 0.9);
+          color: #6fbf6a;
         }
         .consume-btn.confirm {
           border-color: rgba(85, 196, 78, 0.6);
-          color: rgba(85, 196, 78, 0.9);
+          color: #6fbf6a;
           background: rgba(85, 196, 78, 0.1);
         }
         .consume-btn:disabled {

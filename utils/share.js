@@ -4,3 +4,8 @@ import { configuredAppURL } from './appPath.mjs';
 export function shareUrlFor(shareId) {
   return shareId ? `${configuredAppURL()}/crama/${shareId}` : null;
 }
+
+// Liste publice (SOCIAL-003): /l/[shareId]
+export function listShareUrlFor(shareId) {
+  return shareId ? `${configuredAppURL()}/l/${shareId}` : null;
+}

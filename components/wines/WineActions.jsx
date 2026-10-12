@@ -76,15 +76,15 @@ export default function WineActions({ wineId, isFavorite }) {
           color: rgba(245,230,232,0.6);
         }
         .wa-btn-fav:hover { background: rgba(196,69,105,0.1); border-color: rgba(196,69,105,0.4) !important; color: #f5e6e8; }
-        .wa-btn-fav.active { color: #c44569; border-color: rgba(196,69,105,0.5) !important; }
+        .wa-btn-fav.active { color: #d97a95; border-color: rgba(196,69,105,0.5) !important; }
 
         .wa-btn-del {
           background: transparent;
           border: 1px solid rgba(220,80,80,0.2) !important;
-          color: rgba(220,80,80,0.5);
+          color: #e06b6b;
         }
-        .wa-btn-del:hover { background: rgba(220,80,80,0.08); border-color: rgba(220,80,80,0.4) !important; color: rgba(220,80,80,0.9); }
-        .wa-btn-del.confirm { border-color: rgba(220,80,80,0.6) !important; color: rgba(220,80,80,0.9); background: rgba(220,80,80,0.1); }
+        .wa-btn-del:hover { background: rgba(220,80,80,0.08); border-color: rgba(220,80,80,0.4) !important; color: #e06b6b; }
+        .wa-btn-del.confirm { border-color: rgba(220,80,80,0.6) !important; color: #e06b6b; background: rgba(220,80,80,0.1); }
 
         .wa-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
       `}</style>

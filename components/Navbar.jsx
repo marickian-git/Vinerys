@@ -37,8 +37,19 @@ export default function Navbar() {
         setDropdownOpen(false);
       }
     };
+    // Escape închide meniurile (navigare cu tastatura)
+    const onKey = (e) => {
+      if (e.key === "Escape") {
+        setDropdownOpen(false);
+        setMenuOpen(false);
+      }
+    };
     document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", handler);
+      document.removeEventListener("keydown", onKey);
+    };
   }, []);
 
   if (isAuthPage) return null;
@@ -83,7 +94,7 @@ export default function Navbar() {
         .vn-link {
           position: relative; padding: 0.4rem 0.85rem;
           font-size: 0.78rem; font-weight: 400; letter-spacing: 0.1em; text-transform: uppercase;
-          color: rgba(245, 230, 232, 0.5); text-decoration: none; border-radius: 6px;
+          color: rgba(245,230,232,0.6); text-decoration: none; border-radius: 6px;
           transition: color 0.2s ease;
         }
         .vn-link::after {
@@ -116,11 +127,11 @@ export default function Navbar() {
         .vn-avatar img { width: 100%; height: 100%; object-fit: cover; }
 
         .vn-username {
-          font-size: 0.78rem; color: rgba(245, 230, 232, 0.45); font-weight: 300;
+          font-size: 0.78rem; color: rgba(245,230,232,0.6); font-weight: 300;
           letter-spacing: 0.05em; max-width: 100px;
           overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
-        .vn-chevron { font-size: 0.55rem; color: rgba(196,69,105,0.6); transition: transform 0.2s; margin-left: 2px; }
+        .vn-chevron { font-size: 0.55rem; color: #d97a95; transition: transform 0.2s; margin-left: 2px; }
         .vn-chevron.open { transform: rotate(180deg); }
 
         .vn-dropdown {
@@ -141,19 +152,19 @@ export default function Navbar() {
           border-bottom: 1px solid rgba(196,69,105,0.1); margin-bottom: 0.35rem;
         }
         .vn-dropdown-name { font-size: 0.82rem; color: #f5e6e8; font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .vn-dropdown-email { font-size: 0.68rem; color: rgba(245,230,232,0.25); font-weight: 300; margin-top: 0.1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .vn-dropdown-email { font-size: 0.68rem; color: rgba(245,230,232,0.6); font-weight: 300; margin-top: 0.1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
         .vn-dropdown-item {
           display: flex; align-items: center; gap: 0.6rem;
           padding: 0.55rem 0.75rem; font-size: 0.75rem; letter-spacing: 0.06em;
-          color: rgba(245,230,232,0.55); text-decoration: none; border-radius: 7px;
+          color: rgba(245,230,232,0.6); text-decoration: none; border-radius: 7px;
           transition: all 0.15s; cursor: pointer;
           background: none; border: none; width: 100%;
           font-family: 'Jost', sans-serif; text-align: left;
         }
         .vn-dropdown-item:hover { background: rgba(196,69,105,0.08); color: rgba(245,230,232,0.85); }
-        .vn-dropdown-item.danger { color: rgba(220,80,80,0.6); }
-        .vn-dropdown-item.danger:hover { background: rgba(220,80,80,0.08); color: rgba(220,80,80,0.9); }
+        .vn-dropdown-item.danger { color: #e06b6b; }
+        .vn-dropdown-item.danger:hover { background: rgba(220,80,80,0.08); color: #e06b6b; }
 
         .vn-dropdown-divider { height: 1px; background: rgba(196,69,105,0.1); margin: 0.35rem 0; }
         .vn-dropdown-icon { font-size: 0.85rem; width: 16px; text-align: center; flex-shrink: 0; }
@@ -161,7 +172,7 @@ export default function Navbar() {
         .vn-btn-ghost {
           padding: 0.38rem 0.9rem; font-family: 'Jost', sans-serif;
           font-size: 0.72rem; font-weight: 400; letter-spacing: 0.12em; text-transform: uppercase;
-          color: rgba(245, 230, 232, 0.5); background: transparent;
+          color: rgba(245,230,232,0.6); background: transparent;
           border: 1px solid transparent; border-radius: 6px;
           text-decoration: none; transition: all 0.25s ease;
         }
@@ -195,7 +206,7 @@ export default function Navbar() {
         .vn-mobile-link {
           padding: 0.75rem 1rem; font-size: 0.82rem; font-weight: 400;
           letter-spacing: 0.1em; text-transform: uppercase;
-          color: rgba(245,230,232,0.55); text-decoration: none;
+          color: rgba(245,230,232,0.6); text-decoration: none;
           border-radius: 8px; transition: all 0.2s; border: 1px solid transparent;
         }
         .vn-mobile-link:hover, .vn-mobile-link.active {
@@ -204,12 +215,12 @@ export default function Navbar() {
         .vn-mobile-divider { height: 1px; background: rgba(196,69,105,0.12); margin: 0.5rem 0; }
 
         .vn-mobile-user { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; }
-        .vn-mobile-username { font-size: 0.82rem; color: rgba(245,230,232,0.4); font-weight: 300; }
+        .vn-mobile-username { font-size: 0.82rem; color: rgba(245,230,232,0.6); font-weight: 300; }
 
         .vn-mobile-signout {
           text-align: left; cursor: pointer; background: none;
           border: 1px solid transparent; width: 100%;
-          color: rgba(196,69,105,0.8); font-family: 'Jost', sans-serif;
+          color: #d97a95; font-family: 'Jost', sans-serif;
           letter-spacing: 0.1em; text-transform: uppercase;
           border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.82rem;
           transition: all 0.2s;
@@ -236,18 +247,24 @@ export default function Navbar() {
             <div className="vn-links">
               <Link
                 href="/wines"
+                aria-current={isActive("/wines") ? "page" : undefined}
                 className={`vn-link ${isActive("/wines") ? "active" : ""}`}>
                 Vinurile mele
               </Link>
               <Link
                 href="/dashboard"
+                aria-current={isActive("/dashboard") ? "page" : undefined}
                 className={`vn-link ${isActive("/dashboard") ? "active" : ""}`}>
                 Dashboard
               </Link>
               <div className="vn-divider" />
               <div className="vn-user" ref={dropdownRef}>
                 <button
+                  type="button"
                   className="vn-avatar-btn"
+                  aria-haspopup="menu"
+                  aria-expanded={dropdownOpen}
+                  aria-controls="vn-account-menu"
                   onClick={() => setDropdownOpen((o) => !o)}>
                   <div className="vn-avatar">
                     {avatarSrc ? (
@@ -257,12 +274,12 @@ export default function Navbar() {
                     )}
                   </div>
                   <span className="vn-username">{session.user.name}</span>
-                  <span className={`vn-chevron ${dropdownOpen ? "open" : ""}`}>
+                  <span aria-hidden="true" className={`vn-chevron ${dropdownOpen ? "open" : ""}`}>
                     ▼
                   </span>
                 </button>
 
-                <div className={`vn-dropdown ${dropdownOpen ? "open" : ""}`}>
+                <div id="vn-account-menu" className={`vn-dropdown ${dropdownOpen ? "open" : ""}`} inert={!dropdownOpen}>
                   <div className="vn-dropdown-header">
                     <div className="vn-dropdown-name">{session.user.name}</div>
                     <div className="vn-dropdown-email">
@@ -304,7 +321,9 @@ export default function Navbar() {
           <button
             className={`vn-hamburger ${menuOpen ? "open" : ""}`}
             onClick={() => setMenuOpen(!menuOpen)}
-            aria-label="Meniu">
+            aria-label="Meniu"
+            aria-expanded={menuOpen}
+            aria-controls="vn-mobile-menu">
             <span />
             <span />
             <span />
@@ -312,7 +331,7 @@ export default function Navbar() {
         </div>
       </nav>
 
-      <div className={`vn-mobile-menu ${menuOpen ? "open" : ""}`}>
+      <div id="vn-mobile-menu" className={`vn-mobile-menu ${menuOpen ? "open" : ""}`} inert={!menuOpen}>
         {session ? (
           <>
             <div className="vn-mobile-user">

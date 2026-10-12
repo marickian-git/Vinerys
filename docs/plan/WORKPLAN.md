@@ -58,6 +58,29 @@ Același flux. Branch-ul a fost repornit din `main` (`137957e`). Un singur merge
 | 25 | #35 | DATA-007 Multi-currency | done | `dfa0a21` | `Wine.currency` (moneda originală a prețurilor) + `User.currency` (moneda statisticilor), cu migrație și EUR implicit pentru datele existente. Cursuri BCE zilnice cu cache (12 h; 30 min după eșec; fallback `FX_RATES_JSON`). Statisticile, Wrapped și profilul sunt convertite; prețurile apar cu `Intl` (narrowSymbol: €, lei, $). Select de monedă în formular și în Setări; exportul are coloana Monedă. Filtrul de preț compară în moneda vinului. Formatarea completă per limbă vine cu #100 |
 | — | | **Checkpoint 5** + merge | | | |
 
+## Lot 3 — 2026-10-12 (după PR #126)
+
+| # | Issue | Titlu | Status | Commit | Note / interpretare |
+|---|---|---|---|---|---|
+| 26 | #46 | AI-011 Profil de gust | done | `326dd53` | Profil explicabil, fără ML: fiecare vin votează pentru trăsăturile lui (tip, soiuri, țară, regiune, categorii de arome), ponderat cu cât ți-a plăcut (rating, degustări, favorit, sticle consumate). Pe Profil: preferințe + ce să eviți + „Din pivniță, pe gustul tău” cu % și motive. Pe pagina vinului: „Asemănătoare din pivniță” |
+| 27 | #105 | HOME-004 Mâncare → vin | done | `638bcb3` | Pagina `/pairing` „Ce gătesc azi?” (text + exemple): top 3 sticle din pivniță, scor = potrivire × urgență × gust (#46), cu explicație. Cu AI: agenții proprii sau ai platformei, validat ca să nu inventeze vinuri. Fără AI: asocierile salvate pe vin (`foodPairing`, completat la 100% la scanare). Vocea (AI-007) și poza (AI-003) rămân în issue-urile lor. Importul CSV citește acum și asocierile |
+| 28 | #37 | AI-002 Tool-uri AI peste colecție | done | `6a926a0` | `server/sommelierTools.js`: searchWines (limbaj natural + filtre), getWine, getAvailableBottles (după urgență), getUserPreferences (profilul #46). Argumente validate cu Zod, executate doar pe datele utilizatorului, rezultate compacte. Protocol JSON independent de provider (Gemini, Claude și OpenAI-compatibil au formate diferite de tool calling). Verificat pe DB local, inclusiv izolarea între utilizatori |
+| 29 | #36 | AI-001 Sommelier conversațional | done | `6ddee97` | Chat `/sommelier` + `POST /api/v1/sommelier`. Bucla agent (`server/sommelier.js`): maximum 4 apeluri de tool (#37), apoi răspuns. Recomandă doar vinuri apărute în rezultatele tool-urilor (id-urile inventate sunt eliminate), respectă prețul și tipul cerut, explică. Verificat cap-coadă cu un LLM fals local + DB real. Istoricul conversației stă în browser (fără tabel). Fix: modelele fără imagini nu mai sunt respinse la cererile doar text |
+| 30 | #54 | CELLAR-008 Istoric de preț și ROI | done | `12c1b79` | Tabela `wine_valuation` (migrație cu backfill: valoarea curentă devine primul punct). Se scrie la creare, la import și la schimbarea valorii sau monedei. Pe pagina vinului: sparkline + ROI. Pagina `/value`: valoare, cost, câștig, ROI, top câștiguri/pierderi, în moneda utilizatorului. `/value/report`: raport printabil/PDF pentru asigurare. Fără prețuri de piață automate (nu există o sursă publică) |
+| — | | **Checkpoint 6** | | | |
+| 31 | #59 | SOCIAL-003 Wishlist și liste publice | done | `390fbaf` | Liste (`wine_list` + `wine_list_item`, migrație): wishlist, recomandări, cadouri. Elementele vin din pivniță sau sunt vinuri noi, cu notă și link spre magazin. Fiecare listă poate fi publică prin link (`/l/<id>`, fără cont, noindex). Cadouri: vizitatorul rezervă cu numele, proprietarul vede doar „rezervat” (surpriza rămâne), iar „cumpărat” se bifează. Exportul GDPR include listele |
+| 32 | #53 | CELLAR-007 Notificări push | done | `9769d4d` | Web Push (VAPID, `web-push`), cu migrație pentru abonamente + jurnal anti-dubluri. Service worker separat `push-sw.js` (fără cache). Activare din Setări. Rezumat lunar: trecute de vârf / ies anul acesta / intră anul acesta, cu link spre vin sau plan. Trimis de `POST /api/cron/digest` (`CRON_SECRET`), rulat de un cron extern. Abonamentele expirate se șterg. Dezactivat elegant fără chei VAPID. Plan de weekend (#107) poate folosi același canal |
+
+## Lot 4 — 2026-10-12 (după PR #127)
+
+| # | Issue | Titlu | Status | Commit | Note / interpretare |
+|---|---|---|---|---|---|
+| 33 | #107 | HOME-006 Plan de weekend | done | `d466a41` | Plan de weekend (vineri / sâmbătă / duminică): cele mai urgente sticle, apoi gustul (#46), cel mult două de același tip, cu mâncare, temperatură și locație. Apare în Sommelier („Planul weekendului”, ca în machetă) și pe `/planner`. Notificarea de vineri vine prin `/api/cron/digest?kind=weekend` (o dată pe weekend). Fără AI. Construirea planului din conversație rămâne pentru o versiune viitoare |
+| 34 | #42 | AI-007 Adăugare vocală | done | `c97dc8b` | Bloc „Adăugare rapidă” pe /wines/add: microfon (Web Speech API, ro-RO, doar unde browserul îl are) sau text. Fraza trece prin agenții AI (operația `voice`, intră în cota text), cu parserul euristic `utils/voiceParse.js` drept completare și fallback fără AI (cantitate în cifre sau cuvinte, an, producător după „de la”, preț + monedă, tip din text sau soi). Rezultatul apare ca previzualizare editabilă și se salvează doar la confirmare. Interpretare: doar vinuri, nu și consumuri („am deschis…”) |
+| 35 | #38 | AI-003 Pairing din fotografie | done | `decb2c2` | Pe /pairing: butonul „Fotografiază mâncarea” (cameră pe mobil). Poza se micșorează în browser (≤1024 px, JPEG), un agent cu imagini recunoaște felul (operația `dish_photo`, în cota de scanări), felul apare editabil și intră în același flux ca textul (#45): doar vinuri din pivniță, prioritate celor urgente și gustului. Agenții fără imagini sunt săriți. Fără AI apare un mesaj clar și varianta scrisă |
+| 36 | #44 | AI-009 Progres scanare (SSE) | done | `8a8424c` | `/api/ai-scan` răspunde în stream (SSE) când clientul cere `Accept: text/event-stream`: încărcare → „Gemini citește eticheta” → „Gemini a identificat X” / „Groq confirmă: X” → consens (procent) → fereastra de consum → rezultat (același JSON ca înainte). Fără header (API v1, clienți vechi) răspunsul rămâne JSON. Erorile dinainte de scanare (auth, cotă, cache) vin tot ca JSON. Butonul de scanare și FAB-ul arată etapa curentă. Se folosește fetch + stream, nu EventSource (care nu poate face POST cu poza) |
+| 37 | #78 | REFACTOR-007 Accesibilitate | done | | Interpretare: ce se poate face pe ecranele actuale (restilizarea e pe branch-ul de design). Test automat axe-core WCAG 2.1 A/AA pe 15 ecrane (publice + autentificate + detaliu vin), cu zero încălcări. Am crescut contrastul textului secundar (α ≥ 0,6, accent #d97a95, roșu #e06b6b, verde #6fbf6a), am setat culoarea implicită a body pe deschis (textul fără culoare era negru pe fundal închis) și am asociat etichetele cu câmpurile (formularul de vin, filtre, profil, upload). Focus vizibil global, link „Sari la conținut”, un singur `<main>`, Escape și `aria-expanded` în meniuri, `inert` pe meniurile închise, steluțe și „✕” din filtre ca butoane, `prefers-reduced-motion`. Comentariul din issue (componente `ui/`, teme) rămâne pe branch-ul de design |
+
 ## Sărite (cu motiv)
 
 | Issue | Motiv |
@@ -146,4 +169,25 @@ Același flux. Branch-ul a fost repornit din `main` (`137957e`). Un singur merge
 - **Dependență nouă:** `qrcode`.
 - **Env nou (opțional):** `PLATFORM_AI_AGENTS`, `AI_QUOTA_SCANS`, `AI_QUOTA_TEXT`, `FX_RATES_JSON`.
 - **Merge:** un singur PR pentru tot lotul 2 (deploy rar).
+
+### Checkpoint 6 — 2026-10-12
+
+- **Terminate (5):** #46 profil de gust, #105 „Ce gătesc azi?”, #37 tool-uri AI, #36 Sommelier conversațional, #54 valoare și ROI.
+- **Lotul 2** e în `main` (PR #126, `7e6e08c`).
+- **Teste:** 233 unit, e2e 28/28. Sommelierul e verificat cap-coadă cu un LLM fals local, pe DB-ul real.
+- **Bug reparat:** modelele fără suport de imagini erau respinse și la cererile doar text.
+- **Migrație nouă:** `wine_valuation`, cu backfill.
+- **Rămase în lotul 3:** #59, #53.
+
+### Checkpoint 7 — 2026-10-12 (lotul 3 terminat)
+
+- **Terminate în lotul 3 (7):** #46, #105, #37, #36, #54, #59, #53.
+- **Teste:** 236 unit, e2e 30/30, drift = 0.
+- **Migrații noi:** `wine_valuation` (cu backfill), `wine_lists`, `push_notifications`.
+- **Dependență nouă:** `web-push`.
+- **Env nou (opțional):** `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `CRON_SECRET`.
+- **După deploy:**
+  - smoke test;
+  - opțional, chei VAPID + cron lunar pentru notificări;
+  - opțional, `PLATFORM_AI_AGENTS` ca Sommelierul să meargă și fără chei proprii.
 

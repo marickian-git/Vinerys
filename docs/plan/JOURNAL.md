@@ -303,6 +303,137 @@ Pe pagina vinului apare secțiunea „Jurnal de degustare”. Pagina `/tastings`
 - CLDR `ro` afișează codul („100 EUR”). Cu `currencyDisplay: 'narrowSymbol'` iese „100 €” / „1.235 lei”.
 - În containerul cloud, serverul nu ajunge la BCE, deci e2e-ul acoperă degradarea fără cursuri.
 
+### #46 AI-011 Profil de gust
+**Făcut:**
+- `utils/tasteProfile.js`: `likeSignal` (rating și degustări pe scara -1…+1, favorit 0.8, ≥ 2 sticle consumate 0.3), `featuresOf` (tip, soiuri, țară, regiune, categorii de arome din vocabularul #120), `buildTasteProfile` (top + „de evitat”, `confident` de la 5 vinuri), `predictPreference` (sigmoid, plus motive în care soiul/regiunea au prioritate față de tip), `similarWines` (Jaccard ponderat).
+- `server/taste.js` (`winesWithSignals`, `tasteProfileFor`, `similarInCellar`).
+- Card „Profilul tău de gust” pe Profil și secțiunea „Asemănătoare din pivniță” pe pagina vinului.
+- Teste unit + e2e `tests/e2e/taste.spec.js`.
+
+**Decizii:** fără model ML. Cu zeci de vinuri, un scor pe trăsături e explicabil („pentru că îți place Fetească Neagră”) și nu are nevoie de antrenare. Același profil îl folosesc și „Mâncare → vin” (#105) și Sommelierul (#36).
+
+### #105 HOME-004 Mâncare → vin: „Ce gătesc azi?”
+**Făcut:**
+- `utils/foodToWine.js`:
+  - `urgencyScore`: trecut 1 > ultimul an 0.9 > spre final > abia intrat > tânăr 0.15;
+  - `heuristicMatch`: cuvintele preparatului în `foodPairing`, cu rădăcini comune;
+  - `pairingCandidates`, `foodToWinePrompt`;
+  - `normalizeFoodPicks`: elimină id-urile inventate, deci AI-ul nu poate recomanda vinuri care nu sunt în pivniță;
+  - `rankPicks`: potrivire × (0.6 + 0.4 urgență) × (0.9 + 0.2 gust).
+- Acțiunea `suggestWinesForDish`: AI dacă există agenți sau cotă (`resolveTextAgents`, comun cu pairing-ul), altfel asocierile salvate. Dacă AI-ul eșuează, cade tot pe asocieri.
+- UI: pagina `/pairing` (protejată), cu exemple; link din Pivniță și din Profil.
+- Importul CSV mapează și „Asocieri gastronomice” (exportul Vinerys), deci exportul și importul sunt simetrice pentru acest câmp.
+- Teste unit + e2e `tests/e2e/dish.spec.js`.
+
+**Decizii:** varianta fără AI contează: `foodPairing` e completat la 100% de scanare (DATA-REPORT), deci funcționează și pentru cine nu are chei. Urgența ordonează și în interiorul ferestrei, cum cerea raportul de date.
+
+### #37 AI-002 Tool-uri AI pentru interogarea colecției
+**Făcut:** `server/sommelierTools.js` cu `SOMMELIER_TOOLS`:
+- `searchWines(query?, type?, maxPrice?, inCellarOnly?, limit?)`, peste `listWines` (fuzzy + limbaj natural din #55);
+- `getWine(id)`;
+- `getAvailableBottles(type?, limit?)`, ordonate după `urgencyScore`;
+- `getUserPreferences()`, din profilul de gust #46.
+
+Plus `describeTools()` (textul pentru prompt) și `runTool(userId, name, args)` (validare Zod; erorile devin mesaje, nu excepții). Teste unit pentru validare. Verificat ad-hoc pe DB-ul local: căutare, detalii, izolare (alt utilizator primește „Acces interzis”), preferințe.
+**Decizii:** protocol JSON propriu în loc de tool calling nativ. Agenții pot fi Gemini, Claude sau OpenAI-compatibil, fiecare cu alt format; un singur protocol text merge cu toți și cu ensemble-ul existent. Rezultatele sunt compacte (fără URL-uri de imagini sau ID-uri interne inutile), ca promptul să rămână mic.
+
+### #36 AI-001 Sommelier conversațional
+**Făcut:**
+- `server/sommelier.js`:
+  - `sommelierPrompt`: reguli „nu inventa vinuri”, prioritate pentru cele urgente, limita de preț și tipul cerut, plus tool-urile și conversația;
+  - `parseSommelierReply`;
+  - `seenWines`;
+  - `runSommelier` (maximum 4 apeluri de tool, apoi răspuns forțat; erorile tool-urilor ajung la model ca rezultat).
+- Acțiunea `askSommelier` (validare Zod a istoricului, rate limit, agenți proprii sau platforma cu cotă, `ai_usage` cu `operation: 'sommelier'`).
+- UI `/sommelier` (`SommelierChat`, `role="log"`, întrebări de pornire, chip-uri cu vinurile recomandate). Linkuri din Pivniță și Profil. `POST /api/v1/sommelier` + OpenAPI.
+- Teste unit (bucla cu generator și tool-uri simulate) + e2e (fără agenți: mesaj clar).
+- **Verificat cap-coadă:** server local cu `PLATFORM_AI_AGENTS` spre un LLM fals OpenAI-compatibil. Modelul cere `getAvailableBottles`, tool-ul citește DB-ul real, iar răspunsul conține doar vinul real (id-ul inventat e eliminat). `ai_usage` are 2 linii `sommelier/platform`.
+
+**Bug reparat pe drum:** `callProviderWithModel` respingea modelele marcate fără suport de imagini și pentru cererile doar text. Acum verificarea se face doar când se trimite o imagine.
+**Decizii:** istoricul conversației stă în browser și se trimite la fiecare întrebare (maximum 20 de mesaje). Nu e nevoie de tabel până nu se cere continuarea pe alt dispozitiv.
+
+### #54 CELLAR-008 Istoric de preț și ROI
+**Făcut:**
+- Model `WineValuation` (`wine_valuation`, migrația `wine_valuation`, cu backfill SQL: 52/52 de vinuri cu valoare primesc punctul inițial, la data adăugării vinului). `recordValuation` rulează în `createWineForUser` / `updateWineForUser` (doar la schimbarea valorii sau monedei), iar importul CSV scrie valorile în aceeași tranzacție.
+- `utils/valuation.js` (`roi`, `formatRoi`, `portfolio`, `sparklinePath`) și `server/valuation.js` (`valueReportFor`, convertit în moneda utilizatorului, #35).
+- UI: secțiunea „Valoare în timp” pe pagina vinului (SVG cu `aria-label`), pagina `/value` și `/value/report` (printabil / „Salvează ca PDF”, cu notă că valorile sunt estimări).
+- Teste unit + e2e `tests/e2e/value.spec.js`.
+
+**Decizii:**
+- Nu există o sursă publică gratuită de prețuri de piață, deci istoricul se construiește din valorile introduse sau sugerate de AI.
+- ROI-ul folosește doar vinurile care au și preț, și valoare; celelalte sunt numărate separat.
+
+**Învățat:** primul test e2e avea aritmetica greșită (+52% în loc de +31%), nu codul. Verifică valorile așteptate de mână înainte să ajustezi codul.
+
+### #59 SOCIAL-003 Wishlist și liste publice
+**Făcut:**
+- Modelele `WineList` (`kind`: WISHLIST / RECOMMENDATIONS / GIFTS, `isPublic`, `shareId` aleator) și `WineListItem` (vin din pivniță sau text liber, notă, link, `reservedBy` / `reservedAt`, `purchased`). Migrația `wine_lists`.
+- `server/lists.js` și `schemas/list.js`. Acțiunile `getLists/saveList/removeList/addToList/removeFromList/toggleListItemPurchased`, plus `reserveGift`: publică, cu rate limit pe IP, unde prima rezervare câștigă (`updateMany` condiționat de `reservedAt: null`).
+- UI: `/lists` (`ListsManager`: creare, publicare, link copiabil, elemente, bifă „cumpărat”) și pagina publică `/l/[shareId]` (noindex, buton „Îl dăruiesc eu”). Link din Profil. Exportul GDPR include listele.
+- E2E `tests/e2e/lists.spec.js`: listă de cadouri publică, rezervare din alt browser, numele nu apare nici la vizitator, nici la proprietar.
+
+**Decizii:** numele celui care rezervă se păstrează, dar nu e afișat nimănui, inclusiv proprietarului, pentru surpriză. Poate fi arătat după o dată aleasă, într-o versiune viitoare.
+
+### #53 CELLAR-007 Notificări push
+**Făcut:**
+- Modelele `PushSubscription` și `NotificationLog` (unic pe `userId + key`, ca rezumatul să plece o singură dată pe lună). Migrația `push_notifications`.
+- `utils/digest.js` (`buildDigest`: mesaje românești, link spre vin când e unul singur, altfel spre `/planner`) și `server/push.js` (`sendToUser`: șterge abonamentele 404/410; `sendMonthlyDigests`).
+- Rute: `/api/push/subscribe` (GET cheia publică, POST, DELETE) și `/api/cron/digest` (Bearer `CRON_SECRET`, comparat în timp constant).
+- `public/push-sw.js` (doar `push` + `notificationclick`). `ServiceWorkerRegister` îl păstrează și curăță în continuare restul.
+- Cardul „Notificări” din Setări (`PushSetting`), cu stări pentru browser fără suport, server neconfigurat, activ și inactiv.
+- Teste: unit pentru digest, e2e pentru dezactivarea fără VAPID și autorizarea cron-ului. Ad-hoc pe DB: trimitere, ștergerea abonamentului expirat, fără dublură în aceeași lună.
+
+**Decizii:**
+- Service worker separat pentru push, fiindcă `sw.js` e dezînregistrat intenționat (cache-uri private, B13) până la PWA-001.
+- Cron extern în loc de un scheduler în aplicație: containerul rulează o singură instanță, iar CasaOS/crontab e mai simplu și vizibil.
+
+**De făcut de utilizator:** `npx web-push generate-vapid-keys`, apoi `VAPID_*` + `CRON_SECRET` în CasaOS și un cron lunar cu `curl` (comanda e în `.env.example`).
+
+### #107 HOME-006 Plan de weekend
+**Făcut:**
+- `utils/weekendPlan.js`:
+  - `weekendStart`: vinerea curentă sau cea trecută, în weekend;
+  - `weekKey`;
+  - `buildWeekendPlan`: scor 0.7 urgență + 0.3 gust, cel mult două vinuri de același tip, mâncare din `foodPairing[0]`, temperatură;
+  - `weekendNotification`.
+- `server/push.js` (`weekendPlanFor`, `sendWeekendPlans`); cron-ul acceptă `?kind=weekend`.
+- `WeekendPlan` pe `/sommelier` („Planul weekendului”, după machetă) și pe `/planner`.
+- Teste unit + e2e (planner, cron weekend).
+
+**Decizii:**
+- Fără AI: planul trebuie să apară instant și gratuit la fiecare deschidere.
+- „Planul construit din conversație” (comentariul din issue) poate veni ca tool al Sommelierului (`setWeekendPlan`) când se salvează planul.
+
+**Învățat:** pentru date în fusul orar local se folosește formatul local, nu `toISOString()`, care mută ziua în fusurile din fața UTC.
+
+### #42 AI-007 Adăugare vocală
+
+- **Făcut:** `utils/voiceParse.js` (parser euristic + prompt + `mergeVoiceResult`), acțiunile `parseWineText` / `quickAddWine`, componenta `VoiceAdd` pe `/wines/add`. Teste: 7 unit, 1 e2e (`voice.spec.js`).
+- **Decizii:** recunoașterea vocală rulează în browser (Web Speech API, gratuit, fără upload audio). Pe server ajunge doar textul. Cu AI, câmpurile invalide sau lipsă din răspuns se completează din euristică. Fără AI, se folosește doar euristica. Salvarea cere confirmare.
+- **Învățat:** `getByLabel('An')` prinde și eticheta „Tip”, fiindcă textul ei include opțiunile („Spumant”), deci testul folosește `exact: true`. Prefixele „Crama/Cramele/Domeniul” trebuie potrivite indiferent de majusculă.
+- **Next:** #38 (poză cu mâncarea → vin).
+
+### #38 AI-003 Pairing invers din fotografie
+
+- **Făcut:** `generateWithAgents` acceptă `image` și păstrează doar agenții cu imagini. Am adăugat `dishFromPhotoPrompt` / `normalizeDish`, acțiunea `identifyDishFromPhoto`, `utils/imageResize.js` și butonul din `DishPairing`. Teste: 4 unit (`dishPhoto.test.js`), 1 e2e.
+- **Decizii:** poza nu se salvează. Se recunoaște doar felul de mâncare, iar recomandarea refolosește fluxul text (o singură logică de potrivire). Consumul intră în cota de scanări, fiindcă e un apel cu imagine. `resolveTextAgents` a devenit `resolveAgents(userId, kind)`.
+- **Învățat:** micșorarea în browser ține poza sub limita implicită de 1 MB a server actions. Next are propriul `role=alert` (route announcer), deci testele caută după text.
+- **Next:** #44 (progres SSE la scanare).
+
+### #44 AI-009 Progres scanare prin SSE
+
+- **Făcut:** `utils/sse.js` (răspuns stream + parser incremental), `onProgress` în `analyzeWineLabelEnsemble`, rută `/api/ai-scan` cu `runScan(onProgress)` + variantă SSE, `utils/scanClient.js` (`scanLabel`, `progressLabel`), integrat în `ScanLabelButton` și `AddWineFAB`. Teste: 7 unit (`scanProgress.test.js`), 2 e2e (`scan.spec.js`).
+- **Decizii:** SSE doar la cerere (`Accept`), deci contractul JSON rămâne neschimbat. Header-ul `X-Accel-Buffering: no` oprește nginx să țină evenimentele în buffer. Dacă clientul închide conexiunea, scanarea continuă pe server, ca să se salveze cache-ul și consumul.
+- **Învățat:** un `const body` din handler intra în conflict cu destructurarea rezultatului, așa că variabila a devenit `scan`. Un stream fără eveniment `result` înseamnă conexiune întreruptă și primește un mesaj explicit.
+- **Next:** #78 (accesibilitate).
+
+### #78 REFACTOR-007 Accesibilitate
+
+- **Făcut:** `tests/e2e/a11y.spec.js` (axe-core, 15 ecrane + test de tastatură). Am corectat 150+ noduri cu probleme: contrast (un script schimbă doar proprietatea `color`, sare peste `::placeholder`/`disabled` și peste PDF-ul alb din export), etichete asociate (22 de câmpuri în `WineForm`), `select`-uri fără nume, link în text fără subliniere. Am adăugat `globals.css` (body deschis, `:focus-visible`, skip link, reduced motion), Navbar (`aria-current`, `aria-expanded`, Escape, `inert`), `<main>` imbricate devenite `<div>` și elemente clickabile devenite butoane.
+- **Decizii:** pragul α = 0,6 pentru text secundar (minimul calculat e 0,51, rămâne marjă pentru fundaluri semi-transparente). Badge-urile blocate au chenar punctat în loc de opacitate (opacitatea strica contrastul). Testul axe rulează în CI, deci orice regresie de contrast pică build-ul.
+- **Învățat:** body-ul moștenea `color: rgb(0,0,0)` din template-ul Next, de aceea componentele noi fără culoare explicită aveau text negru invizibil (setări monedă, push). `openWine` cere să fii pe `/wines`.
+- **Next:** checkpoint 8, PR + merge lot 3+4.
+
 ---
 
 ## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub

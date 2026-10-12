@@ -38,7 +38,7 @@ export default function ProfileEditForm({ profile }) {
         .pef-wrap { font-family: 'Jost', sans-serif; }
         .pef-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
         .pef-full { grid-column: 1 / -1; }
-        .pef-label { display: block; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.15em; color: rgba(245,230,232,0.45); margin-bottom: 0.5rem; font-weight: 400; }
+        .pef-label { display: block; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.15em; color: rgba(245,230,232,0.6); margin-bottom: 0.5rem; font-weight: 400; }
         .pef-input {
           width: 100%; padding: 0.75rem 1rem;
           background: rgba(255,255,255,0.04);
@@ -50,7 +50,7 @@ export default function ProfileEditForm({ profile }) {
         .pef-input:focus { border-color: rgba(196,69,105,0.5); background: rgba(196,69,105,0.04); box-shadow: 0 0 0 3px rgba(196,69,105,0.07); }
         .pef-input[disabled] { opacity: 0.4; cursor: not-allowed; }
         .pef-input::placeholder { color: rgba(245,230,232,0.2); }
-        .pef-hint { font-size: 0.65rem; color: rgba(245,230,232,0.2); margin-top: 0.35rem; letter-spacing: 0.05em; }
+        .pef-hint { font-size: 0.65rem; color: rgba(245,230,232,0.6); margin-top: 0.35rem; letter-spacing: 0.05em; }
         .pef-btn {
           margin-top: 1.5rem;
           padding: 0.75rem 1.75rem;
@@ -72,8 +72,9 @@ export default function ProfileEditForm({ profile }) {
       <form className="pef-wrap" onSubmit={handleSubmit}>
         <div className="pef-grid">
           <div>
-            <label className="pef-label">Nume afișat</label>
+            <label className="pef-label" htmlFor="pef-name">Nume afișat</label>
             <input
+              id="pef-name"
               className="pef-input"
               value={name}
               onChange={e => setName(e.target.value)}
@@ -84,8 +85,8 @@ export default function ProfileEditForm({ profile }) {
           </div>
 
           <div>
-            <label className="pef-label">Email</label>
-            <input className="pef-input" value={profile.email} disabled />
+            <label className="pef-label" htmlFor="pef-email">Email</label>
+            <input id="pef-email" className="pef-input" value={profile.email} disabled />
             <p className="pef-hint">Emailul nu poate fi schimbat</p>
           </div>
 

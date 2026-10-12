@@ -36,6 +36,9 @@ model User {
   aiUsage       AIUsage[]
   savedFilters  SavedFilter[]
   tastings      Tasting[]
+  wineLists     WineList[]
+  pushSubscriptions PushSubscription[]
+  notificationLogs  NotificationLog[]
 
 
   @@map("user")
@@ -179,6 +182,8 @@ model Wine {
 
   wineLogs             WineLog[]
   tastings             Tasting[]
+  valuations           WineValuation[]
+  listItems            WineListItem[]
 
   @@index([userId])
   @@index([type])
@@ -231,6 +236,88 @@ model Tasting {
   @@index([userId, tastedAt])
   @@index([wineId])
   @@map("tasting")
+}
+
+// Istoricul valorii estimate (CELLAR-008): o înregistrare la fiecare schimbare a valorii unui vin
+model WineValuation {
+  id         String   @id @default(cuid())
+  wineId     String
+  wine       Wine     @relation(fields: [wineId], references: [id], onDelete: Cascade)
+  userId     String
+  value      Float
+  currency   String   @default("EUR")
+  source     String   @default("manual")
+  recordedAt DateTime @default(now())
+
+  @@index([wineId, recordedAt])
+  @@index([userId])
+  @@map("wine_valuation")
+}
+
+// Liste de vinuri (SOCIAL-003): wishlist, recomandări, listă de cadouri; opțional publice prin link
+model WineList {
+  id          String         @id @default(cuid())
+  userId      String
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  kind        String         @default("WISHLIST")
+  isPublic    Boolean        @default(false)
+  shareId     String         @unique
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  items       WineListItem[]
+
+  @@index([userId])
+  @@map("wine_list")
+}
+
+model WineListItem {
+  id         String    @id @default(cuid())
+  listId     String
+  list       WineList  @relation(fields: [listId], references: [id], onDelete: Cascade)
+  wineId     String?
+  wine       Wine?     @relation(fields: [wineId], references: [id], onDelete: SetNull)
+  name       String
+  producer   String?
+  vintage    Int?
+  note       String?
+  url        String?
+  position   Int       @default(0)
+  // Cadouri: un vizitator al listei publice rezervă (fără cont), proprietarul vede doar că e rezervat
+  reservedBy String?
+  reservedAt DateTime?
+  purchased  Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+
+  @@index([listId, position])
+  @@map("wine_list_item")
+}
+
+// Notificări push (CELLAR-007): abonamentele browserelor și ce s-a trimis deja (fără dubluri)
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("push_subscription")
+}
+
+model NotificationLog {
+  id     String   @id @default(cuid())
+  userId String
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  key    String
+  sentAt DateTime @default(now())
+
+  @@unique([userId, key])
+  @@map("notification_log")
 }
 
 // Filtre salvate în Pivniță (CELLAR-009): parametrii din URL, sub un nume

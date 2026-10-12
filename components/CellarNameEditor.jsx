@@ -55,12 +55,13 @@ export default function CellarNameEditor({ initialName }) {
         .cn-title:hover { border-bottom-color: rgba(196,69,105,0.4); }
         .cn-edit-btn {
           background: none; border: none; cursor: pointer;
-          color: rgba(196,69,105,0.4); font-size: 0.75rem;
+          color: #d97a95; font-size: 0.75rem;
           padding: 0.2rem 0.4rem; border-radius: 4px;
           transition: all 0.2s; opacity: 0;
         }
-        .cn-wrap:hover .cn-edit-btn { opacity: 1; }
-        .cn-edit-btn:hover { color: #c44569; background: rgba(196,69,105,0.08); }
+        .cn-wrap:hover .cn-edit-btn, .cn-edit-btn:focus-visible { opacity: 1; }
+        @media (hover: none) { .cn-edit-btn { opacity: 1; } }
+        .cn-edit-btn:hover { color: #d97a95; background: rgba(196,69,105,0.08); }
         .cn-input {
           font-family: 'Cormorant Garamond', serif;
           font-size: clamp(2rem, 4vw, 3rem);
@@ -79,7 +80,7 @@ export default function CellarNameEditor({ initialName }) {
         }
         .cn-hint {
           font-size: 0.65rem;
-          color: rgba(245,230,232,0.25);
+          color: rgba(245,230,232,0.6);
           margin-top: 0.2rem;
           font-family: 'Jost', sans-serif;
         }
@@ -108,7 +109,7 @@ export default function CellarNameEditor({ initialName }) {
           >
             {saving ? '...' : value}
           </span>
-          <button className="cn-edit-btn" onClick={() => setEditing(true)} title="Editează numele">
+          <button type="button" className="cn-edit-btn" onClick={() => setEditing(true)} title="Editează numele" aria-label="Editează numele pivniței">
             ✏️
           </button>
         </div>

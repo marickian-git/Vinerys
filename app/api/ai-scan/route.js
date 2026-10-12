@@ -11,6 +11,7 @@ import { findCachedScan, hashImage, storeScan } from '@/utils/scanCache';
 import { platformRequestsThisMonth, recordAIUsage } from '@/utils/aiUsage';
 import { chooseAgents, monthStart, platformAgents, quotaFor, quotaMessage } from '@/utils/platformAI';
 import { notFound, rateLimited, unauthenticated, validationError, withApiHandler } from '@/utils/errors';
+import { eventStreamResponse, wantsEventStream } from '@/utils/sse';
 
 function publicProviderErrors(items = []) {
   return items.map(({ raw, parsed, normalized, ...item }) => item);
@@ -114,86 +115,109 @@ export const POST = withApiHandler('ai-scan', async (request, { log: baseLog, re
       : validationError(undefined, quotaMessage(choice.error, quota));
   }
 
-  let scanResult;
-  try {
-    log.info('scan started', { agents: choice.agents.length, source: choice.source, providers: choice.agents.map((agent) => agent.provider) });
-    scanResult = await analyzeWineLabelEnsemble(imageBase64, mimeType, choice.agents, { providers: [] });
-    await Promise.all(scanResult.successfulAgentIds.map((id) => prisma.aIAgent.updateMany({
-      where: { id, userId: user.id },
-      data: { lastStatus: 'Healthy', lastError: null, lastCheckedAt: new Date() },
-    })));
-    await Promise.all(scanResult.errors.filter((item) => item.agentId).map((item) => prisma.aIAgent.updateMany({
-      where: { id: item.agentId, userId: user.id },
-      data: {
-        lastStatus: providerStatusFor(item),
-        lastError: item.error.slice(0, 500),
-        lastCheckedAt: new Date(),
-      },
-    })));
-  } catch (err) {
-    await Promise.all((err.providerErrors || []).filter((item) => item.agentId).map((item) => prisma.aIAgent.updateMany({
-      where: { id: item.agentId, userId: user.id },
-      data: {
-        lastStatus: providerStatusFor(item),
-        lastError: item.error.slice(0, 500),
-        lastCheckedAt: new Date(),
-      },
-    })));
-    await recordAIUsage(user.id, operationId, err.usage, log);
-    log.error('scan failed', {
-      error: serializeError(err),
-      durationMs: Date.now() - startedAt,
-      providerErrors: publicProviderErrors(err.providerErrors || []),
-    });
-    return NextResponse.json({
-      error: 'Scanarea nu a putut fi finalizată. Verifică agenții AI configurați.',
-      code: 'AI_FAILED',
+  const runScan = async (onProgress) => {
+    let scanResult;
+    try {
+      log.info('scan started', { agents: choice.agents.length, source: choice.source, providers: choice.agents.map((agent) => agent.provider) });
+      scanResult = await analyzeWineLabelEnsemble(imageBase64, mimeType, choice.agents, { providers: [], onProgress });
+      await Promise.all(scanResult.successfulAgentIds.map((id) => prisma.aIAgent.updateMany({
+        where: { id, userId: user.id },
+        data: { lastStatus: 'Healthy', lastError: null, lastCheckedAt: new Date() },
+      })));
+      await Promise.all(scanResult.errors.filter((item) => item.agentId).map((item) => prisma.aIAgent.updateMany({
+        where: { id: item.agentId, userId: user.id },
+        data: {
+          lastStatus: providerStatusFor(item),
+          lastError: item.error.slice(0, 500),
+          lastCheckedAt: new Date(),
+        },
+      })));
+    } catch (err) {
+      await Promise.all((err.providerErrors || []).filter((item) => item.agentId).map((item) => prisma.aIAgent.updateMany({
+        where: { id: item.agentId, userId: user.id },
+        data: {
+          lastStatus: providerStatusFor(item),
+          lastError: item.error.slice(0, 500),
+          lastCheckedAt: new Date(),
+        },
+      })));
+      await recordAIUsage(user.id, operationId, err.usage, log);
+      log.error('scan failed', {
+        error: serializeError(err),
+        durationMs: Date.now() - startedAt,
+        providerErrors: publicProviderErrors(err.providerErrors || []),
+      });
+      return {
+        status: 502,
+        body: {
+          error: 'Scanarea nu a putut fi finalizată. Verifică agenții AI configurați.',
+          code: 'AI_FAILED',
+          operationId,
+          providerErrors: publicProviderErrors(err.providerErrors || []),
+        },
+      };
+    }
+
+    await logScan(user.id, {
       operationId,
-      providerErrors: publicProviderErrors(err.providerErrors || []),
-    }, { status: 502 });
+      providers: scanResult.sources,
+      providerErrors: scanResult.errors,
+      enrichmentErrors: scanResult.enrichmentErrors || [],
+      identificationConfidence: scanResult.result.identification?.confidence ?? scanResult.result.confidence?.identity ?? null,
+      enrichmentConfidence: scanResult.result.enrichment?.confidence ?? null,
+      drinkingWindow: {
+        from: scanResult.result.drinkFrom ?? null,
+        until: scanResult.result.drinkUntil ?? null,
+        confidence: scanResult.result.confidence?.drinkWindow ?? null,
+        basis: scanResult.result.drinkWindowBasis ?? null,
+      },
+      durationMs: Date.now() - startedAt,
+      imageMimeType: mimeType,
+      aiResult: scanResult.result,
+    }, log);
+
+    await recordAIUsage(user.id, operationId, scanResult.usage, log);
+    await storeScan(prisma, imageHash, scanResult).catch((err) => {
+      log.warn('scan cache write failed', { error: serializeError(err) });
+    });
+
+    log.debug('provider pipeline', { providerDebug: scanResult.providerDebug });
+    log.info('scan completed', {
+      durationMs: Date.now() - startedAt,
+      providers: scanResult.sources,
+      agentTimings: scanResult.agentTimings,
+      identityConfidence: scanResult.result.confidence?.identity ?? null,
+      drinkFrom: scanResult.result.drinkFrom ?? null,
+      drinkUntil: scanResult.result.drinkUntil ?? null,
+    });
+
+    return {
+      status: 200,
+      body: {
+        success: true,
+        operationId,
+        providers: scanResult.sources,
+        providerErrors: publicProviderErrors(scanResult.errors),
+        enrichmentErrors: scanResult.enrichmentErrors || [],
+        cached: false,
+        data: scanResult.result,
+        wine: null,
+      },
+    };
+  };
+
+  // AI-009: cu `Accept: text/event-stream` clientul primește etapele pe parcurs, apoi rezultatul (același JSON)
+  if (wantsEventStream(request)) {
+    return eventStreamResponse(async (send) => {
+      send('progress', { stage: 'upload' });
+      const scan = await runScan((event) => send('progress', event)).catch((err) => {
+        log.error('scan stream failed', { error: serializeError(err) });
+        return { status: 500, body: { error: 'Eroare internă la scanare', code: 'INTERNAL', operationId } };
+      });
+      send('result', { status: scan.status, ...scan.body });
+    }, { 'x-request-id': requestId });
   }
 
-  await logScan(user.id, {
-    operationId,
-    providers: scanResult.sources,
-    providerErrors: scanResult.errors,
-    enrichmentErrors: scanResult.enrichmentErrors || [],
-    identificationConfidence: scanResult.result.identification?.confidence ?? scanResult.result.confidence?.identity ?? null,
-    enrichmentConfidence: scanResult.result.enrichment?.confidence ?? null,
-    drinkingWindow: {
-      from: scanResult.result.drinkFrom ?? null,
-      until: scanResult.result.drinkUntil ?? null,
-      confidence: scanResult.result.confidence?.drinkWindow ?? null,
-      basis: scanResult.result.drinkWindowBasis ?? null,
-    },
-    durationMs: Date.now() - startedAt,
-    imageMimeType: mimeType,
-    aiResult: scanResult.result,
-  }, log);
-
-  await recordAIUsage(user.id, operationId, scanResult.usage, log);
-  await storeScan(prisma, imageHash, scanResult).catch((err) => {
-    log.warn('scan cache write failed', { error: serializeError(err) });
-  });
-
-  log.debug('provider pipeline', { providerDebug: scanResult.providerDebug });
-  log.info('scan completed', {
-    durationMs: Date.now() - startedAt,
-    providers: scanResult.sources,
-    agentTimings: scanResult.agentTimings,
-    identityConfidence: scanResult.result.confidence?.identity ?? null,
-    drinkFrom: scanResult.result.drinkFrom ?? null,
-    drinkUntil: scanResult.result.drinkUntil ?? null,
-  });
-
-  return NextResponse.json({
-    success: true,
-    operationId,
-    providers: scanResult.sources,
-    providerErrors: publicProviderErrors(scanResult.errors),
-    enrichmentErrors: scanResult.enrichmentErrors || [],
-    cached: false,
-    data: scanResult.result,
-    wine: null,
-  });
+  const scan = await runScan();
+  return NextResponse.json(scan.body, { status: scan.status });
 });

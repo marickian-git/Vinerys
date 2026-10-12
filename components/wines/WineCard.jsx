@@ -48,10 +48,10 @@ const TYPE_CONFIG = {
 };
 
 const STATUS_CONFIG = {
-  IN_CELLAR: { label: "În pivniță", color: "rgba(85,196,78,0.8)" },
-  CONSUMED: { label: "Consumat", color: "rgba(245,230,232,0.3)" },
+  IN_CELLAR: { label: "În pivniță", color: "#6fbf6a" },
+  CONSUMED: { label: "Consumat", color: "rgba(245,230,232,0.6)" },
   SOLD: { label: "Vândut", color: "rgba(212,175,55,0.7)" },
-  GIFTED: { label: "Dăruit", color: "rgba(196,69,105,0.7)" },
+  GIFTED: { label: "Dăruit", color: "#d97a95" },
 };
 
 export default function WineCard({ wine }) {
@@ -107,7 +107,7 @@ export default function WineCard({ wine }) {
         .wc-favorite { position: absolute; top: 0.75rem; right: 0.75rem; font-size: 1rem; z-index: 2; }
         .wc-qty {
           position: absolute; top: 0.75rem; right: 0.75rem;
-          font-size: 0.65rem; color: rgba(245,230,232,0.35);
+          font-size: 0.65rem; color: rgba(245,230,232,0.6);
           background: rgba(0,0,0,0.4); padding: 0.15rem 0.4rem;
           border-radius: 4px; font-family: 'Jost', sans-serif; z-index: 2;
         }
@@ -120,12 +120,12 @@ export default function WineCard({ wine }) {
           white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
         .wc-producer {
-          font-size: 0.72rem; color: rgba(245,230,232,0.35); font-weight: 300;
+          font-size: 0.72rem; color: rgba(245,230,232,0.6); font-weight: 300;
           letter-spacing: 0.04em; margin-bottom: 0.55rem;
           white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
         .wc-meta { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
-        .wc-meta-item { font-size: 0.68rem; color: rgba(245,230,232,0.3); font-weight: 300; }
+        .wc-meta-item { font-size: 0.68rem; color: rgba(245,230,232,0.6); font-weight: 300; }
         .wc-meta-sep { width: 2px; height: 2px; border-radius: 50%; background: rgba(196,69,105,0.3); flex-shrink: 0; }
 
         .wc-extras { display: flex; flex-direction: column; gap: 0.3rem; margin-bottom: 0.6rem; }
@@ -134,8 +134,8 @@ export default function WineCard({ wine }) {
         .wc-footer { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: 0.5rem; }
         .wc-stars { display: flex; gap: 2px; }
         .wc-star { font-size: 0.7rem; line-height: 1; color: #d4af37; }
-        .wc-star-empty { color: rgba(245,230,232,0.15); }
-        .wc-no-rating { font-size: 0.7rem; color: rgba(245,230,232,0.2); }
+        .wc-star-empty { color: rgba(245,230,232,0.6); }
+        .wc-no-rating { font-size: 0.7rem; color: rgba(245,230,232,0.6); }
         .wc-right { display: flex; align-items: center; gap: 0.6rem; }
         .wc-price { font-family: 'Cormorant Garamond', serif; font-size: 1rem; font-weight: 600; color: rgba(212,175,55,0.85); }
         .wc-status { font-size: 0.62rem; font-weight: 400; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.2rem 0.5rem; border-radius: 4px; background: rgba(255,255,255,0.04); }
@@ -224,7 +224,7 @@ export default function WineCard({ wine }) {
                     default: {
                       bg: "rgba(196,69,105,0.08)",
                       border: "rgba(196,69,105,0.2)",
-                      color: "rgba(196,69,105,0.8)",
+                      color: "#d97a95",
                     },
                   };
                   return (
@@ -236,7 +236,7 @@ export default function WineCard({ wine }) {
                         background: "rgba(196,69,105,0.07)",
                         border: "1px solid rgba(196,69,105,0.15)",
                         fontSize: "0.6rem",
-                        color: "rgba(245,230,232,0.5)",
+                        color: "rgba(245,230,232,0.6)",
                         fontFamily: "'Jost', sans-serif",
                         fontWeight: 300,
                       }}>
@@ -253,7 +253,7 @@ export default function WineCard({ wine }) {
                     background: "rgba(255,255,255,0.03)",
                     border: "1px solid rgba(255,255,255,0.07)",
                     fontSize: "0.6rem",
-                    color: "rgba(245,230,232,0.2)",
+                    color: "rgba(245,230,232,0.6)",
                     fontFamily: "'Jost', sans-serif",
                   }}>
                   +{wine.aromaProfile.length - 3}

@@ -30,12 +30,12 @@ function Pagination({ page, totalPages, searchParams }) {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Jost:wght@300;400&display=swap');
         .pg-wrap { display: flex; align-items: center; justify-content: center; gap: 0.4rem; margin-top: 3rem; flex-wrap: wrap; font-family: 'Jost', sans-serif; }
-        .pg-btn { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 0.82rem; border: 1px solid rgba(196,69,105,0.15); color: rgba(245,230,232,0.45); text-decoration: none; transition: all 0.2s; background: rgba(255,255,255,0.02); }
+        .pg-btn { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 0.82rem; border: 1px solid rgba(196,69,105,0.15); color: rgba(245,230,232,0.6); text-decoration: none; transition: all 0.2s; background: rgba(255,255,255,0.02); }
         .pg-btn:hover { border-color: rgba(196,69,105,0.4); color: rgba(245,230,232,0.85); background: rgba(196,69,105,0.07); }
         .pg-btn.active { background: linear-gradient(135deg, #8b1a2e, #c44569); border-color: transparent; color: #f5e6e8; }
         .pg-btn.off { opacity: 0.2; pointer-events: none; }
-        .pg-dots { color: rgba(245,230,232,0.2); font-size: 0.75rem; padding: 0 0.2rem; }
-        .pg-info { font-size: 0.68rem; color: rgba(245,230,232,0.2); letter-spacing: 0.08em; margin-left: 0.5rem; }
+        .pg-dots { color: rgba(245,230,232,0.6); font-size: 0.75rem; padding: 0 0.2rem; }
+        .pg-info { font-size: 0.68rem; color: rgba(245,230,232,0.6); letter-spacing: 0.08em; margin-left: 0.5rem; }
       `}</style>
       <nav className="pg-wrap">
         <Link href={buildUrl(page - 1)} className={`pg-btn ${page <= 1 ? 'off' : ''}`}>←</Link>
@@ -106,7 +106,7 @@ export default async function WinesPage({ searchParams }) {
         .wl-page { min-height: 100vh; background: #0d0608; padding: 5rem 1.5rem 4rem; font-family: 'Jost', sans-serif; }
         .wl-inner { max-width: 1200px; margin: 0 auto; }
         .wl-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
-        .wl-eyebrow { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.2em; color: #c44569; margin-bottom: 0.3rem; }
+        .wl-eyebrow { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.2em; color: #d97a95; margin-bottom: 0.3rem; }
         .wl-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.8rem, 3vw, 2.8rem); font-weight: 300; color: #f5e6e8; line-height: 1; }
         .wl-actions { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
         .wl-btn-add {
@@ -120,10 +120,10 @@ export default async function WinesPage({ searchParams }) {
         .wl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.25rem; }
         .wl-empty { text-align: center; padding: 5rem 2rem; }
         .wl-empty-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.3; }
-        .wl-empty-title { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; font-weight: 300; color: rgba(245,230,232,0.45); margin-bottom: 0.5rem; }
-        .wl-empty-sub { font-size: 0.82rem; color: rgba(245,230,232,0.25); font-weight: 300; margin-bottom: 2rem; }
+        .wl-empty-title { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; font-weight: 300; color: rgba(245,230,232,0.6); margin-bottom: 0.5rem; }
+        .wl-empty-sub { font-size: 0.82rem; color: rgba(245,230,232,0.6); font-weight: 300; margin-bottom: 2rem; }
         .wl-btn-empty { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.7rem 1.35rem; background: linear-gradient(135deg, #8b1a2e, #c44569); color: #f5e6e8; text-decoration: none; border-radius: 10px; font-size: 0.8rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; }
-        .wl-error { padding: 1.25rem 1.5rem; border-radius: 10px; background: rgba(220,80,80,0.08); border: 1px solid rgba(220,80,80,0.2); color: rgba(220,80,80,0.8); font-size: 0.85rem; font-weight: 300; }
+        .wl-error { padding: 1.25rem 1.5rem; border-radius: 10px; background: rgba(220,80,80,0.08); border: 1px solid rgba(220,80,80,0.2); color: #e06b6b; font-size: 0.85rem; font-weight: 300; }
         @media (max-width: 640px) { .wl-page { padding: 1rem 1rem 3rem; } .wl-actions { width: 100%; justify-content: flex-end; } }
       `}</style>
 
@@ -141,6 +141,7 @@ export default async function WinesPage({ searchParams }) {
           </div>
 
           <FollowUpBanner items={followUps} />
+          <p style={{ margin: '0 0 1rem', fontSize: '0.85rem' }}><Link href="/pairing" style={{ color: '#d97a95' }}>🍽️ Ce gătesc azi? Alege vinul după mâncare →</Link> · <Link href="/sommelier" style={{ color: '#d97a95' }}>🤵 Întreabă Sommelierul</Link></p>
           <WineFilters countries={countries} totalResults={total} />
           <SavedFilters initial={savedFilters} />
 

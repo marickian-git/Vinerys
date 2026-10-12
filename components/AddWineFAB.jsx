@@ -3,12 +3,13 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { appPath } from "@/utils/appPath";
+import { scanLabel } from "@/utils/scanClient";
 
 export default function AddWineFAB() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [scanning, setScanning] = useState(false);
+  const [stage, setStage] = useState("Analizez eticheta...");
   const cameraRef = useRef(null);
   const galleryRef = useRef(null);
 
@@ -36,19 +37,12 @@ export default function AddWineFAB() {
         r.readAsDataURL(file);
       });
 
-      const response = await fetch(appPath("/api/ai-scan"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          imageBase64: base64,
-          mimeType: file.type,
-          createWine: false,
-        }),
+      const { ok, result } = await scanLabel({ imageBase64: base64, mimeType: file.type }, (label) => {
+        setStage(label);
+        toast.loading(label, { id: toastId });
       });
 
-      const result = await response.json();
-
-      if (!response.ok || result.error) {
+      if (!ok) {
         throw new Error(
           result.error?.includes("IDENTIFICATION_FAILED")
             ? "Nu am putut identifica suficient vinul din această fotografie. Încearcă o fotografie mai clară sau completează manual."
@@ -71,6 +65,7 @@ export default function AddWineFAB() {
       toast.error(err.message || "Eroare la analizarea etichetei");
     } finally {
       setScanning(false);
+      setStage("Analizez eticheta...");
       if (cameraRef.current) cameraRef.current.value = "";
       if (galleryRef.current) galleryRef.current.value = "";
     }
@@ -265,9 +260,9 @@ export default function AddWineFAB() {
       </div>
 
       {scanning && (
-        <div className="fab-scanning-indicator">
+        <div className="fab-scanning-indicator" role="status">
           <div className="fab-scan-spinner" />
-          Analizez eticheta...
+          {stage}
         </div>
       )}
     </>

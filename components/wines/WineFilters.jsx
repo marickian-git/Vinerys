@@ -109,7 +109,7 @@ export default function WineFilters({ countries = [], totalResults = 0 }) {
         .wf-search-btn {
           padding: 0 0.9rem;
           background: rgba(196,69,105,0.12); border: 1px solid rgba(196,69,105,0.15); border-left: none;
-          border-radius: 0 8px 8px 0; color: rgba(196,69,105,0.8);
+          border-radius: 0 8px 8px 0; color: #d97a95;
           cursor: pointer; font-size: 0.85rem; transition: all 0.2s;
         }
         .wf-search-btn:hover { background: rgba(196,69,105,0.22); }
@@ -128,7 +128,7 @@ export default function WineFilters({ countries = [], totalResults = 0 }) {
         .wf-advanced-btn {
           padding: 0.65rem 0.9rem; background: transparent;
           border: 1px solid rgba(196,69,105,0.15); border-radius: 8px;
-          color: rgba(245,230,232,0.4); font-family: 'Jost', sans-serif;
+          color: rgba(245,230,232,0.6); font-family: 'Jost', sans-serif;
           font-size: 0.75rem; letter-spacing: 0.06em; cursor: pointer;
           transition: all 0.2s; white-space: nowrap;
           display: flex; align-items: center; gap: 0.4rem;
@@ -150,7 +150,7 @@ export default function WineFilters({ countries = [], totalResults = 0 }) {
 
         .wf-adv-label {
           display: block; font-size: 0.62rem; text-transform: uppercase;
-          letter-spacing: 0.13em; color: rgba(245,230,232,0.3);
+          letter-spacing: 0.13em; color: rgba(245,230,232,0.6);
           margin-bottom: 0.4rem; font-weight: 400;
         }
         .wf-adv-input {
@@ -164,19 +164,19 @@ export default function WineFilters({ countries = [], totalResults = 0 }) {
         .wf-adv-input::placeholder { color: rgba(245,230,232,0.15); }
 
         .wf-stars { display: flex; gap: 3px; padding: 0.55rem 0; }
-        .wf-star { font-size: 1.15rem; cursor: pointer; color: rgba(245,230,232,0.15); transition: all 0.15s; line-height: 1; }
+        .wf-star { background: none; border: 0; padding: 0; font-size: 1.15rem; cursor: pointer; color: rgba(245,230,232,0.6); transition: all 0.15s; line-height: 1; }
         .wf-star.on, .wf-star:hover { color: #d4af37; }
         .wf-star:hover { transform: scale(1.2); }
 
         .wf-fav-btn {
           width: 100%; padding: 0.55rem 0.75rem; cursor: pointer;
           background: rgba(255,255,255,0.03); border: 1px solid rgba(196,69,105,0.12);
-          border-radius: 7px; color: rgba(245,230,232,0.4);
+          border-radius: 7px; color: rgba(245,230,232,0.6);
           font-family: 'Jost', sans-serif; font-size: 0.8rem; font-weight: 300;
           transition: all 0.2s; text-align: left;
         }
         .wf-fav-btn:hover { border-color: rgba(196,69,105,0.3); }
-        .wf-fav-btn.on { border-color: rgba(196,69,105,0.35); color: #c44569; background: rgba(196,69,105,0.07); }
+        .wf-fav-btn.on { border-color: rgba(196,69,105,0.35); color: #d97a95; background: rgba(196,69,105,0.07); }
 
         .wf-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.65rem; align-items: center; }
         .wf-tag {
@@ -185,15 +185,15 @@ export default function WineFilters({ countries = [], totalResults = 0 }) {
           background: rgba(196,69,105,0.1); border: 1px solid rgba(196,69,105,0.2);
           border-radius: 20px; color: rgba(245,230,232,0.65); font-family: 'Jost', sans-serif;
         }
-        .wf-tag-x { cursor: pointer; opacity: 0.5; transition: opacity 0.15s; line-height: 1; }
-        .wf-tag-x:hover { opacity: 1; color: #c44569; }
-        .wf-clear { font-size: 0.68rem; color: rgba(196,69,105,0.6); background: none; border: none; cursor: pointer; font-family: 'Jost', sans-serif; text-decoration: underline; text-underline-offset: 2px; transition: color 0.2s; }
-        .wf-clear:hover { color: #c44569; }
+        .wf-tag-x { background: none; border: 0; padding: 0; color: inherit; font: inherit; cursor: pointer; opacity: 0.75; transition: opacity 0.15s; line-height: 1; }
+        .wf-tag-x:hover { opacity: 1; color: #d97a95; }
+        .wf-clear { font-size: 0.68rem; color: #d97a95; background: none; border: none; cursor: pointer; font-family: 'Jost', sans-serif; text-decoration: underline; text-underline-offset: 2px; transition: color 0.2s; }
+        .wf-clear:hover { color: #d97a95; }
 
         .wf-row2 { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; }
         .wf-row2-left { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
-        .wf-count { font-size: 0.72rem; color: rgba(245,230,232,0.25); }
-        .wf-count b { color: rgba(245,230,232,0.5); font-weight: 400; }
+        .wf-count { font-size: 0.72rem; color: rgba(245,230,232,0.6); }
+        .wf-count b { color: rgba(245,230,232,0.6); font-weight: 400; }
 
         @media (max-width: 640px) {
           .wf-search-form { min-width: 100%; }
@@ -210,11 +210,11 @@ export default function WineFilters({ countries = [], totalResults = 0 }) {
             <button type="submit" className="wf-search-btn">🔍</button>
           </form>
 
-          <select className="wf-select" value={type} onChange={e => { setType(e.target.value); push({ type: e.target.value }); }}>
+          <select className="wf-select" aria-label="Tip vin" value={type} onChange={e => { setType(e.target.value); push({ type: e.target.value }); }}>
             {WINE_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
           </select>
 
-          <select className="wf-select" value={status} onChange={e => { setStatus(e.target.value); push({ status: e.target.value }); }}>
+          <select className="wf-select" aria-label="Status" value={status} onChange={e => { setStatus(e.target.value); push({ status: e.target.value }); }}>
             {STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
           </select>
 
@@ -229,44 +229,45 @@ export default function WineFilters({ countries = [], totalResults = 0 }) {
         {advancedOpen && (
           <div className="wf-advanced">
             <div>
-              <label className="wf-adv-label">Țară</label>
+              <label className="wf-adv-label" htmlFor="wf-filter-country">Țară</label>
               {countries.length > 0 ? (
-                <select className="wf-select wf-adv-input" style={{ padding: '0.55rem 2rem 0.55rem 0.75rem' }} value={country} onChange={e => { setCountry(e.target.value); push({ country: e.target.value }); }}>
+                <select id="wf-filter-country" className="wf-select wf-adv-input" style={{ padding: '0.55rem 2rem 0.55rem 0.75rem' }} value={country} onChange={e => { setCountry(e.target.value); push({ country: e.target.value }); }}>
                   <option value="">Toate</option>
                   {countries.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               ) : (
-                <input className="wf-adv-input" placeholder="ex. România" value={country} onChange={e => setCountry(e.target.value)} onBlur={() => push({ country })} />
+                <input id="wf-filter-country" className="wf-adv-input" placeholder="ex. România" value={country} onChange={e => setCountry(e.target.value)} onBlur={() => push({ country })} />
               )}
             </div>
 
             <div>
-              <label className="wf-adv-label">An de la</label>
-              <input type="number" className="wf-adv-input" placeholder="ex. 2010" min="1800" max="2030" value={vintageMin} onChange={e => setVintageMin(e.target.value)} onBlur={() => push({ vintageMin })} />
+              <label className="wf-adv-label" htmlFor="wf-filter-vmin">An de la</label>
+              <input type="number" id="wf-filter-vmin" className="wf-adv-input" placeholder="ex. 2010" min="1800" max="2030" value={vintageMin} onChange={e => setVintageMin(e.target.value)} onBlur={() => push({ vintageMin })} />
             </div>
 
             <div>
-              <label className="wf-adv-label">An până la</label>
-              <input type="number" className="wf-adv-input" placeholder="ex. 2022" min="1800" max="2030" value={vintageMax} onChange={e => setVintageMax(e.target.value)} onBlur={() => push({ vintageMax })} />
+              <label className="wf-adv-label" htmlFor="wf-filter-vmax">An până la</label>
+              <input type="number" id="wf-filter-vmax" className="wf-adv-input" placeholder="ex. 2022" min="1800" max="2030" value={vintageMax} onChange={e => setVintageMax(e.target.value)} onBlur={() => push({ vintageMax })} />
             </div>
 
             <div>
-              <label className="wf-adv-label">Preț maxim</label>
-              <input type="number" className="wf-adv-input" placeholder="ex. 100" min="0" value={priceMax} onChange={e => setPriceMax(e.target.value)} onBlur={() => push({ priceMax })} />
+              <label className="wf-adv-label" htmlFor="wf-filter-price">Preț maxim</label>
+              <input type="number" id="wf-filter-price" className="wf-adv-input" placeholder="ex. 100" min="0" value={priceMax} onChange={e => setPriceMax(e.target.value)} onBlur={() => push({ priceMax })} />
             </div>
 
             <div>
-              <label className="wf-adv-label">Rating minim</label>
-              <div className="wf-stars">
+              <span className="wf-adv-label" id="wf-filter-rating">Rating minim</span>
+              <div className="wf-stars" role="group" aria-labelledby="wf-filter-rating">
                 {[1,2,3,4,5].map(n => (
-                  <span key={n} className={`wf-star ${parseInt(ratingMin) >= n ? 'on' : ''}`}
-                    onClick={() => { const v = ratingMin == n ? '' : String(n); setRatingMin(v); push({ ratingMin: v }); }}>★</span>
+                  <button type="button" key={n} className={`wf-star ${parseInt(ratingMin) >= n ? 'on' : ''}`}
+                    aria-label={`Minim ${n} ${n === 1 ? 'stea' : 'stele'}`} aria-pressed={ratingMin == n}
+                    onClick={() => { const v = ratingMin == n ? '' : String(n); setRatingMin(v); push({ ratingMin: v }); }}>★</button>
                 ))}
               </div>
             </div>
 
             <div>
-              <label className="wf-adv-label">Favorite</label>
+              <span className="wf-adv-label">Favorite</span>
               <button type="button" className={`wf-fav-btn ${isFavorite ? 'on' : ''}`}
                 onClick={() => { const v = isFavorite ? '' : 'true'; setIsFavorite(v); push({ isFavorite: v }); }}>
                 {isFavorite ? '❤️ Doar favorite' : '🤍 Toate vinurile'}
@@ -281,7 +282,7 @@ export default function WineFilters({ countries = [], totalResults = 0 }) {
             {activeTags.map(tag => (
               <div key={tag.key} className="wf-tag">
                 <span>{tag.label}</span>
-                <span className="wf-tag-x" onClick={tag.clear}>✕</span>
+                <button type="button" className="wf-tag-x" onClick={tag.clear} aria-label={`Elimină filtrul ${tag.label}`}>✕</button>
               </div>
             ))}
             <button className="wf-clear" onClick={clearAll}>Șterge tot</button>
@@ -291,18 +292,18 @@ export default function WineFilters({ countries = [], totalResults = 0 }) {
         {/* Row 2: sort + page size + count */}
         <div className="wf-row2">
           <div className="wf-row2-left">
-            <select className="wf-select" style={{ fontSize: '0.75rem' }} value={sort}
+            <select className="wf-select" aria-label="Sortare" style={{ fontSize: '0.75rem' }} value={sort}
               onChange={e => { setSort(e.target.value); push({ sort: e.target.value }); }}>
               {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
-            <select className="wf-select" style={{ fontSize: '0.75rem' }} value={pageSize}
+            <select className="wf-select" aria-label="Vinuri pe pagină" style={{ fontSize: '0.75rem' }} value={pageSize}
               onChange={e => { setPageSize(e.target.value); push({ pageSize: e.target.value }); }}>
               {PAGE_SIZES.map(n => <option key={n} value={n}>{n} / pagină</option>)}
             </select>
           </div>
           <div className="wf-count">
             <b>{totalResults}</b> {totalResults === 1 ? 'vin' : 'vinuri'}
-            {isPending && <span style={{ marginLeft: '0.5rem', color: 'rgba(196,69,105,0.5)' }}>···</span>}
+            {isPending && <span style={{ marginLeft: '0.5rem', color: '#d97a95' }}>···</span>}
           </div>
         </div>
 

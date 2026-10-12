@@ -11,7 +11,7 @@ export default function BadgeGrid({ badges = [], challenge = null }) {
       )}
       <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '0.75rem' }}>
         {badges.map((badge) => (
-          <li key={badge.id} style={{ padding: '0.9rem', borderRadius: 12, border: `1px solid ${TIER_COLORS[badge.level]}`, background: 'rgba(255,255,255,0.02)', opacity: badge.level ? 1 : 0.7 }}>
+          <li key={badge.id} style={{ padding: '0.9rem', borderRadius: 12, border: `1px ${badge.level ? 'solid' : 'dashed'} ${TIER_COLORS[badge.level]}`, background: 'rgba(255,255,255,0.02)' }}>
             <div aria-hidden="true" style={{ fontSize: '1.6rem' }}>{badge.icon}</div>
             <div style={{ fontWeight: 500, fontSize: '0.88rem', marginTop: 4 }}>{badge.name}</div>
             <div style={{ fontSize: '0.72rem', color: TIER_COLORS[badge.level] === TIER_COLORS[0] ? 'rgba(245,230,232,0.6)' : TIER_COLORS[badge.level] }}>
@@ -21,7 +21,7 @@ export default function BadgeGrid({ badges = [], challenge = null }) {
               style={{ height: 4, borderRadius: 2, background: 'rgba(245,230,232,0.12)', marginTop: 8 }}>
               <div style={{ width: `${badge.progress * 100}%`, height: 4, borderRadius: 2, background: '#c44569' }} />
             </div>
-            <div style={{ fontSize: '0.7rem', color: 'rgba(245,230,232,0.55)', marginTop: 6 }}>{badge.description}</div>
+            <div style={{ fontSize: '0.7rem', color: 'rgba(245,230,232,0.6)', marginTop: 6 }}>{badge.description}</div>
           </li>
         ))}
       </ul>

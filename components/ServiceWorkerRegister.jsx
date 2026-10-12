@@ -8,7 +8,10 @@ export default function ServiceWorkerRegister() {
         .getRegistrations()
         .then((registrations) =>
           Promise.all(
-            registrations.map((registration) => registration.unregister()),
+            // push-sw.js (notificări, fără cache) rămâne înregistrat; restul se curăță
+            registrations
+              .filter((registration) => !registration.active?.scriptURL.endsWith("/push-sw.js"))
+              .map((registration) => registration.unregister()),
           ),
         )
         // Cache-urile vechi pot conține pagini private (dashboard, colecție) — le ștergem

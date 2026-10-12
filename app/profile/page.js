@@ -1,4 +1,5 @@
-import { getProfile, getDashboardStats, getBadges } from '@/utils/actions';
+import { getProfile, getDashboardStats, getBadges, getTasteProfile } from '@/utils/actions';
+import TasteProfile from '@/components/profile/TasteProfile';
 import BadgeGrid from '@/components/profile/BadgeGrid';
 import { formatMoney } from '@/utils/currency';
 import Link from 'next/link';
@@ -14,9 +15,10 @@ export default async function ProfilePage() {
   let profile = null;
   let stats = { totalBottles: 0, totalWines: 0, totalValue: 0 };
   let badges = { badges: [], challenge: null };
+  let taste = null;
 
   try {
-    [profile, stats, badges] = await Promise.all([getProfile(), getDashboardStats(), getBadges()]);
+    [profile, stats, badges, taste] = await Promise.all([getProfile(), getDashboardStats(), getBadges(), getTasteProfile()]);
   } catch { }
 
   if (!profile) return null;
@@ -35,7 +37,7 @@ export default async function ProfilePage() {
         .prof-page { min-height: 100vh; background: #0d0608; padding: 6rem 1.5rem 4rem; font-family: 'Jost', sans-serif; }
         .prof-inner { max-width: 900px; margin: 0 auto; }
 
-        .prof-back { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.12em; color: rgba(245,230,232,0.3); text-decoration: none; margin-bottom: 2rem; transition: color 0.2s; }
+        .prof-back { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.12em; color: rgba(245,230,232,0.6); text-decoration: none; margin-bottom: 2rem; transition: color 0.2s; }
         .prof-back:hover { color: rgba(245,230,232,0.65); }
 
         /* Hero card */
@@ -101,8 +103,8 @@ export default async function ProfilePage() {
           line-height: 1.1;
           margin-bottom: 0.25rem;
         }
-        .prof-email { font-size: 0.82rem; color: rgba(245,230,232,0.35); font-weight: 300; margin-bottom: 0.75rem; }
-        .prof-join { font-size: 0.7rem; color: rgba(245,230,232,0.2); text-transform: uppercase; letter-spacing: 0.12em; }
+        .prof-email { font-size: 0.82rem; color: rgba(245,230,232,0.6); font-weight: 300; margin-bottom: 0.75rem; }
+        .prof-join { font-size: 0.7rem; color: rgba(245,230,232,0.6); text-transform: uppercase; letter-spacing: 0.12em; }
 
         .prof-actions { display: flex; gap: 0.65rem; flex-shrink: 0; flex-wrap: wrap; }
         .prof-btn-edit {
@@ -120,7 +122,7 @@ export default async function ProfilePage() {
           padding: 0.6rem 1.1rem;
           background: transparent;
           border: 1px solid rgba(196,69,105,0.2);
-          color: rgba(245,230,232,0.5); text-decoration: none;
+          color: rgba(245,230,232,0.6); text-decoration: none;
           border-radius: 8px; font-size: 0.75rem;
           letter-spacing: 0.1em; text-transform: uppercase;
           transition: all 0.2s; white-space: nowrap;
@@ -153,7 +155,7 @@ export default async function ProfilePage() {
           color: #f5e6e8; line-height: 1;
           margin-bottom: 0.35rem;
         }
-        .prof-stat-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.15em; color: rgba(245,230,232,0.3); }
+        .prof-stat-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.15em; color: rgba(245,230,232,0.6); }
 
         /* Edit form card */
         .prof-card {
@@ -165,7 +167,7 @@ export default async function ProfilePage() {
         }
         .prof-card-title {
           font-size: 0.68rem; text-transform: uppercase;
-          letter-spacing: 0.18em; color: #c44569;
+          letter-spacing: 0.18em; color: #d97a95;
           font-weight: 400; margin-bottom: 1.25rem;
           padding-bottom: 0.75rem;
           border-bottom: 1px solid rgba(196,69,105,0.1);
@@ -206,7 +208,11 @@ export default async function ProfilePage() {
             <div className="prof-actions">
               <Link href="/settings" className="prof-btn-edit">⚙️ Setări</Link>
               <Link href="/wines" className="prof-btn-settings">🍷 Colecție</Link>
+              <Link href="/sommelier" className="prof-btn-settings">🤵 Sommelier</Link>
+              <Link href="/pairing" className="prof-btn-settings">🍽️ Ce gătesc azi?</Link>
               <Link href="/planner" className="prof-btn-settings">🗓️ Plan de consum</Link>
+              <Link href="/value" className="prof-btn-settings">📈 Valoare</Link>
+              <Link href="/lists" className="prof-btn-settings">📝 Liste</Link>
               <Link href="/tastings" className="prof-btn-settings">📓 Degustări</Link>
               <Link href="/wrapped" className="prof-btn-settings">✨ Wrapped</Link>
             </div>
@@ -229,6 +235,11 @@ export default async function ProfilePage() {
           </div>
 
           {/* Edit profile form */}
+          <div className="prof-card">
+            <div className="prof-card-title">Profilul tău de gust</div>
+            <TasteProfile data={taste} />
+          </div>
+
           <div className="prof-card">
             <div className="prof-card-title">Badge-uri</div>
             <BadgeGrid badges={badges.badges} challenge={badges.challenge} />

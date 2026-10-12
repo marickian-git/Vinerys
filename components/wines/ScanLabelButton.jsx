@@ -2,10 +2,11 @@
 
 import { useState, useRef } from "react";
 import toast from "react-hot-toast";
-import { appPath } from "@/utils/appPath";
+import { scanLabel } from "@/utils/scanClient";
 
 export default function ScanLabelButton({ onScan }) {
   const [scanning, setScanning] = useState(false);
+  const [stage, setStage] = useState("Analizez...");
   const [preview, setPreview] = useState(null);
   const inputRef = useRef(null);
 
@@ -37,19 +38,12 @@ export default function ScanLabelButton({ onScan }) {
         r.readAsDataURL(file);
       });
 
-      const response = await fetch(appPath("/api/ai-scan"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          imageBase64: base64,
-          mimeType: file.type,
-          createWine: false,
-        }),
+      const { ok, result } = await scanLabel({ imageBase64: base64, mimeType: file.type }, (label) => {
+        setStage(label);
+        toast.loading(label, { id: toastId });
       });
 
-      const result = await response.json();
-
-      if (!response.ok || result.error) {
+      if (!ok) {
         const providerDetails = (result.providerErrors || [])
           .map(
             (item) =>
@@ -72,6 +66,7 @@ export default function ScanLabelButton({ onScan }) {
       setPreview(null);
     } finally {
       setScanning(false);
+      setStage("Analizez...");
       if (inputRef.current) inputRef.current.value = "";
     }
   };
@@ -99,7 +94,7 @@ export default function ScanLabelButton({ onScan }) {
         .scan-btn:disabled { opacity: 0.6; cursor: wait; }
 
         .scan-hint {
-          font-size: 0.68rem; color: rgba(245,230,232,0.25);
+          font-size: 0.68rem; color: rgba(245,230,232,0.6);
           text-align: center; margin-top: 0.5rem; line-height: 1.5;
         }
 
@@ -142,6 +137,7 @@ export default function ScanLabelButton({ onScan }) {
           type="file"
           accept="image/*"
           capture="environment"
+          aria-label="Poză cu eticheta"
           style={{ display: "none" }}
           onChange={(e) => handleFile(e.target.files?.[0])}
         />
@@ -174,7 +170,7 @@ export default function ScanLabelButton({ onScan }) {
             {scanning && (
               <div className="scan-overlay">
                 <div className="scan-spinner" />
-                <span className="scan-overlay-text">Analizez...</span>
+                <span className="scan-overlay-text" role="status">{stage}</span>
               </div>
             )}
           </div>

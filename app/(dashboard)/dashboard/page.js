@@ -206,9 +206,9 @@ export default async function DashboardPage() {
 
         /* ── Header ── */
         .db-header  { margin-bottom:2rem; }
-        .db-eyebrow { font-size:.7rem; text-transform:uppercase; letter-spacing:.2em; color:#c44569; margin-bottom:.4rem; }
+        .db-eyebrow { font-size:.7rem; text-transform:uppercase; letter-spacing:.2em; color:#d97a95; margin-bottom:.4rem; }
         .db-title   { font-family:'Cormorant Garamond',serif; font-size:clamp(2rem,4vw,3rem); font-weight:300; color:#f5e6e8; line-height:1; letter-spacing:-.02em; }
-        .db-sub     { font-size:.82rem; color:rgba(245,230,232,.35); font-weight:300; margin-top:.4rem; }
+        .db-sub     { font-size:.82rem; color:rgba(245,230,232,0.6); font-weight:300; margin-top:.4rem; }
         .db-divider { height:1px; background:linear-gradient(to right,rgba(196,69,105,.3),transparent); margin-bottom:2rem; }
 
         /* ── KPI grid ── */
@@ -274,7 +274,7 @@ export default async function DashboardPage() {
           font-size:.62rem;
           text-transform:uppercase;
           letter-spacing:.18em;
-          color:rgba(245,230,232,.3);
+          color:rgba(245,230,232,0.6);
           font-weight:400;
           line-height:1.3;
           max-width:70%;
@@ -346,7 +346,7 @@ export default async function DashboardPage() {
           font-size:.65rem;
           text-transform:uppercase;
           letter-spacing:.18em;
-          color:#c44569;
+          color:#d97a95;
           font-weight:400;
           margin-bottom:1.25rem;
           padding-bottom:.75rem;
@@ -357,16 +357,16 @@ export default async function DashboardPage() {
         }
         .db-card-link {
           font-size:.65rem;
-          color:rgba(196,69,105,.5);
+          color:#d97a95;
           text-decoration:none;
           letter-spacing:.08em;
           display:flex; align-items:center; gap:3px;
           transition:color .2s;
         }
-        .db-card-link:hover { color:#c44569; }
+        .db-card-link:hover { color:#d97a95; }
         .db-card-aside {
           font-size:.65rem;
-          color:rgba(245,230,232,.2);
+          color:rgba(245,230,232,0.6);
           letter-spacing:.05em;
         }
 
@@ -470,7 +470,7 @@ export default async function DashboardPage() {
         }
         .db-urgent-sub {
           font-size:.68rem;
-          color:rgba(245,230,232,.3);
+          color:rgba(245,230,232,0.6);
           margin-top:.1rem;
         }
         .db-urgent-badge {
@@ -491,8 +491,8 @@ export default async function DashboardPage() {
         .db-bars      { display:flex; flex-direction:column; gap:.75rem; }
         .db-bar-row   { display:flex; flex-direction:column; gap:.3rem; }
         .db-bar-top   { display:flex; justify-content:space-between; align-items:center; }
-        .db-bar-label { font-size:.75rem; color:rgba(245,230,232,.5); font-weight:300; }
-        .db-bar-count { font-size:.75rem; color:rgba(245,230,232,.35); }
+        .db-bar-label { font-size:.75rem; color:rgba(245,230,232,0.6); font-weight:300; }
+        .db-bar-count { font-size:.75rem; color:rgba(245,230,232,0.6); }
         .db-bar-track { height:3px; background:rgba(255,255,255,.05); border-radius:2px; overflow:hidden; }
         .db-bar-fill  { height:100%; border-radius:2px; }
 
@@ -500,9 +500,9 @@ export default async function DashboardPage() {
         .db-status-list { display:flex; flex-direction:column; gap:.8rem; }
         .db-status-item { display:flex; align-items:center; gap:.75rem; }
         .db-status-dot  { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
-        .db-status-name { font-size:.78rem; color:rgba(245,230,232,.5); font-weight:300; flex:1; }
+        .db-status-name { font-size:.78rem; color:rgba(245,230,232,0.6); font-weight:300; flex:1; }
         .db-status-num  { font-family:'Cormorant Garamond',serif; font-size:1.1rem; font-weight:600; color:#f5e6e8; }
-        .db-status-pct  { font-size:.68rem; color:rgba(245,230,232,.25); margin-left:.3rem; }
+        .db-status-pct  { font-size:.68rem; color:rgba(245,230,232,0.6); margin-left:.3rem; }
 
         /* ── Monthly chart ── */
         .db-line-chart   { display:flex; align-items:flex-end; gap:3px; height:80px; padding-top:.5rem; }
@@ -511,27 +511,27 @@ export default async function DashboardPage() {
         .db-line-bar:hover .db-line-tooltip { opacity:1; }
         .db-line-tooltip { position:absolute; bottom:105%; left:50%; transform:translateX(-50%); background:rgba(13,6,8,.95); border:1px solid rgba(196,69,105,.2); color:#f5e6e8; font-size:.65rem; padding:2px 6px; border-radius:4px; white-space:nowrap; opacity:0; pointer-events:none; transition:opacity .15s; }
         .db-line-labels  { display:flex; gap:3px; margin-top:.4rem; }
-        .db-line-label   { flex:1; font-size:.52rem; color:rgba(245,230,232,.2); text-align:center; overflow:hidden; }
+        .db-line-label   { flex:1; font-size:.52rem; color:rgba(245,230,232,0.6); text-align:center; overflow:hidden; }
 
         /* ── Top wines ── */
         .db-top-list { display:flex; flex-direction:column; }
         .db-top-item { display:flex; align-items:center; gap:.75rem; padding:.55rem 0; border-bottom:1px solid rgba(255,255,255,.03); text-decoration:none; }
         .db-top-item:last-child { border-bottom:none; }
-        .db-top-rank { font-family:'Cormorant Garamond',serif; font-size:1.1rem; font-weight:600; color:rgba(196,69,105,.35); width:1.4rem; flex-shrink:0; text-align:center; }
+        .db-top-rank { font-family:'Cormorant Garamond',serif; font-size:1.1rem; font-weight:600; color:#d97a95; width:1.4rem; flex-shrink:0; text-align:center; }
         .db-top-img  { width:34px; height:34px; border-radius:6px; object-fit:cover; background:rgba(196,69,105,.08); flex-shrink:0; display:flex; align-items:center; justify-content:center; }
         .db-top-info { flex:1; min-width:0; }
         .db-top-name { font-size:.82rem; color:#f5e6e8; font-weight:400; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-        .db-top-meta { font-size:.68rem; color:rgba(245,230,232,.3); font-weight:300; margin-top:.1rem; }
+        .db-top-meta { font-size:.68rem; color:rgba(245,230,232,0.6); font-weight:300; margin-top:.1rem; }
 
         /* ── Price stats ── */
         .db-price-grid  { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; }
         .db-price-item  { background:rgba(255,255,255,.025); border:1px solid rgba(196,69,105,.07); border-radius:10px; padding:.8rem 1rem; }
         .db-price-val   { font-family:'Cormorant Garamond',serif; font-size:1.55rem; font-weight:600; color:#f5e6e8; line-height:1; }
-        .db-price-lbl   { font-size:.62rem; text-transform:uppercase; letter-spacing:.12em; color:rgba(245,230,232,.25); margin-top:.2rem; }
+        .db-price-lbl   { font-size:.62rem; text-transform:uppercase; letter-spacing:.12em; color:rgba(245,230,232,0.6); margin-top:.2rem; }
         .db-price-best  { margin-top:.9rem; padding-top:.9rem; border-top:1px solid rgba(196,69,105,.07); }
-        .db-price-best-lbl  { font-size:.62rem; text-transform:uppercase; letter-spacing:.12em; color:rgba(245,230,232,.25); margin-bottom:.35rem; }
+        .db-price-best-lbl  { font-size:.62rem; text-transform:uppercase; letter-spacing:.12em; color:rgba(245,230,232,0.6); margin-bottom:.35rem; }
         .db-price-best-name { font-size:.83rem; color:#f5e6e8; text-decoration:none; display:block; }
-        .db-price-best-name:hover { color:#c44569; }
+        .db-price-best-name:hover { color:#d97a95; }
         .db-price-best-val  { font-size:.75rem; color:#d4af37; margin-top:.1rem; }
 
         /* ── Maturity ── */
@@ -541,16 +541,16 @@ export default async function DashboardPage() {
         .db-mat-year  { font-family:'Cormorant Garamond',serif; font-size:1.1rem; font-weight:600; color:#d4af37; width:2.4rem; flex-shrink:0; }
         .db-mat-info  { flex:1; min-width:0; }
         .db-mat-name  { font-size:.82rem; color:#f5e6e8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-        .db-mat-sub   { font-size:.68rem; color:rgba(245,230,232,.3); margin-top:.1rem; }
+        .db-mat-sub   { font-size:.68rem; color:rgba(245,230,232,0.6); margin-top:.1rem; }
         .db-mat-badge { font-size:.62rem; padding:.18rem .5rem; border-radius:20px; white-space:nowrap; flex-shrink:0; }
 
         /* ── Country ── */
         .db-country-list     { display:flex; flex-direction:column; gap:.65rem; }
         .db-country-item     { display:flex; align-items:center; gap:.6rem; }
-        .db-country-name     { font-size:.75rem; color:rgba(245,230,232,.5); width:80px; flex-shrink:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .db-country-name     { font-size:.75rem; color:rgba(245,230,232,0.6); width:80px; flex-shrink:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
         .db-country-bar-wrap { flex:1; height:4px; background:rgba(255,255,255,.05); border-radius:2px; overflow:hidden; }
         .db-country-bar      { height:100%; border-radius:2px; background:linear-gradient(to right,#8b1a2e,#c44569); }
-        .db-country-num      { font-size:.72rem; color:rgba(245,230,232,.35); width:1.5rem; text-align:right; flex-shrink:0; }
+        .db-country-num      { font-size:.72rem; color:rgba(245,230,232,0.6); width:1.5rem; text-align:right; flex-shrink:0; }
 
         /* ── Recent grid ── */
         .db-recent-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; }
@@ -558,7 +558,7 @@ export default async function DashboardPage() {
         /* ── Empty state ── */
         .db-empty      { display:flex; flex-direction:column; align-items:center; padding:2rem 1rem; text-align:center; gap:.6rem; }
         .db-empty-icon { opacity:.2; }
-        .db-empty-text { font-size:.78rem; color:rgba(245,230,232,.25); line-height:1.5; }
+        .db-empty-text { font-size:.78rem; color:rgba(245,230,232,0.6); line-height:1.5; }
 
         /* ── Responsive ── */
         @media (max-width:1024px) {
@@ -781,7 +781,7 @@ export default async function DashboardPage() {
                         <div className="db-top-name">{wine.name}</div>
                         <div className="db-top-meta">
                           <Stars rating={wine.rating} />
-                          <span style={{ marginLeft: '.3rem', color: 'rgba(245,230,232,.25)', fontSize: '.65rem' }}>
+                          <span style={{ marginLeft: '.3rem', color: 'rgba(245,230,232,0.6)', fontSize: '.65rem' }}>
                             {STAR_LABELS[wine.rating]}
                           </span>
                         </div>
@@ -847,7 +847,7 @@ export default async function DashboardPage() {
                       </div>
                       <span className="db-mat-badge" style={{
                         background: 'rgba(85,196,78,.1)',
-                        color: 'rgba(85,196,78,.9)',
+                        color: '#6fbf6a',
                         border: '1px solid rgba(85,196,78,.2)',
                       }}>● Acum!</span>
                     </Link>

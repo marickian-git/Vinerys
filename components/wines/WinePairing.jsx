@@ -56,7 +56,7 @@ export default function WinePairing({ wineId, initialPairing = null }) {
       <button type="button" onClick={() => load(true)} disabled={loading} style={{ ...buttonStyle, fontSize: '0.72rem', padding: '0.4rem 0.8rem' }}>
         {loading ? 'Se regenerează…' : 'Alte sugestii'}
       </button>
-      <span style={{ fontSize: '0.7rem', color: 'rgba(245,230,232,0.5)', marginLeft: '0.6rem' }}>Generat de AI</span>
+      <span style={{ fontSize: '0.7rem', color: 'rgba(245,230,232,0.6)', marginLeft: '0.6rem' }}>Generat de AI</span>
     </div>
   );
 }
