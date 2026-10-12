@@ -12,6 +12,7 @@ import { likePattern, parseSearchQuery } from "./searchQuery";
 import { buildWrapped } from "./wrapped";
 import { pendingFollowUps } from "./followUp";
 import { evaluateBadges, nextChallenge } from "./badges";
+import { buildPlan } from "./planner";
 import { cleanText, dedupeLocations, normalizeAromas, normalizeList, normalizeWineData } from "./normalize";
 import { countsBy, monthlySeries, nearMaturityWines, overdueWines } from "./stats";
 import { CellarNameSchema, PasswordChangeSchema, ProfileInputSchema, firstIssueMessage } from "../schemas/account";
@@ -1162,4 +1163,17 @@ export async function getBadges() {
           AND w."drinkFrom" <= EXTRACT(YEAR FROM l."createdAt") AND w."drinkUntil" >= EXTRACT(YEAR FROM l."createdAt")), 0)::int AS "inWindow"`;
   const badges = evaluateBadges({ ...counts, bottlesConsumed: consumed.logged + consumed.legacy, openedInWindow: consumed.inWindow });
   return { badges, challenge: nextChallenge(badges) };
+}
+
+// ─────────────────────────────────────────
+// PLANIFICATOR DE CONSUM (CELLAR-006)
+// ─────────────────────────────────────────
+
+export async function getConsumptionPlan({ horizon = 10 } = {}) {
+  const user = await getCurrentUser();
+  const wines = await prisma.wine.findMany({
+    where: { userId: user.id, status: 'IN_CELLAR', quantity: { gt: 0 } },
+    select: { id: true, name: true, producer: true, vintage: true, type: true, quantity: true, status: true, drinkFrom: true, drinkUntil: true, agingPotential: true },
+  });
+  return buildPlan(wines, { horizon: Math.min(Math.max(Number(horizon) || 10, 3), 25) });
 }

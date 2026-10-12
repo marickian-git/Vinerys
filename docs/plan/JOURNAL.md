@@ -236,6 +236,15 @@ Pe pagina vinului apare secțiunea „Jurnal de degustare”. Pagina `/tastings`
 - Badge-urile se calculează mereu din date, nu se salvează. Nu trebuie migrare, iar progresul nu se poate desincroniza. Data obținerii lipsește; se poate adăuga cu un `BadgeAward` când vin notificările (#53).
 - „Toate DOC-urile din România” e aproximat prin regiunile românești până la RO-002 (#63).
 
+### #52 CELLAR-006 Planificator de consum
+**Făcut:** `utils/planner.js`:
+- `drinkWindow`, cu fallback pe anii din `agingPotential`, pe care HOME-001 îl cerea și el;
+- `spreadBottles`: distribuție uniformă, sau ciclică dacă sunt mai multe sticle decât ani;
+- `buildPlan`: orizont de 10 ani; depășitele intră în anul curent; „mai târziu” pentru ce trece de orizont; „fără fereastră” separat.
+
+`getConsumptionPlan()` și pagina `/planner` (protejată, link din Profil): grafic pe ani, apoi secțiuni pe ani cu statusul fiecărui vin (trecut de vârf / ultimul an / în fereastră). Teste unit + e2e `tests/e2e/planner.spec.js`.
+**Decizii:** planul e calculat la fiecare afișare, nu salvat. Alocarea manuală a sticlelor pe ani („assign bottles to years”) cere sticle individuale, deci vine cu modelul `Bottle` (#30).
+
 ---
 
 ## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub

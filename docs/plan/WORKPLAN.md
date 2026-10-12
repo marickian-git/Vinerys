@@ -51,7 +51,7 @@ Același flux. Branch-ul a fost repornit din `main` (`137957e`). Un singur merge
 | 19 | #106 | HOME-005 „Deschide sticla” + follow-up | done | `2abf4e1` | „Cum a fost?”: imediat după consum, pe pagina vinului se deschide formularul de degustare. În Pivniță apare un banner pentru sticlele deschise acum 12 h – 7 zile fără degustare („Notează” / „Nu acum”, ținut minte în browser). Consumul cu un tap din recomandarea de pe Acasă rămâne la branch-ul de design (ecranul Acasă e acolo) |
 | 20 | #61 | SOCIAL-005 Badge-uri | done | `efd008a` | 8 badge-uri cu 4 niveluri (Bronz → Platină) calculate din date, fără tabel nou: țări, soiuri, degustări, sticle consumate, pivniță, regiuni românești, deschise în fereastră, scanări AI. Card pe Profil, cu „Următoarea provocare”. „Toate DOC-urile din România” așteaptă baza DOC (RO-002, #63); până atunci se numără regiunile |
 | — | | **Checkpoint 4** | | | |
-| 21 | #52 | CELLAR-006 Planificator de consum | todo | | |
+| 21 | #52 | CELLAR-006 Planificator de consum | done | | Pagina `/planner`: sticlele din pivniță împărțite uniform pe anii ferestrei (orizont de 10 ani), cu cele depășite în anul curent marcate și cele aflate în ultimul an. Vinurile fără fereastră sunt listate separat, cu link de editare. Fallback pe anii din `agingPotential`. Planul e calculat, nu salvat; „assign bottles to years” manual vine cu modelul Bottle (#30) |
 | 22 | #48 | CELLAR-002 QR per sticlă | todo | | |
 | 23 | #87 | AI-012 Chei de platformă + cote | todo | | |
 | 24 | #84 | ARCH-008 API REST /api/v1 | todo | | |
