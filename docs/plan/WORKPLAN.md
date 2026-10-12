@@ -49,7 +49,7 @@ Același flux. Branch-ul a fost repornit din `main` (`137957e`). Un singur merge
 | 17 | #31 | DATA-003 Modelul Tasting | done | | Model `Tasting` (migrație + valoarea `TASTED` în `LogAction`): vin, dată, rating, ocazie, oameni, mâncare, loc, note, poze, arome. Aditiv, fără să atingă `Wine`; primește `bottleId` când vine #30. `Wine.rating` = media degustărilor. CRUD în actions + `schemas/tasting.js`; export GDPR include degustările și filtrele salvate |
 | 18 | #49 | CELLAR-003 Jurnal de degustare | done | | Secțiunea „Jurnal de degustare” pe pagina vinului (formular cu stele, ocazie, oameni, mâncare, loc, arome, note, poză) + pagina `/tastings` cu toate degustările și ratingul mediu. Link din Profil. O singură poză per degustare în UI (modelul acceptă 6) |
 | 19 | #106 | HOME-005 „Deschide sticla” + follow-up | done | | „Cum a fost?”: imediat după consum, pe pagina vinului se deschide formularul de degustare. În Pivniță apare un banner pentru sticlele deschise acum 12 h – 7 zile fără degustare („Notează” / „Nu acum”, ținut minte în browser). Consumul cu un tap din recomandarea de pe Acasă rămâne la branch-ul de design (ecranul Acasă e acolo) |
-| 20 | #61 | SOCIAL-005 Badge-uri | todo | | |
+| 20 | #61 | SOCIAL-005 Badge-uri | done | | 8 badge-uri cu 4 niveluri (Bronz → Platină) calculate din date, fără tabel nou: țări, soiuri, degustări, sticle consumate, pivniță, regiuni românești, deschise în fereastră, scanări AI. Card pe Profil, cu „Următoarea provocare”. „Toate DOC-urile din România” așteaptă baza DOC (RO-002, #63); până atunci se numără regiunile |
 | — | | **Checkpoint 4** | | | |
 | 21 | #52 | CELLAR-006 Planificator de consum | todo | | |
 | 22 | #48 | CELLAR-002 QR per sticlă | todo | | |

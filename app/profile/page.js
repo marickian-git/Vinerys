@@ -1,4 +1,5 @@
-import { getProfile, getDashboardStats } from '@/utils/actions';
+import { getProfile, getDashboardStats, getBadges } from '@/utils/actions';
+import BadgeGrid from '@/components/profile/BadgeGrid';
 import Link from 'next/link';
 import ImageUpload from '@/components/wines/ImageUpload';
 import ProfileEditForm from '@/components/profile/ProfileEditForm';
@@ -11,9 +12,10 @@ const ROLE_LABELS = { USER: 'Colecționar', ADMIN: 'Administrator' };
 export default async function ProfilePage() {
   let profile = null;
   let stats = { totalBottles: 0, totalWines: 0, totalValue: 0 };
+  let badges = { badges: [], challenge: null };
 
   try {
-    [profile, stats] = await Promise.all([getProfile(), getDashboardStats()]);
+    [profile, stats, badges] = await Promise.all([getProfile(), getDashboardStats(), getBadges()]);
   } catch { }
 
   if (!profile) return null;
@@ -225,6 +227,11 @@ export default async function ProfilePage() {
           </div>
 
           {/* Edit profile form */}
+          <div className="prof-card">
+            <div className="prof-card-title">Badge-uri</div>
+            <BadgeGrid badges={badges.badges} challenge={badges.challenge} />
+          </div>
+
           <div className="prof-card">
             <div className="prof-card-title">Editează profilul</div>
             <ProfileEditForm profile={profile} />

@@ -11,6 +11,7 @@ import { duplicateKey } from "./csvImport";
 import { likePattern, parseSearchQuery } from "./searchQuery";
 import { buildWrapped } from "./wrapped";
 import { pendingFollowUps } from "./followUp";
+import { evaluateBadges, nextChallenge } from "./badges";
 import { cleanText, dedupeLocations, normalizeAromas, normalizeList, normalizeWineData } from "./normalize";
 import { countsBy, monthlySeries, nearMaturityWines, overdueWines } from "./stats";
 import { CellarNameSchema, PasswordChangeSchema, ProfileInputSchema, firstIssueMessage } from "../schemas/account";
@@ -1134,4 +1135,31 @@ export async function getFollowUps({ wineId, minAgeHours = 12 } = {}) {
     tastings,
     { minAgeHours },
   );
+}
+
+// ─────────────────────────────────────────
+// BADGE-URI (SOCIAL-005)
+// ─────────────────────────────────────────
+
+export async function getBadges() {
+  const user = await getCurrentUser();
+  const [counts] = await prisma.$queryRaw`
+    SELECT
+      (SELECT COUNT(DISTINCT country)::int FROM "Wine" WHERE "userId" = ${user.id} AND country IS NOT NULL) AS countries,
+      (SELECT COUNT(DISTINCT lower(g))::int FROM "Wine", unnest("grapeVarieties") AS g WHERE "userId" = ${user.id}) AS varieties,
+      (SELECT COUNT(*)::int FROM "tasting" WHERE "userId" = ${user.id}) AS tastings,
+      (SELECT COALESCE(SUM(quantity), 0)::int FROM "Wine" WHERE "userId" = ${user.id} AND status = 'IN_CELLAR') AS "bottlesInCellar",
+      (SELECT COUNT(DISTINCT lower(region))::int FROM "Wine" WHERE "userId" = ${user.id} AND country IN ('România', 'Romania') AND region IS NOT NULL) AS "romanianRegions",
+      (SELECT COUNT(*)::int FROM "wine_log" WHERE "userId" = ${user.id} AND action = 'SCAN_AI') AS scans`;
+  // Sticle consumate: din istoric + vinurile consumate înainte de wine_log (o sticlă fiecare)
+  const [consumed] = await prisma.$queryRaw`
+    SELECT
+      COALESCE((SELECT SUM(COALESCE(("details"->>'quantityConsumed')::int, 1)) FROM "wine_log" WHERE "userId" = ${user.id} AND action = 'CONSUMED'), 0)::int AS logged,
+      (SELECT COUNT(*)::int FROM "Wine" w WHERE w."userId" = ${user.id} AND w.status = 'CONSUMED'
+        AND NOT EXISTS (SELECT 1 FROM "wine_log" l WHERE l."wineId" = w.id AND l.action = 'CONSUMED')) AS legacy,
+      COALESCE((SELECT SUM(COALESCE((l."details"->>'quantityConsumed')::int, 1)) FROM "wine_log" l JOIN "Wine" w ON w.id = l."wineId"
+        WHERE l."userId" = ${user.id} AND l.action = 'CONSUMED'
+          AND w."drinkFrom" <= EXTRACT(YEAR FROM l."createdAt") AND w."drinkUntil" >= EXTRACT(YEAR FROM l."createdAt")), 0)::int AS "inWindow"`;
+  const badges = evaluateBadges({ ...counts, bottlesConsumed: consumed.logged + consumed.legacy, openedInWindow: consumed.inWindow });
+  return { badges, challenge: nextChallenge(badges) };
 }

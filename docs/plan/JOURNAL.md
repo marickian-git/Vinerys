@@ -230,6 +230,12 @@ Pe pagina vinului apare secțiunea „Jurnal de degustare”. Pagina `/tastings`
 **Decizii:** fără tabel de „dismiss” în DB. Banner-ul dispare singur când notezi degustarea sau după 7 zile. „Consum cu un tap din recomandare” ține de ecranul Acasă de pe `feat/phase-2-design`; aici e acoperit pe pagina vinului.
 **Învățat:** rulat complet, e2e-ul local are uneori eșecuri de timing când mașina e încărcată (o rulare de 1,5 min a picat 3 teste). Rerulate de două ori, trec 17/17. În CI e `retries: 1`.
 
+### #61 SOCIAL-005 Badge-uri și provocări
+**Făcut:** `utils/badges.js` (`BADGES`, `evaluateBadges`, `nextChallenge`) și `getBadges()`: două interogări SQL agregate, cu sticlele consumate luate din `wine_log` plus istoricul vechi. `components/profile/BadgeGrid.jsx` pe Profil, cu `progressbar` accesibil. Teste unit + e2e `tests/e2e/badges.spec.js`.
+**Decizii:**
+- Badge-urile se calculează mereu din date, nu se salvează. Nu trebuie migrare, iar progresul nu se poate desincroniza. Data obținerii lipsește; se poate adăuga cu un `BadgeAward` când vin notificările (#53).
+- „Toate DOC-urile din România” e aproximat prin regiunile românești până la RO-002 (#63).
+
 ---
 
 ## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub
