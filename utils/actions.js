@@ -26,6 +26,8 @@ import {
 } from "../server/wines";
 import { createTastingForUser, listTastings, syncWineRating, tastingData } from "../server/tastings";
 import { similarInCellar, tasteProfileFor } from "../server/taste";
+import { predictPreference } from "./tasteProfile";
+import { foodToWinePrompt, heuristicMatch, normalizeFoodPicks, pairingCandidates, rankPicks } from "./foodToWine";
 import { auth } from "./auth";
 import { decryptSecret, encryptSecret } from "./aiSecrets";
 import { getProviderDefinition, isKnownProvider, listProviderDefinitions } from "./aiProviderRegistry";
@@ -618,6 +620,22 @@ export async function importWines(rows, { source = 'csv' } = {}) {
 
 const PAIRING_LIMIT = { limit: 20, windowMs: 10 * 60 * 1000 };
 
+// Agenții pentru un răspuns text: proprii, altfel ai platformei în limita cotei (AI-012)
+async function resolveTextAgents(userId) {
+  const agents = (await prisma.aIAgent.findMany({ where: { userId, enabled: true } })).flatMap((agent) => {
+    try {
+      return [{ ...agent, apiKey: decryptSecret(agent.encryptedApiKey) }];
+    } catch {
+      return [];
+    }
+  });
+  const platform = platformAgents();
+  const quota = quotaFor(await prisma.user.findUnique({ where: { id: userId }, select: { role: true } }), 'text');
+  const used = agents.length || !platform.length ? 0 : await platformRequestsThisMonth(userId, 'text', monthStart());
+  const choice = chooseAgents({ ownAgents: agents, platform, used, quota });
+  return choice.error ? { error: choice.error, message: quotaMessage(choice.error, quota) } : choice;
+}
+
 // Răspunsul din cache dacă identitatea vinului nu s-a schimbat; altfel (sau la refresh) îl generează cu agenții AI
 export async function getWinePairing(wineId, { refresh = false } = {}) {
   const user = await getCurrentUser();
@@ -630,18 +648,8 @@ export async function getWinePairing(wineId, { refresh = false } = {}) {
   const limited = rateLimit(`pairing:${user.id}`, PAIRING_LIMIT);
   if (!limited.ok) return { error: tooManyRequestsMessage(limited.retryAfter) };
 
-  const agents = (await prisma.aIAgent.findMany({ where: { userId: user.id, enabled: true } })).flatMap((agent) => {
-    try {
-      return [{ ...agent, apiKey: decryptSecret(agent.encryptedApiKey) }];
-    } catch {
-      return [];
-    }
-  });
-  const platform = platformAgents();
-  const quota = quotaFor(await prisma.user.findUnique({ where: { id: user.id }, select: { role: true } }), 'text');
-  const used = agents.length || !platform.length ? 0 : await platformRequestsThisMonth(user.id, 'text', monthStart());
-  const choice = chooseAgents({ ownAgents: agents, platform, used, quota });
-  if (choice.error) return { error: quotaMessage(choice.error, quota) };
+  const choice = await resolveTextAgents(user.id);
+  if (choice.error) return { error: choice.message };
 
   const requestId = randomBytes(8).toString('hex');
   const log = logger.child({ requestId, userId: user.id, wineId });
@@ -918,4 +926,44 @@ export async function getTasteProfile() {
 export async function getSimilarWines(wineId) {
   const user = await getCurrentUser();
   return similarInCellar(user.id, wineId);
+}
+
+// ─────────────────────────────────────────
+// „CE GĂTESC AZI?” — MÂNCARE → VIN (HOME-004)
+// ─────────────────────────────────────────
+
+export async function suggestWinesForDish(dish) {
+  const user = await getCurrentUser();
+  const text = dish?.toString().trim().slice(0, 200);
+  if (!text || text.length < 3) return { error: 'Scrie ce gătești (ex. „miel la cuptor cu rozmarin”)' };
+  const limited = rateLimit(`dish:${user.id}`, PAIRING_LIMIT);
+  if (!limited.ok) return { error: tooManyRequestsMessage(limited.retryAfter) };
+
+  const { profile } = await tasteProfileFor(user.id, { recommendations: 0 });
+  const taste = (wine) => (profile.evidence ? predictPreference(wine, profile).score : 0.5);
+  const wines = await prisma.wine.findMany({ where: { userId: user.id, status: 'IN_CELLAR', quantity: { gt: 0 } } });
+  if (!wines.length) return { error: 'Pivnița e goală: adaugă vinuri ca să primești sugestii.' };
+
+  const candidates = pairingCandidates(wines);
+  const choice = await resolveTextAgents(user.id);
+  if (!choice.error) {
+    const requestId = randomBytes(8).toString('hex');
+    const log = logger.child({ requestId, userId: user.id });
+    try {
+      const { result, usage } = await generateWithAgents(
+        choice.agents,
+        foodToWinePrompt(text, candidates),
+        (raw) => normalizeFoodPicks(raw, candidates.map((c) => c.id)),
+        { operation: 'pairing' },
+      );
+      await recordAIUsage(user.id, requestId, usage, log);
+      return { source: 'ai', dish: text, results: rankPicks(result.picks, wines, { taste }) };
+    } catch (error) {
+      await recordAIUsage(user.id, requestId, error.usage, log);
+      log.warn('dish pairing AI failed, using saved pairings', { error: serializeError(error) });
+    }
+  }
+  // Fără AI (sau AI indisponibil): asocierile salvate pe fiecare vin
+  const picks = wines.map((wine) => ({ id: wine.id, ...heuristicMatch(text, wine) }));
+  return { source: 'saved', dish: text, results: rankPicks(picks, wines, { taste }), aiUnavailable: choice.error ? choice.message : null };
 }

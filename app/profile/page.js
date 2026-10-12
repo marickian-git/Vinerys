@@ -208,6 +208,7 @@ export default async function ProfilePage() {
             <div className="prof-actions">
               <Link href="/settings" className="prof-btn-edit">⚙️ Setări</Link>
               <Link href="/wines" className="prof-btn-settings">🍷 Colecție</Link>
+              <Link href="/pairing" className="prof-btn-settings">🍽️ Ce gătesc azi?</Link>
               <Link href="/planner" className="prof-btn-settings">🗓️ Plan de consum</Link>
               <Link href="/tastings" className="prof-btn-settings">📓 Degustări</Link>
               <Link href="/wrapped" className="prof-btn-settings">✨ Wrapped</Link>

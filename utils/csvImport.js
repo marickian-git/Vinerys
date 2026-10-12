@@ -45,7 +45,7 @@ export function parseCsv(text, delimiter = detectDelimiter(text)) {
 export const TARGET_FIELDS = [
   'name', 'producer', 'vintage', 'country', 'region', 'subregion', 'type', 'color', 'grapeVarieties',
   'quantity', 'bottleSize', 'purchasePrice', 'estimatedValue', 'purchaseDate', 'cellarLocation',
-  'rating', 'tastingNotes', 'drinkFrom', 'drinkUntil',
+  'rating', 'tastingNotes', 'drinkFrom', 'drinkUntil', 'foodPairing',
 ];
 
 export const SOURCES = {
@@ -111,6 +111,7 @@ export const SOURCES = {
       cellarLocation: ['location', 'locatie', 'locație', 'locatie pivnita', 'locație pivniță'],
       rating: ['rating', 'rating (1-5)'],
       tastingNotes: ['notes', 'note', 'note degustare'],
+      foodPairing: ['food pairing', 'pairing', 'asocieri gastronomice', 'asocieri', 'mancare'],
     },
   },
 };
@@ -215,6 +216,7 @@ export function mapRow(row, mapping) {
       tastingNotes: get('tastingNotes') || undefined,
       drinkFrom: parseYear(get('drinkFrom')),
       drinkUntil: parseYear(get('drinkUntil')),
+      foodPairing: get('foodPairing') ? get('foodPairing').split(/[;|]/).map((f) => f.trim()).filter(Boolean) : [],
     },
   };
 }

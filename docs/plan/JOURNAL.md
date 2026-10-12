@@ -312,6 +312,21 @@ Pe pagina vinului apare secțiunea „Jurnal de degustare”. Pagina `/tastings`
 
 **Decizii:** fără model ML. Cu zeci de vinuri, un scor pe trăsături e explicabil („pentru că îți place Fetească Neagră”) și nu are nevoie de antrenare. Același profil îl folosesc și „Mâncare → vin” (#105) și Sommelierul (#36).
 
+### #105 HOME-004 Mâncare → vin: „Ce gătesc azi?”
+**Făcut:**
+- `utils/foodToWine.js`:
+  - `urgencyScore`: trecut 1 > ultimul an 0.9 > spre final > abia intrat > tânăr 0.15;
+  - `heuristicMatch`: cuvintele preparatului în `foodPairing`, cu rădăcini comune;
+  - `pairingCandidates`, `foodToWinePrompt`;
+  - `normalizeFoodPicks`: elimină id-urile inventate, deci AI-ul nu poate recomanda vinuri care nu sunt în pivniță;
+  - `rankPicks`: potrivire × (0.6 + 0.4 urgență) × (0.9 + 0.2 gust).
+- Acțiunea `suggestWinesForDish`: AI dacă există agenți sau cotă (`resolveTextAgents`, comun cu pairing-ul), altfel asocierile salvate. Dacă AI-ul eșuează, cade tot pe asocieri.
+- UI: pagina `/pairing` (protejată), cu exemple; link din Pivniță și din Profil.
+- Importul CSV mapează și „Asocieri gastronomice” (exportul Vinerys), deci exportul și importul sunt simetrice pentru acest câmp.
+- Teste unit + e2e `tests/e2e/dish.spec.js`.
+
+**Decizii:** varianta fără AI contează: `foodPairing` e completat la 100% de scanare (DATA-REPORT), deci funcționează și pentru cine nu are chei. Urgența ordonează și în interiorul ferestrei, cum cerea raportul de date.
+
 ---
 
 ## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub

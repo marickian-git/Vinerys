@@ -63,7 +63,7 @@ Același flux. Branch-ul a fost repornit din `main` (`137957e`). Un singur merge
 | # | Issue | Titlu | Status | Commit | Note / interpretare |
 |---|---|---|---|---|---|
 | 26 | #46 | AI-011 Profil de gust | done | | Profil explicabil, fără ML: fiecare vin votează pentru trăsăturile lui (tip, soiuri, țară, regiune, categorii de arome), ponderat cu cât ți-a plăcut (rating, degustări, favorit, sticle consumate). Pe Profil: preferințe + ce să eviți + „Din pivniță, pe gustul tău” cu % și motive. Pe pagina vinului: „Asemănătoare din pivniță” |
-| 27 | #105 | HOME-004 Mâncare → vin | todo | | |
+| 27 | #105 | HOME-004 Mâncare → vin | done | | Pagina `/pairing` „Ce gătesc azi?” (text + exemple): top 3 sticle din pivniță, scor = potrivire × urgență × gust (#46), cu explicație. Cu AI: agenții proprii sau ai platformei, validat ca să nu inventeze vinuri. Fără AI: asocierile salvate pe vin (`foodPairing`, completat la 100% la scanare). Vocea (AI-007) și poza (AI-003) rămân în issue-urile lor. Importul CSV citește acum și asocierile |
 | 28 | #37 | AI-002 Tool-uri AI peste colecție | todo | | |
 | 29 | #36 | AI-001 Sommelier conversațional | todo | | |
 | 30 | #54 | CELLAR-008 Istoric de preț și ROI | todo | | |
