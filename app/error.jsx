@@ -2,9 +2,18 @@
 
 import { useEffect } from 'react';
 import Link from 'next/link';
+import { appPath } from '@/utils/appPath';
 
 export default function Error({ error, reset }) {
-  useEffect(() => { console.error(error); }, [error]);
+  useEffect(() => {
+    console.error(error);
+    // REFACTOR-006: eroarea ajunge în logurile serverului (și în Sentry/GlitchTip, dacă e configurat)
+    fetch(appPath('/api/client-errors'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: error?.name, message: error?.message ?? String(error), stack: error?.stack, digest: error?.digest, path: window.location.pathname }),
+    }).catch(() => {});
+  }, [error]);
 
   return (
     <>

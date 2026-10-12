@@ -176,6 +176,17 @@ Curățenia contului rulează în `finally`. Raportul OK/FAIL iese cu cod 0/1, i
 
 **Rămas:** imaginea „story” generată (OG image) și varianta publică, odată cu „Portretul pivniței” (#94) și designul nou.
 
+### #77 REFACTOR-006 Sentry (opțional)
+**Făcut:**
+- `utils/errorReporting.js` (`parseDsn`, `buildEvent`, `reportError`) trimite evenimente în format envelope Sentry, compatibil și cu GlitchTip self-hosted. Datele trec prin `redact`, are timeout de 3 s și nu aruncă niciodată.
+- `instrumentation.js` (`onRequestError`) loghează structurat și raportează erorile din server components, route handlers și server actions.
+- `app/error.jsx` trimite erorile din browser la `/api/client-errors` (validat cu Zod, rate limit 20 / 10 min).
+- Variabile noi în `.env.example`: `SENTRY_DSN`, `SENTRY_ENVIRONMENT`.
+- Teste: `tests/unit/errorReporting.test.js`. Verificat local cap-coadă: endpoint fals pe portul 9999, envelope-ul ajunge cu `X-Sentry-Auth` corect.
+
+**Decizii:** fără `@sentry/nextjs`. SDK-ul cere `withSentryConfig`, fișiere de config, upload de source maps și adaugă greutate pe Raspberry Pi. Clientul minimal acoperă server + browser + mediu + release. Recomandare: GlitchTip în CasaOS, ca să rămână totul local.
+**Rămas:** source maps (numai cu SDK) și erorile din `global-error` (layout-ul rădăcină).
+
 ---
 
 ## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub

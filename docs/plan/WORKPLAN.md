@@ -37,7 +37,7 @@ Consecințe pentru planul ăsta:
 | 12 | #104 | HOME-003 Vin → mâncare | done | | Secțiunea „Ce gătesc cu el?” pe pagina vinului: 3 preparate + temperatură + decantare + pahar, generate cu agenții utilizatorului (fallback pe rând), cache pe vin (`pairing`/`pairingKey`, migrație), invalidat când se schimbă identitatea vinului. Consumul AI intră în `ai_usage` |
 | 13 | #55 | CELLAR-009 Căutare fuzzy (pg_trgm) | done | | pg_trgm (`word_similarity` pe nume/producător, fără diacritice cu `translate`) + căutare în regiune/soiuri/arome/asocieri/note + limbaj natural (tip, „gata de băut”, „trecute de vârf”, sub/peste preț, an, favorite). Filtre salvate (max 20). 2 migrații. Moneda în „lei/€” e ignorată; prețul se compară cu valoarea salvată (multi-currency = #35) |
 | 14 | #57 | SOCIAL-001 Vinerys Wrapped | done | | Pagina `/wrapped?year=` ca o poveste verticală de carduri: sticle, țări, soiul anului, ritmul pe luni, producătorul preferat, cea mai scumpă sticlă, preferatele, pivnița azi. Distribuire prin Web Share / clipboard. Istoricul vechi vine din `consumptionDate`. Fără imagine generată și fără pagină publică (vin cu designul nou, #94) |
-| 15 | #77 | REFACTOR-006 Sentry (opțional, pe DSN) | todo | | |
+| 15 | #77 | REFACTOR-006 Sentry (opțional, pe DSN) | done | | Fără SDK: client minimal compatibil Sentry/GlitchTip (`utils/errorReporting.js`), activ doar cu `SENTRY_DSN`. Server: `instrumentation.js` → `onRequestError`. Browser: `app/error.jsx` → `/api/client-errors`. Release = `APP_VERSION`, mediul = `SENTRY_ENVIRONMENT`. Verificat cap-coadă cu un endpoint fals. Fără source maps (cer SDK + upload la build) |
 
 ## Sărite (cu motiv)
 
