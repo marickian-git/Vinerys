@@ -271,6 +271,21 @@ Pe pagina vinului apare secțiunea „Jurnal de degustare”. Pagina `/tastings`
 - Cotele sunt pe rol (ADMIN nelimitat) până la planurile Free/Pro (#112).
 - Hit-urile din cache-ul de scanări (#43) nu consumă cotă, pentru că verificarea cache-ului e înaintea alegerii agenților.
 
+### #84 ARCH-008 API REST /api/v1 (+ parte din #27)
+**Făcut:**
+- Refactor `1a7d535`: `server/wines.js` (listă/căutare, CRUD, consum, statistici, cu `userId` explicit) și `server/media.js`. Actions devin wrapper-e subțiri. Aici apoi `server/tastings.js`.
+- `bearer()` în better-auth: tokenul vine în headerul `set-auth-token` la sign-in/sign-up.
+- `server/api.js` (`apiRoute`: autentificare cookie sau bearer, rate limit 120/min, `readJson` cu Zod).
+- Rute: `GET /me`, `GET|POST /wines`, `GET|PATCH|DELETE /wines/:id`, `POST /wines/:id/consume`, `GET|POST /wines/:id/tastings`, `GET /wines/:id/pairing`, `GET /stats`, `GET /openapi.json` (OpenAPI 3.1, `server/openapi.js`).
+- E2E `tests/e2e/api-v1.spec.js`, într-un context fără cookie-uri, doar cu `Authorization: Bearer`: CRUD, normalizare, căutare, consum peste stoc (400 VALIDATION), degustare care propagă ratingul, pairing fără agenți (400 clar), statistici, 401 fără token. Unit: `tests/unit/openapi.test.js` (toate `$ref`-urile există).
+
+**Decizii:**
+- PATCH schimbă doar câmpurile trimise efectiv; valorile implicite din schemă nu suprascriu datele.
+- Erorile au același format ca restul API-ului (`error`, `code`, `requestId`).
+- `bottles` vine cu modelul `Bottle` (#30).
+
+**Învățat:** `headers()` din `next/headers` include și `Authorization`, deci acțiunile existente care citesc sesiunea (ex. `getWinePairing`) merg și cu bearer token.
+
 ---
 
 ## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub

@@ -12,17 +12,17 @@ import { buildWrapped } from "./wrapped";
 import { pendingFollowUps } from "./followUp";
 import { evaluateBadges, nextChallenge } from "./badges";
 import { buildPlan } from "./planner";
-import { cleanText, normalizeAromas, normalizeList, normalizeWineData } from "./normalize";
+import { normalizeWineData } from "./normalize";
 import { countsBy, monthlySeries, nearMaturityWines, overdueWines } from "./stats";
 import { CellarNameSchema, PasswordChangeSchema, ProfileInputSchema, firstIssueMessage } from "../schemas/account";
 import { AIAgentInputSchema } from "../schemas/ai";
-import { TastingInputSchema } from "../schemas/tasting";
 import prisma from "./db";
 import { releaseImages } from "../server/media";
 import {
   consumeWineForUser, createWineForUser, dashboardStats, deleteWineForUser, getWineForUser,
   listWines, toggleFavoriteForUser, updateWineForUser, userLocations,
 } from "../server/wines";
+import { createTastingForUser, listTastings, syncWineRating, tastingData } from "../server/tastings";
 import { auth } from "./auth";
 import { decryptSecret, encryptSecret } from "./aiSecrets";
 import { getProviderDefinition, isKnownProvider, listProviderDefinitions } from "./aiProviderRegistry";
@@ -755,57 +755,19 @@ export async function restockWine(id, input = {}) {
 // DEGUSTĂRI (DATA-003 / CELLAR-003)
 // ─────────────────────────────────────────
 
-// Ratingul vinului = media degustărilor cu rating (compatibilitate cu listele și statisticile existente)
-async function syncWineRating(tx, wineId) {
-  if (!wineId) return;
-  const { _avg } = await tx.tasting.aggregate({ where: { wineId, rating: { not: null } }, _avg: { rating: true } });
-  if (_avg.rating != null) await tx.wine.update({ where: { id: wineId }, data: { rating: Math.round(_avg.rating) } });
-}
-
-function tastingData(input) {
-  const parsed = TastingInputSchema.safeParse(input ?? {});
-  if (!parsed.success) return { error: z.flattenError(parsed.error).fieldErrors };
-  const data = parsed.data;
-  return {
-    data: {
-      ...data,
-      tastedAt: data.tastedAt ?? new Date(),
-      people: normalizeList(data.people),
-      aromas: normalizeAromas(data.aromas),
-      occasion: cleanText(data.occasion),
-      location: cleanText(data.location),
-      food: cleanText(data.food),
-    },
-  };
-}
-
 export async function getTastings({ wineId, limit = 100 } = {}) {
   const user = await getCurrentUser();
-  return prisma.tasting.findMany({
-    where: { userId: user.id, ...(wineId && { wineId }) },
-    orderBy: { tastedAt: 'desc' },
-    take: Math.min(Number(limit) || 100, 500),
-    include: { wine: { select: { id: true, name: true, producer: true, vintage: true, type: true, labelImageUrl: true } } },
-  });
+  return listTastings(user.id, { wineId, limit });
 }
 
 export async function createTasting(input) {
   const user = await getCurrentUser();
-  const parsed = tastingData(input);
-  if (parsed.error) return { error: parsed.error };
-  const wine = await prisma.wine.findFirst({ where: { id: parsed.data.wineId, userId: user.id }, select: { id: true, name: true } });
-  if (!wine) return { error: 'Vinul nu a fost găsit' };
-
-  const tasting = await prisma.$transaction(async (tx) => {
-    const created = await tx.tasting.create({ data: { ...parsed.data, userId: user.id, wineName: wine.name } });
-    await syncWineRating(tx, wine.id);
-    await tx.wineLog.create({ data: { wineId: wine.id, userId: user.id, action: 'TASTED', details: { tastingId: created.id, rating: created.rating } } });
-    return created;
-  });
-
-  revalidatePath(`/wines/${wine.id}`);
-  revalidatePath('/tastings');
-  return { success: true, tasting };
+  const result = await createTastingForUser(user.id, input);
+  if (result.success) {
+    revalidatePath(`/wines/${result.tasting.wineId}`);
+    revalidatePath('/tastings');
+  }
+  return result;
 }
 
 export async function updateTasting(id, input) {
