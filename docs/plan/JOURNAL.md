@@ -107,6 +107,18 @@ Tokenii sunt în `docs/design/proposed-themes.tokens.json`, iar `tests/unit/prop
 - **Prisma 7: `migrate dev` nu mai rulează `generate`.** După o migrație nouă trebuie rulat `npx prisma generate`, altfel `prisma.<model>` e `undefined` la rulare (build-ul din CI îl rulează, deci acolo nu se vede).
 - Limita de sign-up (5/oră/IP) bloca suita e2e la al 6-lea cont. Acum e configurabilă prin `AUTH_SIGNUP_MAX`, setat la 100 doar în `playwright.config.mjs`. În producție rămâne 5.
 
+### #64 INT-001 Import CSV Vivino
+**Făcut:**
+- `utils/csvImport.js`: parser RFC 4180 (ghilimele, newline în câmp, BOM, `,`/`;`/tab), presetări de coloane per sursă cu `detectSource`/`autoMapColumns`, conversii (tip, numere RO/US, rating 1–5 sau 50–100, mărime sticlă, date) și `buildPreview` cu duplicate față de colecție și în fișier.
+- `importWines` / `getImportDuplicateKeys` în actions revalidează cu `WineInputSchema`, normalizează (#120), fac `createManyAndReturn` + `wine_log` într-o tranzacție și acceptă maximum 1000 de rânduri.
+- UI: `/wines/import` (`ImportWizard`), cu link din „Adaugă vin”.
+- Teste: `tests/unit/csvImport.test.js` + `tests/fixtures/vivino.csv`, e2e `tests/e2e/import.spec.js`.
+
+**Decizii:**
+- Maparea rulează în browser, pentru un preview instant fără upload. Serverul revalidează tot, deci clientul nu e de încredere.
+- Duplicat = nume + producător + an, comparate fără diacritice. Duplicatele sunt sărite, nu actualizate.
+- Formatul exact al exportului Vivino nu e documentat public. Aliasurile acoperă variantele cunoscute, iar maparea se poate corecta manual.
+
 ---
 
 ## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub

@@ -6,7 +6,8 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { cache } from "react";
 import { z } from "zod";
-import { parseWineForm } from "../schemas/wine";
+import { WineInputSchema, parseWineForm } from "../schemas/wine";
+import { duplicateKey } from "./csvImport";
 import { dedupeLocations, normalizeWineData } from "./normalize";
 import { countsBy, monthlySeries, nearMaturityWines, overdueWines } from "./stats";
 import { CellarNameSchema, PasswordChangeSchema, ProfileInputSchema, firstIssueMessage } from "../schemas/account";
@@ -753,4 +754,58 @@ export async function getAIUsageSummary() {
     })).sort((a, b) => b.calls - a.calls),
     platform: platform?.map((row) => ({ ...row, month: new Date(row.month).toISOString().slice(0, 7) })) ?? null,
   };
+}
+
+// ─────────────────────────────────────────
+// IMPORT CSV (INT-001 / INT-002)
+// ─────────────────────────────────────────
+
+const IMPORT_MAX_ROWS = 1000;
+
+// Cheile de duplicat ale colecției, pentru preview-ul din client
+export async function getImportDuplicateKeys() {
+  const user = await getCurrentUser();
+  const wines = await prisma.wine.findMany({ where: { userId: user.id }, select: { name: true, producer: true, vintage: true } });
+  return wines.map(duplicateKey);
+}
+
+// Primește vinurile mapate în client; le revalidează, normalizează și sare peste duplicate
+export async function importWines(rows, { source = 'csv' } = {}) {
+  const user = await getCurrentUser();
+  if (!Array.isArray(rows) || !rows.length) return { error: 'Nimic de importat' };
+  if (rows.length > IMPORT_MAX_ROWS) return { error: `Maximum ${IMPORT_MAX_ROWS} de vinuri pe import` };
+
+  const [existing, existingLocations] = await Promise.all([getImportDuplicateKeys(), userLocations(user.id)]);
+  const seen = new Set(existing);
+  const valid = [];
+  const skipped = [];
+  rows.forEach((row, index) => {
+    const parsed = WineInputSchema.safeParse(row);
+    if (!parsed.success) return skipped.push({ index, reason: firstIssueMessage(parsed.error) });
+    const key = duplicateKey(parsed.data);
+    if (seen.has(key)) return skipped.push({ index, reason: 'duplicat' });
+    seen.add(key);
+    valid.push(normalizeWineData({ ...parsed.data, drinkFrom: parsed.data.drinkFrom ?? null, drinkUntil: parsed.data.drinkUntil ?? null }, { existingLocations }));
+  });
+
+  if (valid.length) {
+    await prisma.$transaction(async (tx) => {
+      const created = await tx.wine.createManyAndReturn({
+        data: valid.map((wine) => ({ ...wine, userId: user.id })),
+        select: { id: true, name: true, quantity: true },
+      });
+      await tx.wineLog.createMany({
+        data: created.map((wine) => ({
+          wineId: wine.id,
+          userId: user.id,
+          action: 'ADDED',
+          details: { name: wine.name, quantity: wine.quantity, source: `import:${source}` },
+        })),
+      });
+    });
+    revalidatePath('/wines');
+    revalidatePath('/dashboard');
+  }
+
+  return { success: true, imported: valid.length, skipped };
 }

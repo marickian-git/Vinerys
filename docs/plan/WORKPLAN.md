@@ -30,7 +30,7 @@ Consecințe pentru planul ăsta:
 | 6 | #43 | AI-008 Cache scanări (hash imagine) | done | | Cache după SHA-256 pe octeții imaginii (tabela `scan_cache`, migrație nouă), doar pentru identificări cu încredere ≥ 0.6, expiră după 180 de zile, `force: true` ocolește cache-ul. Fără hash perceptual (risc de potriviri greșite între ani). Entitățile canonice Wine/Producer rămân la modelul de date (#29–#33, RO-001) |
 | 7 | #88 | AI-013 Tracking cost AI | done | | Tabela `ai_usage` (migrație): o linie per apel de agent (identificare + îmbogățire), cu tokeni, cost, latență și succes. Costul se ia din prețuri configurate (`agent.metadata.pricing` sau `AI_PRICING_JSON`), nu hardcodate. Card „Consum AI” în Setări; adminul vede și totalul platformei |
 | 8 | #111 | BIZ-004 GDPR: export date + pagini legale | done | | Export JSON complet (`/api/account/export`, fără secrete, rate limit). Paginile `/legal/privacy` și `/legal/terms` sunt schițe RO cu [PLACEHOLDER] pentru operator, contact și găzduire: **cer revizuire juridică**. Cookie consent: nu e necesar, avem doar cookie-uri strict necesare (scris în politică). Ștergerea contului exista deja |
-| 9 | #64 | INT-001 Import CSV Vivino | todo | | |
+| 9 | #64 | INT-001 Import CSV Vivino | done | | Pagina `/wines/import`: upload, auto-detectare format, mapare coloane editabilă, preview cu Nou/Duplicat/Eroare, import în tranzacție + `wine_log` ADDED. Motor comun `utils/csvImport.js` (și pentru #65 și CSV generic, inclusiv exportul Vinerys). Rating 1–5 rotunjit; zecimalele Vivino se pierd |
 | 10 | #65 | INT-002 Import CSV CellarTracker | todo | | |
 | — | | **Checkpoint 2** | | | |
 | 11 | #123 | CI-008 Smoke test producție | todo | | |
