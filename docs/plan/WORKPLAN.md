@@ -26,12 +26,12 @@ Consecințe pentru planul ăsta:
 | 4 | #120 | DATA-010 Normalizare și vocabulare | done | `133e1b6` | `utils/normalize.js` + normalizare la salvare + `scripts/normalize-wines.mjs` (dry-run/backup/raport). Autocomplete: `datalist` pentru țări/locații (minim, fără restilizare). Culoarea derivată nu ghicește la spumant/desert cu soiuri mixte. **De rulat pe producție:** dry-run, apoi `--apply` |
 | 5 | #34 | DATA-006 Statistici prin agregări DB | done | `3503414` | `groupBy`/`aggregate`/SQL în DB în loc de încărcarea tuturor vinurilor. Pentru fereastra de consum se încarcă doar vinurile `IN_CELLAR`. `getCurrentUser` cu `cache()` (o citire a sesiunii pe request). Forma răspunsului e identică |
 | — | | **Checkpoint 1** | | | |
-| 5b | #125 | DESIGN-012 Teme noi F · G · H (de ales) | done | | Cerut pe 11.10. Machete: [canvas](https://claude.ai/artifact/1boBd3tvqZ8k9eXU1BLoMv). Tokeni: `docs/design/proposed-themes.tokens.json` + test AA. Integrarea în app așteaptă alegerea ta și sistemul A–E publicat. Issue-ul rămâne deschis |
-| 6 | #43 | AI-008 Cache scanări (hash imagine) | done | | Cache după SHA-256 pe octeții imaginii (tabela `scan_cache`, migrație nouă), doar pentru identificări cu încredere ≥ 0.6, expiră după 180 de zile, `force: true` ocolește cache-ul. Fără hash perceptual (risc de potriviri greșite între ani). Entitățile canonice Wine/Producer rămân la modelul de date (#29–#33, RO-001) |
-| 7 | #88 | AI-013 Tracking cost AI | done | | Tabela `ai_usage` (migrație): o linie per apel de agent (identificare + îmbogățire), cu tokeni, cost, latență și succes. Costul se ia din prețuri configurate (`agent.metadata.pricing` sau `AI_PRICING_JSON`), nu hardcodate. Card „Consum AI” în Setări; adminul vede și totalul platformei |
-| 8 | #111 | BIZ-004 GDPR: export date + pagini legale | done | | Export JSON complet (`/api/account/export`, fără secrete, rate limit). Paginile `/legal/privacy` și `/legal/terms` sunt schițe RO cu [PLACEHOLDER] pentru operator, contact și găzduire: **cer revizuire juridică**. Cookie consent: nu e necesar, avem doar cookie-uri strict necesare (scris în politică). Ștergerea contului exista deja |
-| 9 | #64 | INT-001 Import CSV Vivino | done | | Pagina `/wines/import`: upload, auto-detectare format, mapare coloane editabilă, preview cu Nou/Duplicat/Eroare, import în tranzacție + `wine_log` ADDED. Motor comun `utils/csvImport.js` (și pentru #65 și CSV generic, inclusiv exportul Vinerys). Rating 1–5 rotunjit; zecimalele Vivino se pierd |
-| 10 | #65 | INT-002 Import CSV CellarTracker | done | | Preset CellarTracker (detectat după `iWine`) peste motorul din #64: tipuri compuse („White - Sweet/Dessert”), mărime în ml, BeginConsume/EndConsume, Valuation, Location, scor pe 100 → 1–5, NV (1001) → fără an |
+| 5b | #125 | DESIGN-012 Teme noi F · G · H (de ales) | done | `3b435d6` | Cerut pe 11.10. Machete: [canvas](https://claude.ai/artifact/1boBd3tvqZ8k9eXU1BLoMv). Tokeni: `docs/design/proposed-themes.tokens.json` + test AA. Integrarea în app așteaptă alegerea ta și sistemul A–E publicat. Issue-ul rămâne deschis |
+| 6 | #43 | AI-008 Cache scanări (hash imagine) | done | `258a0dc` | Cache după SHA-256 pe octeții imaginii (tabela `scan_cache`, migrație nouă), doar pentru identificări cu încredere ≥ 0.6, expiră după 180 de zile, `force: true` ocolește cache-ul. Fără hash perceptual (risc de potriviri greșite între ani). Entitățile canonice Wine/Producer rămân la modelul de date (#29–#33, RO-001) |
+| 7 | #88 | AI-013 Tracking cost AI | done | `9e70c82` | Tabela `ai_usage` (migrație): o linie per apel de agent (identificare + îmbogățire), cu tokeni, cost, latență și succes. Costul se ia din prețuri configurate (`agent.metadata.pricing` sau `AI_PRICING_JSON`), nu hardcodate. Card „Consum AI” în Setări; adminul vede și totalul platformei |
+| 8 | #111 | BIZ-004 GDPR: export date + pagini legale | done | `1cbf7f4` | Export JSON complet (`/api/account/export`, fără secrete, rate limit). Paginile `/legal/privacy` și `/legal/terms` sunt schițe RO cu [PLACEHOLDER] pentru operator, contact și găzduire: **cer revizuire juridică**. Cookie consent: nu e necesar, avem doar cookie-uri strict necesare (scris în politică). Ștergerea contului exista deja |
+| 9 | #64 | INT-001 Import CSV Vivino | done | `c542d27` | Pagina `/wines/import`: upload, auto-detectare format, mapare coloane editabilă, preview cu Nou/Duplicat/Eroare, import în tranzacție + `wine_log` ADDED. Motor comun `utils/csvImport.js` (și pentru #65 și CSV generic, inclusiv exportul Vinerys). Rating 1–5 rotunjit; zecimalele Vivino se pierd |
+| 10 | #65 | INT-002 Import CSV CellarTracker | done | `be5fa76` | Preset CellarTracker (detectat după `iWine`) peste motorul din #64: tipuri compuse („White - Sweet/Dessert”), mărime în ml, BeginConsume/EndConsume, Valuation, Location, scor pe 100 → 1–5, NV (1001) → fără an |
 | — | | **Checkpoint 2** | | | |
 | 11 | #123 | CI-008 Smoke test producție | todo | | |
 | 12 | #104 | HOME-003 Vin → mâncare | todo | | |
@@ -64,3 +64,25 @@ Consecințe pentru planul ăsta:
   - Testul e2e de consum pica și pe `main`; reparat.
 - **Rămase:** rândurile 5b–15.
 - **Merge:** PR #124 rămâne deschis și strânge toate issue-urile sesiunii. Utilizatorul a cerut pe 11.10 deploy-uri rare, deci un singur merge la final, după CI verde. Pe producție nu e nicio migrație. `scripts/normalize-wines.mjs` se rulează manual (dry-run, apoi `--apply`).
+
+### Checkpoint 2 — 2026-10-12
+
+- **Terminate (6):**
+  - #125 teme F/G/H (propuse; issue-ul rămâne deschis pentru alegere)
+  - #43 cache scanări
+  - #88 cost AI
+  - #111 GDPR + pagini legale
+  - #64 import Vivino
+  - #65 import CellarTracker
+- **Teste:** 152 unit, e2e 12/12 local (noi: GDPR, import), CI verde pe fiecare push din PR #124.
+- **Migrații noi:** `scan_cache` și `ai_usage`. Se aplică automat la pornirea containerului (`prisma migrate deploy`).
+- **Probleme / capcane:**
+  - Prisma 7 nu mai rulează `generate` după `migrate dev`.
+  - Limita de sign-up bloca e2e-ul; acum se configurează prin `AUTH_SIGNUP_MAX`, doar în teste.
+  - Canvas-ul cu temele A–E nu poate fi citit din sesiune.
+- **De făcut de tine:**
+  - Alege temele din [canvas](https://claude.ai/artifact/1boBd3tvqZ8k9eXU1BLoMv).
+  - Completează `[PLACEHOLDER]`-ele din paginile legale.
+  - Opțional: setează `AI_PRICING_JSON`.
+- **Rămase:** rândurile 11–15.
+
