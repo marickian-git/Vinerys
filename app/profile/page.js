@@ -1,5 +1,6 @@
 import { getProfile, getDashboardStats, getBadges } from '@/utils/actions';
 import BadgeGrid from '@/components/profile/BadgeGrid';
+import { formatMoney } from '@/utils/currency';
 import Link from 'next/link';
 import ImageUpload from '@/components/wines/ImageUpload';
 import ProfileEditForm from '@/components/profile/ProfileEditForm';
@@ -222,7 +223,7 @@ export default async function ProfilePage() {
               <div className="prof-stat-label">Sticle totale</div>
             </div>
             <div className="prof-stat">
-              <div className="prof-stat-value">{stats.totalValue > 0 ? `${Math.round(stats.totalValue)}€` : '—'}</div>
+              <div className="prof-stat-value">{stats.totalValue > 0 ? formatMoney(stats.totalValue, stats.currency, { decimals: 0 }) : '—'}</div>
               <div className="prof-stat-label">Valoare colecție</div>
             </div>
           </div>

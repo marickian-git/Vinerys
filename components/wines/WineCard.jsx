@@ -6,6 +6,7 @@ import AromaProfile from "@/components/wines/AromaProfile";
 import { getDisplayImageUrl } from "@/utils/mediaUrl";
 import { useState } from "react";
 import WinePourLoader from "@/components/wines/WinePourLoader";
+import { formatMoney } from '@/utils/currency';
 
 const TYPE_CONFIG = {
   RED: {
@@ -277,7 +278,7 @@ export default function WineCard({ wine }) {
             </div>
             <div className="wc-right">
               {wine.purchasePrice && (
-                <span className="wc-price">{wine.purchasePrice} €</span>
+                <span className="wc-price">{formatMoney(wine.purchasePrice, wine.currency)}</span>
               )}
               <span className="wc-status" style={{ color: status.color }}>
                 {status.label}

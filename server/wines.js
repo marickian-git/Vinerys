@@ -7,6 +7,8 @@ import { dedupeLocations, normalizeWineData } from '../utils/normalize';
 import { likePattern, parseSearchQuery } from '../utils/searchQuery';
 import { countsBy } from '../utils/stats';
 import { releaseImages } from './media';
+import { getRates } from './fx';
+import { DEFAULT_CURRENCY, sumInCurrency } from '../utils/currency';
 
 const logger = createLogger('wines');
 
@@ -258,24 +260,30 @@ export async function consumeWineForUser(userId, id, quantity = 1) {
   });
 }
 
-// ── Statistici (DATA-006) ──
+// ── Statistici (DATA-006, DATA-007) ──
 
-export async function dashboardStats(userId) {
+// Valoarea pivniței în moneda preferată a utilizatorului (prețurile rămân în moneda lor originală)
+export async function dashboardStats(userId, { rates } = {}) {
   const where = { userId };
-  // Sticle și valoare = doar ce e fizic în pivniță; valoarea e per sticlă × cantitate
-  const [byTypeRows, byStatusRows, bottles, [value]] = await Promise.all([
+  const [byTypeRows, byStatusRows, bottles, valueRows, user] = await Promise.all([
     prisma.wine.groupBy({ by: ['type'], where, _count: { _all: true } }),
     prisma.wine.groupBy({ by: ['status'], where, _count: { _all: true } }),
     prisma.wine.aggregate({ where: { ...where, status: 'IN_CELLAR' }, _sum: { quantity: true } }),
     prisma.$queryRaw`
-      SELECT COALESCE(SUM("estimatedValue" * "quantity"), 0)::float8 AS total
-      FROM "Wine" WHERE "userId" = ${userId} AND "status" = 'IN_CELLAR'`,
+      SELECT currency, COALESCE(SUM("estimatedValue" * "quantity"), 0)::float8 AS amount
+      FROM "Wine" WHERE "userId" = ${userId} AND "status" = 'IN_CELLAR' GROUP BY currency`,
+    prisma.user.findUnique({ where: { id: userId }, select: { currency: true } }),
   ]);
+  const currency = user?.currency ?? DEFAULT_CURRENCY;
+  const needsRates = valueRows.some((row) => row.currency !== currency && row.amount > 0);
+  const { total, unconverted } = sumInCurrency(valueRows, currency, needsRates ? rates ?? await getRates() : null);
   const byType = countsBy(byTypeRows, 'type');
   const byStatus = countsBy(byStatusRows, 'status');
   return {
     totalBottles: bottles._sum.quantity ?? 0,
-    totalValue: Number(value?.total ?? 0),
+    totalValue: total,
+    currency,
+    unconvertedValue: Object.keys(unconverted).length ? unconverted : null,
     totalWines: Object.values(byType).reduce((sum, count) => sum + count, 0),
     byType,
     byStatus,

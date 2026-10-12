@@ -8,6 +8,7 @@ import ReorderCard from '@/components/wines/ReorderCard';
 import TastingJournal from '@/components/wines/TastingJournal';
 import { reorderLinks, shouldSuggestReorder } from '@/utils/reorder';
 import { pairingKey } from '@/utils/pairing';
+import { formatMoney } from '@/utils/currency';
 import { DrinkWindowCard } from '@/components/wines/DrinkWindowBadge';
 import AromaProfile from '@/components/wines/AromaProfile';
 import { getDisplayImageUrl } from '@/utils/mediaUrl';
@@ -279,11 +280,11 @@ export default async function WineDetailPage({ params }) {
               <div className="wd-section-title">Preț & Stocare</div>
               {wine.purchasePrice && (
                 <div style={{ marginBottom: '1rem' }}>
-                  <div className="wd-price-big">{wine.purchasePrice} €</div>
+                  <div className="wd-price-big">{formatMoney(wine.purchasePrice, wine.currency)}</div>
                   <div style={{ fontSize: '0.68rem', color: 'rgba(245,230,232,0.3)', marginTop: '0.2rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Preț achiziție</div>
                 </div>
               )}
-              <InfoRow label="Valoare estimată" value={wine.estimatedValue ? `${wine.estimatedValue} €` : null} />
+              <InfoRow label="Valoare estimată" value={wine.estimatedValue ? formatMoney(wine.estimatedValue, wine.currency) : null} />
               <InfoRow label="Data achiziției" value={wine.purchaseDate ? new Date(wine.purchaseDate).toLocaleDateString('ro-RO') : null} />
               <InfoRow label="Locație pivniță" value={wine.cellarLocation} />
               <InfoRow label="Cantitate" value={`${wine.quantity} ${wine.quantity === 1 ? 'sticlă' : 'sticle'}`} />

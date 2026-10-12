@@ -1,5 +1,6 @@
 // Scheme Zod comune pentru vin (ARCH-007). Fără dependențe de server: se pot importa și în componente client.
 import { z } from 'zod';
+import { CURRENCIES } from '../utils/currency';
 
 export const WINE_TYPES = ['RED', 'WHITE', 'ROSE', 'SPARKLING', 'DESSERT', 'FORTIFIED'];
 export const WINE_COLORS = ['RED', 'WHITE', 'ROSE', 'ORANGE'];
@@ -26,6 +27,7 @@ export const WineInputSchema = z.object({
   purchaseDate: z.coerce.date().optional(),
   purchasePrice: z.coerce.number().min(0).optional(),
   estimatedValue: z.coerce.number().min(0).optional(),
+  currency: z.enum(CURRENCIES).default('EUR'),
   rating: z.coerce.number().min(1).max(5).optional(),
   tastingNotes: z.string().optional(),
   servingTemperature: z.string().optional(),

@@ -9,7 +9,7 @@ test('adăugare vin, consum până la zero, statistici corecte', async ({ page }
   // Dashboard: 2 sticle × 50 € = 100 €
   await page.goto(`${BASE}/dashboard`);
   await expect(page.locator('.db-kpi', { hasText: 'Sticle în pivniță' }).locator('.db-kpi-value')).toHaveText('2');
-  await expect(page.locator('.db-kpi', { hasText: 'Valoare colecție' }).locator('.db-kpi-value')).toHaveText('100€');
+  await expect(page.locator('.db-kpi', { hasText: 'Valoare colecție' }).locator('.db-kpi-value')).toHaveText(/^100\s€$/);
 
   // Consum: primul click cere confirmare, al doilea consumă
   await page.goto(`${BASE}/wines`);

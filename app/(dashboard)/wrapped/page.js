@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { getWrapped } from '@/utils/actions';
 import { monthName, wrappedShareText } from '@/utils/wrapped';
 import WrappedShare from '@/components/WrappedShare';
+import { formatMoney } from '@/utils/currency';
 
 export const metadata = { title: 'Vinerys Wrapped' };
 
@@ -12,7 +13,6 @@ const card = (accent) => ({
 });
 const big = { fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(3.5rem, 12vw, 5.5rem)', lineHeight: 1, margin: 0, fontWeight: 600 };
 const label = { fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.18em', opacity: 0.85, margin: 0 };
-const euro = (value) => `${Math.round(value).toLocaleString('ro-RO')} €`;
 
 export default async function WrappedPage({ searchParams }) {
   const sp = await searchParams;
@@ -74,7 +74,7 @@ export default async function WrappedPage({ searchParams }) {
             {(w.topProducer || w.mostExpensive) && (
               <section style={card('#4a1f14')}>
                 {w.topProducer && (<div><p style={label}>Producătorul preferat</p><p style={{ fontSize: '1.6rem', margin: '0.3rem 0 0' }}>{w.topProducer.name}</p></div>)}
-                {w.mostExpensive && (<div><p style={label}>Cea mai scumpă sticlă deschisă</p><p style={{ fontSize: '1.3rem', margin: '0.3rem 0 0' }}>{w.mostExpensive.name} · {euro(w.mostExpensive.price)}</p></div>)}
+                {w.mostExpensive && (<div><p style={label}>Cea mai scumpă sticlă deschisă</p><p style={{ fontSize: '1.3rem', margin: '0.3rem 0 0' }}>{w.mostExpensive.name} · {formatMoney(w.mostExpensive.price, w.currency, { decimals: 0 })}</p></div>)}
                 {w.favorites.length > 0 && (<div><p style={label}>Preferatele tale</p><p style={{ margin: '0.3rem 0 0' }}>{w.favorites.map((f) => f.name).join(' · ')}</p></div>)}
               </section>
             )}
@@ -84,7 +84,7 @@ export default async function WrappedPage({ searchParams }) {
         <section style={card('#14262e')}>
           <p style={label}>Pivnița azi</p>
           <p style={{ ...big, fontSize: 'clamp(2.6rem, 10vw, 4rem)' }}>{w.collection.bottles} sticle</p>
-          <p style={{ margin: 0 }}>Valoare estimată: {euro(w.collection.value)}</p>
+          <p style={{ margin: 0 }}>Valoare estimată: {formatMoney(w.collection.value, w.currency, { decimals: 0 })}</p>
         </section>
 
         {w.bottles > 0 && <WrappedShare text={wrappedShareText(w)} />}

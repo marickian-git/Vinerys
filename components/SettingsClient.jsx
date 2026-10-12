@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 import ShareLinkSection from "@/components/ShareLinkSection";
 import AISettingsSection from "@/components/AISettingsSection";
 import AIUsageSummary from "@/components/AIUsageSummary";
+import CurrencySetting from "@/components/CurrencySetting";
 import { appPath } from "@/utils/appPath";
 import EmailVerificationBanner from "@/components/EmailVerificationBanner";
 
@@ -21,6 +22,7 @@ export default function SettingsClient({
   aiAgents,
   aiProviders,
   aiUsage,
+  currency,
 }) {
   const router = useRouter();
   const [passwordForm, setPasswordForm] = useState({
@@ -198,6 +200,12 @@ export default function SettingsClient({
               initialAgents={aiAgents}
               providers={aiProviders}
             />
+          </div>
+
+          {/* Monedă (DATA-007) */}
+          <div className="set-card">
+            <div className="set-card-title">💱 Monedă</div>
+            <CurrencySetting initial={currency} />
           </div>
 
           {/* Consum AI (AI-013) */}

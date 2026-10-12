@@ -81,7 +81,7 @@ export default function WineFilters({ countries = [], totalResults = 0 }) {
     vintageMin && { key: 'vintageMin', label: `An ≥ ${vintageMin}`,                            clear: () => { setVintageMin(''); push({ vintageMin: '' }); } },
     vintageMax && { key: 'vintageMax', label: `An ≤ ${vintageMax}`,                            clear: () => { setVintageMax(''); push({ vintageMax: '' }); } },
     ratingMin  && { key: 'ratingMin',  label: `${'★'.repeat(parseInt(ratingMin))} min`,        clear: () => { setRatingMin('');  push({ ratingMin: '' }); } },
-    priceMax   && { key: 'priceMax',   label: `≤ ${priceMax}€`,                                clear: () => { setPriceMax('');   push({ priceMax: '' }); } },
+    priceMax   && { key: 'priceMax',   label: `Preț ≤ ${priceMax}`,                                clear: () => { setPriceMax('');   push({ priceMax: '' }); } },
     isFavorite && { key: 'fav',        label: '❤️ Favorite',                                   clear: () => { setIsFavorite(''); push({ isFavorite: '' }); } },
     search     && { key: 'search',     label: `"${search}"`,                                   clear: () => { setSearch('');     push({ search: '' }); } },
   ].filter(Boolean);
@@ -251,7 +251,7 @@ export default function WineFilters({ countries = [], totalResults = 0 }) {
             </div>
 
             <div>
-              <label className="wf-adv-label">Preț maxim (€)</label>
+              <label className="wf-adv-label">Preț maxim</label>
               <input type="number" className="wf-adv-input" placeholder="ex. 100" min="0" value={priceMax} onChange={e => setPriceMax(e.target.value)} onBlur={() => push({ priceMax })} />
             </div>
 

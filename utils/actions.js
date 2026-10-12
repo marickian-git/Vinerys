@@ -8,6 +8,8 @@ import { cache } from "react";
 import { z } from "zod";
 import { WineInputSchema, parseWineForm } from "../schemas/wine";
 import { duplicateKey } from "./csvImport";
+import { DEFAULT_CURRENCY, convert, isCurrency } from "./currency";
+import { getRates } from "../server/fx";
 import { buildWrapped } from "./wrapped";
 import { pendingFollowUps } from "./followUp";
 import { evaluateBadges, nextChallenge } from "./badges";
@@ -233,6 +235,22 @@ export async function deleteAccount() {
 // STATISTICI AVANSATE
 // ─────────────────────────────────────────
 
+async function priceStatsIn(wines, currency) {
+  const rates = wines.some((w) => w.currency !== currency) ? await getRates() : null;
+  const priced = wines
+    .map((w) => ({ ...w, converted: convert(w.purchasePrice, w.currency, currency, rates) }))
+    .filter((w) => w.converted != null);
+  const values = priced.map((w) => w.converted);
+  const mostExpensive = [...priced].sort((a, b) => b.converted - a.converted)[0] ?? null;
+  return {
+    avg: values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0,
+    max: values.length ? Math.max(...values) : 0,
+    min: values.length ? Math.min(...values) : 0,
+    mostExpensive: mostExpensive && { ...mostExpensive, purchasePrice: mostExpensive.converted },
+    currency,
+  };
+}
+
 export async function getAdvancedStats() {
   const user = await getCurrentUser();
   const where = { userId: user.id };
@@ -241,7 +259,7 @@ export async function getAdvancedStats() {
   const currentYear = now.getFullYear();
   const since = new Date(now.getFullYear(), now.getMonth() - 11, 1);
 
-  const [topWines, countryRows, monthlyRows, priceAgg, mostExpensive, cellarWines] = await Promise.all([
+  const [topWines, countryRows, monthlyRows, pricedWines, owner, cellarWines] = await Promise.all([
     prisma.wine.findMany({
       where: { ...where, rating: { not: null } },
       orderBy: [{ rating: 'desc' }, { createdAt: 'asc' }],
@@ -254,8 +272,9 @@ export async function getAdvancedStats() {
       FROM "Wine"
       WHERE "userId" = ${user.id} AND "purchaseDate" >= ${since}
       GROUP BY 1`,
-    prisma.wine.aggregate({ where: withPrice, _avg: { purchasePrice: true }, _max: { purchasePrice: true }, _min: { purchasePrice: true } }),
-    prisma.wine.findFirst({ where: withPrice, orderBy: { purchasePrice: 'desc' }, select: STATS_WINE_SELECT }),
+    // Prețurile pot fi în monede diferite: se convertesc în moneda utilizatorului (DATA-007)
+    prisma.wine.findMany({ where: withPrice, select: { ...STATS_WINE_SELECT, currency: true } }),
+    prisma.user.findUnique({ where: { id: user.id }, select: { currency: true } }),
     // Doar vinurile din pivniță, cu câmpurile necesare ferestrei de consum
     prisma.wine.findMany({ where: { ...where, status: 'IN_CELLAR' }, select: STATS_WINE_SELECT }),
   ]);
@@ -264,12 +283,7 @@ export async function getAdvancedStats() {
     topWines,
     byCountry: countsBy(countryRows, 'country'),
     monthlyData: monthlySeries(monthlyRows, now),
-    priceStats: {
-      avg: priceAgg._avg.purchasePrice ?? 0,
-      max: priceAgg._max.purchasePrice ?? 0,
-      min: priceAgg._min.purchasePrice ?? 0,
-      mostExpensive,
-    },
+    priceStats: await priceStatsIn(pricedWines, owner?.currency ?? DEFAULT_CURRENCY),
     nearMaturity: nearMaturityWines(cellarWines, currentYear),
     overdueWines: overdueWines(cellarWines, currentYear),
   };
@@ -685,7 +699,7 @@ export async function deleteSavedFilter(id) {
 
 const WRAPPED_WINE_SELECT = {
   id: true, name: true, producer: true, country: true, type: true, grapeVarieties: true,
-  rating: true, isFavorite: true, purchasePrice: true, estimatedValue: true,
+  rating: true, isFavorite: true, purchasePrice: true, estimatedValue: true, currency: true,
 };
 
 export async function getWrapped(year = new Date().getFullYear()) {
@@ -707,11 +721,20 @@ export async function getWrapped(year = new Date().getFullYear()) {
     prisma.wine.findMany({ where: { userId: user.id, status: 'IN_CELLAR' }, select: { quantity: true, estimatedValue: true } }),
   ]);
 
+  // Prețurile în moneda utilizatorului (DATA-007)
+  const stats = await dashboardStats(user.id);
+  const rates = await getRates();
+  const inCurrency = (wine) => wine && {
+    ...wine,
+    purchasePrice: convert(wine.purchasePrice, wine.currency, stats.currency, rates),
+    estimatedValue: convert(wine.estimatedValue, wine.currency, stats.currency, rates),
+  };
   const consumptions = [
-    ...logs.map((log) => ({ at: log.createdAt, quantity: Number(log.details?.quantityConsumed) || 1, wine: log.wine })),
-    ...consumedWithoutLog.map(({ consumptionDate, ...wine }) => ({ at: consumptionDate, quantity: 1, wine })),
+    ...logs.map((log) => ({ at: log.createdAt, quantity: Number(log.details?.quantityConsumed) || 1, wine: inCurrency(log.wine) })),
+    ...consumedWithoutLog.map(({ consumptionDate, ...wine }) => ({ at: consumptionDate, quantity: 1, wine: inCurrency(wine) })),
   ];
-  return buildWrapped({ year: target, consumptions, cellar });
+  const wrapped = buildWrapped({ year: target, consumptions, cellar });
+  return { ...wrapped, currency: stats.currency, collection: { bottles: stats.totalBottles, value: stats.totalValue } };
 }
 
 // ─────────────────────────────────────────
@@ -863,4 +886,21 @@ export async function getConsumptionPlan({ horizon = 10 } = {}) {
     select: { id: true, name: true, producer: true, vintage: true, type: true, quantity: true, status: true, drinkFrom: true, drinkUntil: true, agingPotential: true },
   });
   return buildPlan(wines, { horizon: Math.min(Math.max(Number(horizon) || 10, 3), 25) });
+}
+
+// ─────────────────────────────────────────
+// MONEDĂ (DATA-007)
+// ─────────────────────────────────────────
+
+export async function updateCurrency(currency) {
+  const user = await getCurrentUser();
+  if (!isCurrency(currency)) return { error: 'Monedă necunoscută' };
+  await prisma.user.update({ where: { id: user.id }, data: { currency } });
+  revalidatePath('/', 'layout');
+  return { success: true };
+}
+
+export async function getUserCurrency() {
+  const user = await getCurrentUser();
+  return (await prisma.user.findUnique({ where: { id: user.id }, select: { currency: true } }))?.currency ?? DEFAULT_CURRENCY;
 }

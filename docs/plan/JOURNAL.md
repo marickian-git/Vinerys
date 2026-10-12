@@ -286,6 +286,23 @@ Pe pagina vinului apare secțiunea „Jurnal de degustare”. Pagina `/tastings`
 
 **Învățat:** `headers()` din `next/headers` include și `Authorization`, deci acțiunile existente care citesc sesiunea (ex. `getWinePairing`) merg și cu bearer token.
 
+### #35 DATA-007 Multi-currency
+**Făcut:**
+- Migrația `currency`: `Wine.currency` și `User.currency`, implicit EUR, deci datele existente rămân corecte.
+- `utils/currency.js` (`CURRENCIES`, `convert`, `formatMoney` cu `Intl` + `narrowSymbol`, `parseEcbXml`, `sumInCurrency`) și `server/fx.js` (`getRates`: BCE zilnic, cache 12 h, cache de eșec 30 min, fallback `FX_RATES_JSON`).
+- `dashboardStats` însumează pe monede și convertește în moneda utilizatorului; ce nu se poate converti apare în `unconvertedValue`, nu e ignorat în tăcere. `getAdvancedStats` (prețuri) și Wrapped convertesc la fel.
+- UI: select de monedă în formularul de vin (implicit moneda din Setări), cardul „Monedă” în Setări, toate `€` hardcodate înlocuite cu `formatMoney`.
+- Exportul CSV are coloana „Monedă”, iar copertei PDF îi arată totalul pe monede.
+- Teste: `tests/unit/currency.test.js` și e2e `tests/e2e/currency.spec.js` (RON → „150 lei” pe dashboard).
+
+**Decizii:**
+- Prețul se păstrează în moneda originală și se convertește doar la afișarea agregatelor (issue: „păstrarea monedei originale”).
+- Cursurile vin de la BCE, care include RON, fără cheie API.
+
+**Învățat:**
+- CLDR `ro` afișează codul („100 EUR”). Cu `currencyDisplay: 'narrowSymbol'` iese „100 €” / „1.235 lei”.
+- În containerul cloud, serverul nu ajunge la BCE, deci e2e-ul acoperă degradarea fără cursuri.
+
 ---
 
 ## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub
