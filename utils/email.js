@@ -1,4 +1,7 @@
 import nodemailer from 'nodemailer';
+import { createLogger, serializeError } from './logger';
+
+const logger = createLogger('email');
 
 // Email prin SMTP generic: Brevo (gratuit, 300/zi), Resend, Gmail etc. — se schimbă doar din env.
 // SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, EMAIL_FROM ("Vinerys <adresa@verificata.ro>")
@@ -27,7 +30,7 @@ export async function sendEmail({ to, subject, html, text }) {
     if (process.env.NODE_ENV !== 'production') {
       console.info(`[email:dev] către ${to} — ${subject}\n${text}`);
     } else {
-      console.warn(`[email] SMTP neconfigurat: emailul „${subject}” nu a fost trimis`);
+      logger.warn('SMTP not configured, email not sent', { subject });
     }
     return { sent: false };
   }

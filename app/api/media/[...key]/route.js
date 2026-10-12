@@ -5,6 +5,9 @@ import prisma from '@/utils/db';
 import { BUCKET, getMinioClient } from '@/utils/minio';
 import { parseObjectKey } from '@/utils/storage';
 import { THUMB_WIDTHS } from '@/utils/mediaUrl';
+import { createLogger, serializeError } from '@/utils/logger';
+
+const logger = createLogger('media');
 
 const notFound = () => new Response('Not found', { status: 404 });
 
@@ -31,7 +34,7 @@ export async function GET(request, { params }) {
     buffer = Buffer.concat(chunks);
     contentType = stat.metaData?.['content-type'] || 'application/octet-stream';
   } catch (error) {
-    if (error.code !== 'NotFound' && error.code !== 'NoSuchKey') console.error('[media] read failed:', error.message);
+    if (error.code !== 'NotFound' && error.code !== 'NoSuchKey') logger.error('read failed', { error: serializeError(error) });
     return notFound();
   }
 

@@ -1,6 +1,9 @@
 const VALID_TYPES = ['RED', 'WHITE', 'ROSE', 'SPARKLING', 'DESSERT', 'FORTIFIED'];
 import { AI_PROVIDER_REGISTRY, getProviderDefinition } from './aiProviderRegistry';
 import { validateProviderBaseUrl } from './aiUrlSecurity';
+import { createLogger, serializeError } from './logger';
+
+const logger = createLogger('ai');
 const CURRENT_YEAR = new Date().getFullYear();
 const IDENTIFICATION_PROMPT = `You are identifying a wine from a label image. Return only valid JSON.
 Focus on what is visible or strongly supported by the label. Do not guess missing facts.
@@ -75,6 +78,15 @@ export function normalizeEnrichment(raw, identity) {
         enrichmentConfidence: Math.max(0, Math.min(1, asNumber(raw.enrichmentConfidence) || 0)),
         enrichmentBasis: raw.enrichmentBasis?.toString().trim() || null,
     };
+}
+
+// Tokenii raportați de provider (Gemini, Anthropic, OpenAI-compatibil); null când lipsesc
+export function readUsage(data) {
+    const gemini = data?.usageMetadata;
+    if (gemini) return { inputTokens: gemini.promptTokenCount ?? null, outputTokens: gemini.candidatesTokenCount ?? null };
+    const usage = data?.usage;
+    if (usage) return { inputTokens: usage.input_tokens ?? usage.prompt_tokens ?? null, outputTokens: usage.output_tokens ?? usage.completion_tokens ?? null };
+    return { inputTokens: null, outputTokens: null };
 }
 
 async function requestJson(url, headers, body, timeoutMs, method = 'POST') {
@@ -158,18 +170,18 @@ async function discoverVisionModel(agent) {
 
 async function callProviderWithModel(agent, prompt, imageBase64 = null, mimeType = null, modelOverride) {
     const options = { model: agent.model, timeoutMs: agent.timeoutMs || 20000 };
-    if (process.env.NODE_ENV !== 'production') console.info('[ai-debug] request', { provider: agent.provider, model: modelOverride || options.model || null, vision: Boolean(imageBase64), mimeType: mimeType || null, imageBytes: imageBase64?.length || 0, prompt: prompt.slice(0, 180) });
+    logger.debug('request', { provider: agent.provider, model: modelOverride || options.model || null, vision: Boolean(imageBase64), mimeType: mimeType || null, imageBytes: imageBase64?.length || 0, prompt: prompt.slice(0, 180) });
     if (agent.provider === 'gemini') {
         const model = modelOverride || options.model || 'gemini-3.6-flash';
         const parts = [{ text: prompt }];
         if (imageBase64) parts.push({ inline_data: { mime_type: mimeType, data: imageBase64 } });
         const data = await requestJson(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, { 'Content-Type': 'application/json', 'x-goog-api-key': agent.apiKey }, { contents: [{ parts }], generationConfig: { temperature: 0.1, maxOutputTokens: 1800 } }, options.timeoutMs);
-        return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        return { text: data.candidates?.[0]?.content?.parts?.[0]?.text || '', model, usage: readUsage(data) };
     }
     if (agent.provider === 'claude') {
         const content = imageBase64 ? [{ type: 'image', source: { type: 'base64', media_type: mimeType, data: imageBase64 } }, { type: 'text', text: prompt }] : [{ type: 'text', text: prompt }];
         const data = await requestJson('https://api.anthropic.com/v1/messages', { 'Content-Type': 'application/json', 'x-api-key': agent.apiKey, 'anthropic-version': '2023-06-01' }, { model: options.model || 'claude-3-5-sonnet-20241022', max_tokens: 1800, messages: [{ role: 'user', content }] }, options.timeoutMs);
-        return data.content?.[0]?.text || '';
+        return { text: data.content?.[0]?.text || '', model: options.model || 'claude-3-5-sonnet-20241022', usage: readUsage(data) };
     }
     const definition = getProviderDefinition(agent.provider);
     const baseUrl = agent.baseUrl || definition.baseUrl;
@@ -196,7 +208,7 @@ async function callProviderWithModel(agent, prompt, imageBase64 = null, mimeType
     const content = [{ type: 'text', text: prompt }];
     if (imageBase64) content.push({ type: 'image_url', image_url: { url: `data:${mimeType};base64,${imageBase64}` } });
     const data = await requestJson(url, { 'Content-Type': 'application/json', Authorization: `Bearer ${agent.apiKey}` }, { model, max_tokens: 1800, messages: [{ role: 'user', content }] }, options.timeoutMs);
-    return data.choices?.[0]?.message?.content || '';
+    return { text: data.choices?.[0]?.message?.content || '', model, usage: readUsage(data) };
 }
 
 async function callProvider(agent, prompt, imageBase64, mimeType) {
@@ -216,14 +228,18 @@ async function callProvider(agent, prompt, imageBase64, mimeType) {
 
 async function withRetry(agent, prompt, imageBase64, mimeType, normalizeResult) {
     let lastError;
+    const startedAt = Date.now();
     for (let attempt = 0; attempt <= (agent.maxRetries ?? 1); attempt += 1) {
         try {
-            const raw = await callProvider(agent, prompt, imageBase64, mimeType);
+            const { text: raw, usage, model } = await callProvider(agent, prompt, imageBase64, mimeType);
             const parsed = parseJson(raw);
             const result = normalizeResult(parsed);
-            return { raw, parsed, result, resultStatus: normalizeResult === normalizeIdentification ? identityResultStatus(result) : 'USEFUL' };
+            const latencyMs = Date.now() - startedAt;
+            logger.info('agent call ok', { provider: agent.provider, model, latencyMs, attempts: attempt + 1, ...usage });
+            return { raw, parsed, result, latencyMs, usage, model, resultStatus: normalizeResult === normalizeIdentification ? identityResultStatus(result) : 'USEFUL' };
         } catch (error) {
             lastError = error;
+            logger.warn('agent call failed', { provider: agent.provider, model: agent.model || null, latencyMs: Date.now() - startedAt, attempt: attempt + 1, error: serializeError(error) });
             if (error.status === 429 || error.providerStatus === 'RATE_LIMITED') break;
             if (attempt < (agent.maxRetries ?? 1)) await new Promise((resolve) => setTimeout(resolve, 500 * 2 ** attempt));
         }
@@ -278,6 +294,45 @@ export async function analyzeWineLabel(imageBase64, mimeType, provider, apiKey, 
     return response.result;
 }
 
+// Un singur răspuns text (fără imagine): agenții se încearcă pe rând, după prioritate, până reușește unul.
+// Folosit de pairing (HOME-003). Întoarce rezultatul normalizat și consumul fiecărei încercări.
+export async function generateWithAgents(agents, prompt, normalize, { operation = 'text' } = {}) {
+    const usable = agents
+        .filter((agent) => agent.enabled !== false && agent.apiKey?.trim() && AI_PROVIDERS[agent.provider] && !['Invalid credentials'].includes(agent.lastStatus))
+        .sort((a, b) => (a.priority || 0) - (b.priority || 0));
+    if (!usable.length) throw new Error('Niciun agent AI activ și configurat');
+    const usage = [];
+    let lastError;
+    for (const agent of usable) {
+        try {
+            const response = await withRetry({ ...agent, maxRetries: Math.min(agent.maxRetries ?? 1, 1) }, prompt, null, null, normalize);
+            usage.push(usageEntry(operation, agent, { status: 'fulfilled', value: response }));
+            return { result: response.result, provider: agent.provider, usage };
+        } catch (error) {
+            usage.push(usageEntry(operation, agent, { status: 'rejected', reason: error }));
+            lastError = error;
+        }
+    }
+    throw Object.assign(lastError ?? new Error('AI indisponibil'), { usage });
+}
+
+// O linie de consum per apel de agent (AI-013), reușit sau nu
+function usageEntry(operation, agent, settledItem) {
+    const value = settledItem.status === 'fulfilled' ? settledItem.value : null;
+    return {
+        operation,
+        agentId: agent.id || null,
+        provider: agent.provider,
+        model: value?.model || agent.model || null,
+        billingType: agent.billingType || null,
+        pricing: agent.metadata?.pricing || null,
+        inputTokens: value?.usage?.inputTokens ?? null,
+        outputTokens: value?.usage?.outputTokens ?? null,
+        latencyMs: value?.latencyMs ?? null,
+        success: Boolean(value),
+    };
+}
+
 export async function analyzeWineLabelEnsemble(imageBase64, mimeType, agents = [], { providers = ENSEMBLE_DEFAULT_PROVIDERS, maxRetries = 1 } = {}) {
     if (!imageBase64 || imageBase64.length < 100 || !mimeType?.startsWith('image/')) throw new Error('Imagine invalidă');
     const configured = Array.isArray(agents) ? agents : Object.entries(agents).map(([provider, apiKey]) => ({ provider, apiKey }));
@@ -303,10 +358,10 @@ export async function analyzeWineLabelEnsemble(imageBase64, mimeType, agents = [
         error: item.reason?.message || 'Eroare necunoscută',
     } : null).filter(Boolean);
     const providerDebug = [...responses.map((item) => ({ provider: item.provider, model: item.agent.model || null, httpStatus: 200, providerStatus: 'SUCCESS', resultStatus: item.resultStatus, raw: item.raw, parsed: item.parsed, normalized: item.result })), ...errors];
-    if (process.env.NODE_ENV !== 'production') console.info('[ai-debug] provider pipeline', JSON.stringify(providerDebug));
     if (!successful.length) {
         const error = new Error('IDENTIFICATION_FAILED: niciun provider nu a returnat o identificare utilă');
         error.providerErrors = [...errors, ...emptyResults];
+        error.usage = settled.map((item, index) => usageEntry('scan_identify', usable[index], item));
         throw error;
     }
 
@@ -339,6 +394,11 @@ export async function analyzeWineLabelEnsemble(imageBase64, mimeType, agents = [
         errors: [...errors, ...emptyResults],
         enrichmentErrors: enrichmentSettled.filter((item) => item.status === 'rejected').map((item, index) => ({ provider: successful[index].provider, providerStatus: item.reason?.providerStatus || 'ERROR', error: item.reason?.message || 'Enrichment failed' })),
         providerDebug,
+        usage: [
+            ...settled.map((item, index) => usageEntry('scan_identify', usable[index], item)),
+            ...enrichmentSettled.map((item, index) => usageEntry('scan_enrich', successful[index].agent, item)),
+        ],
+        agentTimings: responses.map((item) => ({ provider: item.provider, latencyMs: item.latencyMs })),
         emptyResults,
     };
 }

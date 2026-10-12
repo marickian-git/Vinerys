@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import WineActions from '@/components/wines/WineActions';
 import ConsumeButton from '@/components/wines/ConsumeButton';
+import WinePairing from '@/components/wines/WinePairing';
+import { pairingKey } from '@/utils/pairing';
 import { DrinkWindowCard } from '@/components/wines/DrinkWindowBadge';
 import AromaProfile from '@/components/wines/AromaProfile';
 import { getDisplayImageUrl } from '@/utils/mediaUrl';
@@ -302,6 +304,10 @@ export default async function WineDetailPage({ params }) {
                 )}
               </div>
             )}
+            <div className="wd-section">
+              <div className="wd-section-title">Ce gătesc cu el?</div>
+              <WinePairing wineId={wine.id} initialPairing={wine.pairingKey === pairingKey(wine) ? wine.pairing : null} />
+            </div>
             {wine.tastingNotes && (
               <div className="wd-section">
                 <div className="wd-section-title">Notițe de degustare</div>

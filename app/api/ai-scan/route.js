@@ -1,11 +1,15 @@
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
-import { randomUUID } from 'node:crypto';
 import { auth } from '@/utils/auth';
 import prisma from '@/utils/db';
 import { analyzeWineLabelEnsemble, AI_PROVIDERS } from '@/utils/aiProviders';
 import { decryptSecret } from '@/utils/aiSecrets';
 import { LIMITS, rateLimit, tooManyRequestsMessage } from '@/utils/rateLimit';
+import { serializeError } from '@/utils/logger';
+import { ScanRequestSchema } from '@/schemas/ai';
+import { findCachedScan, hashImage, storeScan } from '@/utils/scanCache';
+import { recordAIUsage } from '@/utils/aiUsage';
+import { notFound, rateLimited, unauthenticated, validationError, withApiHandler } from '@/utils/errors';
 
 function publicProviderErrors(items = []) {
   return items.map(({ raw, parsed, normalized, ...item }) => item);
@@ -20,22 +24,32 @@ function providerStatusFor(item) {
 }
 
 
-export async function POST(request) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user) {
-    return NextResponse.json({ error: 'Neautentificat' }, { status: 401 });
+// Istoricul scanărilor (wine_log SCAN_AI); o eroare aici nu blochează răspunsul
+async function logScan(userId, details, log) {
+  try {
+    await prisma.wineLog.create({
+      data: {
+        wineId: null,
+        userId,
+        action: 'SCAN_AI',
+        details: { ...details, wineCreated: false, timestamp: new Date().toISOString() },
+      },
+    });
+  } catch (err) {
+    log.error('wine log write failed', { error: serializeError(err) });
   }
+}
+
+export const POST = withApiHandler('ai-scan', async (request, { log: baseLog, requestId }) => {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session?.user) throw unauthenticated();
 
   const limited = rateLimit(`ai-scan:${session.user.id}`, LIMITS.aiScan);
-  if (!limited.ok) {
-    return NextResponse.json(
-      { error: tooManyRequestsMessage(limited.retryAfter) },
-      { status: 429, headers: { 'Retry-After': String(limited.retryAfter) } },
-    );
-  }
+  if (!limited.ok) throw rateLimited(tooManyRequestsMessage(limited.retryAfter), limited.retryAfter);
 
-  const operationId = randomUUID();
+  const operationId = requestId;
   const startedAt = Date.now();
+  const log = baseLog.child({ userId: session.user.id });
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: {
@@ -46,21 +60,36 @@ export async function POST(request) {
       },
     },
   });
-  if (!user) {
-    return NextResponse.json({ error: 'Utilizator negăsit' }, { status: 404 });
-  }
+  if (!user) throw notFound('Utilizator negăsit');
 
-  let imageBase64, mimeType;
-  try {
-    const body = await request.json();
-    imageBase64 = body.imageBase64;
-    mimeType = body.mimeType || 'image/jpeg';
-  } catch {
-    return NextResponse.json({ error: 'Date invalide (imageBase64 lipsă)' }, { status: 400 });
-  }
+  const body = await request.json().catch(() => {
+    throw validationError(undefined, 'Date invalide (imageBase64 lipsă)');
+  });
+  const parsedBody = ScanRequestSchema.safeParse(body ?? {});
+  if (!parsedBody.success) throw validationError(undefined, parsedBody.error.issues[0]?.message);
+  const { imageBase64, mimeType, force } = parsedBody.data;
 
-  if (!imageBase64) {
-    return NextResponse.json({ error: 'Lipsește imaginea (imageBase64)' }, { status: 400 });
+  // AI-008: aceeași imagine scanată deja → rezultatul din cache, fără apel AI
+  const imageHash = hashImage(imageBase64);
+  if (!force) {
+    const cached = await findCachedScan(prisma, imageHash).catch((err) => {
+      log.warn('scan cache read failed', { error: serializeError(err) });
+      return null;
+    });
+    if (cached) {
+      await logScan(user.id, { operationId, cached: true, providers: cached.providers, durationMs: Date.now() - startedAt, imageMimeType: mimeType, aiResult: cached.result }, log);
+      log.info('scan served from cache', { durationMs: Date.now() - startedAt, providers: cached.providers });
+      return NextResponse.json({
+        success: true,
+        cached: true,
+        operationId,
+        providers: cached.providers,
+        providerErrors: [],
+        enrichmentErrors: [],
+        data: cached.result,
+        wine: null,
+      });
+    }
   }
 
   // Un agent cu cheie care nu se poate decripta (ex. secret schimbat) e sărit, nu blochează scanarea
@@ -68,17 +97,15 @@ export async function POST(request) {
     try {
       return [{ ...agent, apiKey: decryptSecret(agent.encryptedApiKey) }];
     } catch {
-      console.error(`[scan:${operationId}] agent ${agent.id}: cheia nu poate fi decriptată`);
+      log.error('agent key cannot be decrypted', { agentId: agent.id, provider: agent.provider });
       return [];
     }
   });
-  if (!agents.length) {
-    return NextResponse.json({ error: 'Configurează cel puțin un agent AI activ în Setări → AI.' }, { status: 400 });
-  }
+  if (!agents.length) throw validationError(undefined, 'Configurează cel puțin un agent AI activ în Setări → AI.');
 
   let scanResult;
   try {
-    console.info(`[scan:${operationId}] starting ${agents.length} agents`);
+    log.info('scan started', { agents: agents.length, providers: agents.map((agent) => agent.provider) });
     scanResult = await analyzeWineLabelEnsemble(imageBase64, mimeType, agents, { providers: [] });
     await Promise.all(scanResult.successfulAgentIds.map((id) => prisma.aIAgent.updateMany({
       where: { id, userId: user.id },
@@ -101,48 +128,52 @@ export async function POST(request) {
         lastCheckedAt: new Date(),
       },
     })));
-    console.error(`[scan:${operationId}] AI error:`, err.message, err.providerErrors || '');
+    await recordAIUsage(user.id, operationId, err.usage, log);
+    log.error('scan failed', {
+      error: serializeError(err),
+      durationMs: Date.now() - startedAt,
+      providerErrors: publicProviderErrors(err.providerErrors || []),
+    });
     return NextResponse.json({
       error: 'Scanarea nu a putut fi finalizată. Verifică agenții AI configurați.',
+      code: 'AI_FAILED',
       operationId,
       providerErrors: publicProviderErrors(err.providerErrors || []),
     }, { status: 502 });
   }
 
-  try {
-    await prisma.wineLog.create({
-      data: {
-        wineId: null,
-        userId: user.id,
-        action: 'SCAN_AI',
-        details: {
-          operationId,
-          providers: scanResult.sources,
-          providerErrors: scanResult.errors,
-          enrichmentErrors: scanResult.enrichmentErrors || [],
-          identificationConfidence: scanResult.result.identification?.confidence ?? scanResult.result.confidence?.identity ?? null,
-          enrichmentConfidence: scanResult.result.enrichment?.confidence ?? null,
-          drinkingWindow: {
-            from: scanResult.result.drinkFrom ?? null,
-            until: scanResult.result.drinkUntil ?? null,
-            confidence: scanResult.result.confidence?.drinkWindow ?? null,
-            basis: scanResult.result.drinkWindowBasis ?? null,
-          },
-          durationMs: Date.now() - startedAt,
-          imageMimeType: mimeType,
-          aiResult: scanResult.result,
-          wineCreated: false,
-          timestamp: new Date().toISOString(),
-        },
-      },
-    });
-  } catch (err) {
-    console.error('[scan] Error logging scan action:', err);
-  }
+  await logScan(user.id, {
+    operationId,
+    providers: scanResult.sources,
+    providerErrors: scanResult.errors,
+    enrichmentErrors: scanResult.enrichmentErrors || [],
+    identificationConfidence: scanResult.result.identification?.confidence ?? scanResult.result.confidence?.identity ?? null,
+    enrichmentConfidence: scanResult.result.enrichment?.confidence ?? null,
+    drinkingWindow: {
+      from: scanResult.result.drinkFrom ?? null,
+      until: scanResult.result.drinkUntil ?? null,
+      confidence: scanResult.result.confidence?.drinkWindow ?? null,
+      basis: scanResult.result.drinkWindowBasis ?? null,
+    },
+    durationMs: Date.now() - startedAt,
+    imageMimeType: mimeType,
+    aiResult: scanResult.result,
+  }, log);
 
-  if (process.env.NODE_ENV !== 'production') console.info(`[scan:${operationId}] RAW -> PARSED -> NORMALIZED -> AGGREGATED`, JSON.stringify(scanResult.providerDebug));
+  await recordAIUsage(user.id, operationId, scanResult.usage, log);
+  await storeScan(prisma, imageHash, scanResult).catch((err) => {
+    log.warn('scan cache write failed', { error: serializeError(err) });
+  });
 
-  console.info(`[scan:${operationId}] completed in ${Date.now() - startedAt}ms; identity=${scanResult.result.confidence?.identity ?? 'unknown'} drinkingWindow=${scanResult.result.drinkFrom ?? 'unknown'}-${scanResult.result.drinkUntil ?? 'unknown'}`);
+  log.debug('provider pipeline', { providerDebug: scanResult.providerDebug });
+  log.info('scan completed', {
+    durationMs: Date.now() - startedAt,
+    providers: scanResult.sources,
+    agentTimings: scanResult.agentTimings,
+    identityConfidence: scanResult.result.confidence?.identity ?? null,
+    drinkFrom: scanResult.result.drinkFrom ?? null,
+    drinkUntil: scanResult.result.drinkUntil ?? null,
+  });
 
   return NextResponse.json({
     success: true,
@@ -150,7 +181,8 @@ export async function POST(request) {
     providers: scanResult.sources,
     providerErrors: publicProviderErrors(scanResult.errors),
     enrichmentErrors: scanResult.enrichmentErrors || [],
+    cached: false,
     data: scanResult.result,
     wine: null,
   });
-}
+});

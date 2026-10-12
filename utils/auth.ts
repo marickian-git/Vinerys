@@ -26,7 +26,8 @@ export const auth = betterAuth({
     storage: "memory",
     customRules: {
       "/sign-in/email": { window: 60, max: 5 },
-      "/sign-up/email": { window: 60 * 60, max: 5 },
+      // E2E creează un cont nou pe test; AUTH_SIGNUP_MAX se setează doar în playwright.config.mjs
+      "/sign-up/email": { window: 60 * 60, max: Number(process.env.AUTH_SIGNUP_MAX) || 5 },
       "/change-password": { window: 10 * 60, max: 5 },
       "/request-password-reset": { window: 60 * 60, max: 3 },
       "/reset-password": { window: 10 * 60, max: 5 },

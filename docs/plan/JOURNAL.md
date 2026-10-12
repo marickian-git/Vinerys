@@ -13,6 +13,182 @@
 
 ---
 
+## 2026-10-11 — Sesiune autonomă (WORKPLAN.md)
+
+> O intrare pentru toată sesiunea; fiecare issue are un paragraf (Făcut / Decizii / Învățat). Ordinea și statusul sunt în `WORKPLAN.md`.
+
+**Constatare:** commit-urile de design (`f19c454`…`d354b61`: teme A–E, `components/ui/`, navigație, `utils/urgency.js`, Acasă nou) nu sunt pe GitHub. Le am doar pe mașina utilizatorului, așa că lucrez pe issue-uri server-side ca să nu intru în conflict.
+
+### #76 REFACTOR-005 Logging structurat
+**Făcut:** `utils/logger.js` (`createLogger(scope).child({...})`, `redact`, `serializeError`, `requestIdFrom`). Toate `console.*` din API, `utils/actions.js`, `aiProviders`, `storage`, `email` trec prin el. Scanarea AI loghează `requestId` (= `operationId`), `userId`, latența per agent și per scanare. Teste: `tests/unit/logger.test.js`.
+**Decizii:** fără pino. Un logger de ~90 de linii fără dependențe merge și în `proxy.ts` (edge) și nu cere `serverExternalPackages`. Formatul e JSON pe stdout în producție, ușor de citit cu `docker logs` sau de trimis mai departe (Loki).
+**Învățat:** regex-ul de redactare e ancorat la final de cheie (`apiKey`, `accessToken`), ca `inputTokens`/`outputTokens` (#88) să nu fie ascunse.
+
+### #75 REFACTOR-004 Error handling standard
+**Făcut:** `utils/errors.js` cu `AppError` (cod → status + mesaj pentru utilizator), fabricile `unauthenticated/forbidden/notFound/validationError/rateLimited`, `toPublicError`, `actionError` (pentru actions care întorc `{ error }`) și `withApiHandler(scope, handler)`. Rutele `upload`, `export` și `ai-scan` sunt înfășurate: aruncă erori tipizate, primesc `log` + `requestId` în context și pun `x-request-id` pe răspuns. Server actions aruncă `AppError`. Teste: `tests/unit/errors.test.js`.
+**Decizii:** corpul răspunsului păstrează câmpul `error` (string), deci clienții existenți nu se schimbă. Se adaugă `code` (pentru UI/i18n) și `requestId` (pentru suport). Erorile neprevăzute nu-și expun niciodată mesajul tehnic.
+**Rămas:** formularele (`WineForm` etc.) pot folosi `code` pentru mesaje traduse când vine I18N-002.
+
+### #28 ARCH-007 Scheme Zod comune
+**Făcut:** `schemas/wine.js` (`WineInputSchema`, enum-uri, `parseWineForm`), `schemas/account.js` (profil, parolă, nume pivniță), `schemas/ai.js` (`AIAgentInputSchema`, `ScanRequestSchema`). `utils/actions.js` și `/api/ai-scan` le folosesc în loc de validări scrise de mână. Teste: `tests/unit/schemas.test.js`. E2E 8/8 local.
+**Decizii:** schemele nu importă nimic de pe server, deci pot fi folosite și în componente client. Mesajele și limitele (timeout, retries, weight) sunt păstrate exact. Am adăugat o limită de mărime pentru `imageBase64` (15 MB) și validarea tipului MIME. Schemele de răspuns vin cu `/api/v1` (#84).
+**Învățat:** testul e2e de consum pica și pe `main`: după un consum, butonul rămânea pe „Confirmi?”, deci al doilea click consuma fără confirmare. Reparat separat în `fix(consume)`. Pentru e2e local în containerul cloud: Postgres 16 pe 5432 (`E2E_DATABASE_URL`) și Chromium din `/opt/pw-browsers` (config local, neversionat).
+
+### #120 DATA-010 Normalizare și vocabulare canonice
+**Făcut:** `utils/normalize.js`:
+- `cleanText`/`foldKey`;
+- 40 de țări canonice în română, cu aliasuri EN/fără diacritice;
+- locații deduplicate după forma existentă;
+- vocabular de ~100 de arome în 13 categorii (`AROMA_CATEGORIES`, `classifyAroma`), pentru roata de arome (#51) și AI;
+- `deriveColor`, `normalizeWineData`.
+
+`createWine`/`updateWine` normalizează la salvare. `WineForm` are autocomplete (`datalist`) pentru țări și locații (`getCellarLocations`). Scriptul `scripts/normalize-wines.mjs` rulează implicit în dry-run, iar cu `--apply` face întâi backup JSON (`backups/`, ignorat de git) și apoi tranzacția. Teste: `tests/unit/normalize.test.js` (18).
+
+**Decizii:**
+- Forma canonică a țărilor e în română („Republica Moldova”, „Statele Unite”). Aromele canonice sunt în română, cu litere mici.
+- Culoarea se derivă doar când e sigură: RED/WHITE/ROSE din tip, spumant/desert/fortifiat din soiuri. La soiuri mixte rămâne `null`.
+- Locația nouă preia scrierea deja existentă la utilizator. Între două variante, câștigă cea cu diacritice.
+
+**Next:** pe producție, `docker exec vinerys-app node scripts/normalize-wines.mjs` (dry-run), verificare, apoi `--apply`.
+
+### #34 DATA-006 Statistici prin agregări DB
+**Făcut:**
+- `getDashboardStats`: 2× `groupBy`, `aggregate` și un `SUM(estimatedValue × quantity)` în SQL.
+- `getAdvancedStats`: top 5 după rating cu `take`, țări prin `groupBy`, lunile prin `date_trunc`, prețuri prin `aggregate`. Doar fereastra de consum mai citește rânduri, și numai pe cele `IN_CELLAR`.
+- Logica pură e în `utils/stats.js` (`overdueWines`, `nearMaturityWines`, `monthlySeries`, `countsBy`), cu teste.
+- `getCurrentUser` e înfășurat în `cache()` din React, deci dashboard-ul citește sesiunea o singură dată, nu de 4 ori.
+
+**Învățat:** tabela `Wine` n-are `@@map`, deci în SQL brut se scrie `"Wine"` cu coloane camelCase. `wine_log` e mapată.
+
+### #125 DESIGN-012 Teme noi F · G · H (cerut de utilizator)
+**Făcut:** am propus 3 teme pe structura D, ca [canvas](https://claude.ai/artifact/1boBd3tvqZ8k9eXU1BLoMv) cu ecranul Acasă pe mobil:
+- **F** Piatră și mușchi (Fraunces + Public Sans);
+- **G** Amurg în vie (DM Serif Display + Figtree);
+- **H** Ie, cu motiv popular (Alegreya).
+
+Tokenii sunt în `docs/design/proposed-themes.tokens.json`, iar `tests/unit/proposedThemes.test.js` verifică contrastul AA pe toate perechile text/fundal.
+**Învățat:** testul a prins teracota din F (`#B5543A`, 4.45:1 pe suprafață). Am închis-o la `#A4482F`.
+**Decizii:** canvas-ul cu temele A–E nu poate fi citit din sesiune (nu e partajat), deci temele sunt construite de la zero, cu tokeni semantici ușor de mapat. Integrarea în aplicație așteaptă alegerea utilizatorului.
+
+### #43 AI-008 Cache pentru scanări
+**Făcut:** model `ScanCache` (`scan_cache`) + migrația `20261011235305_scan_cache`. `utils/scanCache.js` (`hashImage`, `isCacheable`, `findCachedScan`, `storeScan`). În `/api/ai-scan` cache-ul se verifică înaintea agenților, deci un hit merge și fără agenți configurați. Răspunsul are `cached: true/false`, iar `force: true` rescanează. Scanarea din cache se scrie tot în `wine_log` (`cached: true`).
+**Decizii:**
+- Cache global, nu per utilizator: rezultatul e generic (eticheta), nu se salvează imaginea.
+- Hash exact, nu perceptual: două poze ale aceluiași producător cu ani diferiți ar da potriviri greșite.
+- Se cache-uiesc doar identificările cu încredere ≥ 0.6. TTL 180 de zile.
+
+**Rămas:** buton „Rescanează” în UI (trimite `force: true`) la restilizarea scanării (DESIGN-007). Baza canonică de vinuri ține de modelul de date nou.
+
+### #88 AI-013 Tracking cost AI
+**Făcut:**
+- `readUsage` citește tokenii din răspunsurile Gemini, Anthropic și OpenAI-compatibil. `withRetry` întoarce `usage` + `model`, iar ensemble-ul întoarce `usage[]` per apel de agent (și la eșec, pe `error.usage`).
+- Model `AIUsage` (`ai_usage`, migrația `20261011235442_ai_usage`, cascade la ștergerea contului).
+- `utils/aiPricing.js` (`priceFor`, `estimateCostUsd`).
+- `getAIUsageSummary()`: pe lună, pe agent, plus platforma pentru ADMIN.
+- Card „Consum AI” în Setări (`components/AIUsageSummary.jsx`).
+- Teste: `tests/unit/aiUsage.test.js`.
+
+**Decizii:** prețurile nu sunt hardcodate, fiindcă se schimbă des și nu le pot verifica. Sursele sunt `agent.metadata.pricing` și `AI_PRICING_JSON` (model exact sau cel mai lung prefix), iar tier-ul gratuit înseamnă 0. Fără preț, costul rămâne `null`, dar tokenii se salvează oricum.
+
+**Next:** UI pentru prețuri per agent în formularul de agent (split AISettingsSection, #74). Cotele per utilizator (AI-012) se pot construi direct peste `ai_usage`.
+
+### #111 BIZ-004 GDPR: export date + pagini legale
+**Făcut:**
+- `GET /api/account/export`: JSON descărcabil cu profil, vinuri, `wine_log`, agenți AI (fără chei), `ai_usage` și sesiuni (dată/IP/browser). Rate limit 5/oră.
+- În Setări, cardul „Datele tale” are buton de descărcare.
+- `/legal/privacy` și `/legal/terms` (`components/LegalPage.jsx`), plus link pe sign-up.
+- E2E: `tests/e2e/gdpr.spec.js` (export, 401 fără sesiune, pagini publice).
+
+**Decizii:**
+- Fără banner de cookie-uri: folosim doar cookie-uri strict necesare (sesiune, preferințe). Textul o spune explicit și promite consimțământ dacă apar altele.
+- Textele legale sunt schițe: operatorul, contactul, găzduirea și retenția backup-urilor sunt `[PLACEHOLDER]`. Trebuie revizuite înainte de lansarea publică (BIZ-002/BIZ-003).
+
+**Învățat / capcane:**
+- **Prisma 7: `migrate dev` nu mai rulează `generate`.** După o migrație nouă trebuie rulat `npx prisma generate`, altfel `prisma.<model>` e `undefined` la rulare (build-ul din CI îl rulează, deci acolo nu se vede).
+- Limita de sign-up (5/oră/IP) bloca suita e2e la al 6-lea cont. Acum e configurabilă prin `AUTH_SIGNUP_MAX`, setat la 100 doar în `playwright.config.mjs`. În producție rămâne 5.
+
+### #64 INT-001 Import CSV Vivino
+**Făcut:**
+- `utils/csvImport.js`: parser RFC 4180 (ghilimele, newline în câmp, BOM, `,`/`;`/tab), presetări de coloane per sursă cu `detectSource`/`autoMapColumns`, conversii (tip, numere RO/US, rating 1–5 sau 50–100, mărime sticlă, date) și `buildPreview` cu duplicate față de colecție și în fișier.
+- `importWines` / `getImportDuplicateKeys` în actions revalidează cu `WineInputSchema`, normalizează (#120), fac `createManyAndReturn` + `wine_log` într-o tranzacție și acceptă maximum 1000 de rânduri.
+- UI: `/wines/import` (`ImportWizard`), cu link din „Adaugă vin”.
+- Teste: `tests/unit/csvImport.test.js` + `tests/fixtures/vivino.csv`, e2e `tests/e2e/import.spec.js`.
+
+**Decizii:**
+- Maparea rulează în browser, pentru un preview instant fără upload. Serverul revalidează tot, deci clientul nu e de încredere.
+- Duplicat = nume + producător + an, comparate fără diacritice. Duplicatele sunt sărite, nu actualizate.
+- Formatul exact al exportului Vivino nu e documentat public. Aliasurile acoperă variantele cunoscute, iar maparea se poate corecta manual.
+
+### #65 INT-002 Import CSV CellarTracker
+**Făcut:** am adăugat presetul `cellartracker` în `SOURCES`, detectat după coloana `iWine`, cu mapare pentru `Producer`, `SubRegion`/`Appellation`, `Varietal`, `Size`, `Valuation`, `Location`/`Bin`, `BeginConsume`/`EndConsume` și `PScore`. Teste: fixture `tests/fixtures/cellartracker.csv` (tipuri compuse, 375 ml, NV).
+**Învățat:** CellarTracker marchează non-vintage cu anul `1001`. `parseYear` acceptă doar anii 1800–2100, deci NV rămâne fără an. Tipurile vin compuse („Rosé - Sparkling”), așa că ordinea regulilor contează: spumant/fortifiat/desert înaintea culorii.
+
+### #123 CI-008 Test de fum în producție
+**Făcut:** `scripts/smoke-prod.mjs` (`npm run smoke:prod`, Playwright), cu 10 pași:
+1. health + versiunea așteptată (`SMOKE_EXPECT_VERSION`, polling până la 15 min);
+2. cont de test `smoke+<ts>@vinerys.test`;
+3. vin cu poză (PNG generat cu sharp, verificat că ajunge WebP), 2 × 50 €;
+4. dashboard 2 sticle / 100 €;
+5. poza se încarcă prin `/api/media`;
+6. consum → 1 sticlă / 50 €;
+7. link public privat → activ → dezactivat;
+8. schimbare parolă;
+9. ștergere vin + poza dă 404;
+10. ștergere cont, verificat că login-ul nu mai merge.
+
+Curățenia contului rulează în `finally`. Raportul OK/FAIL iese cu cod 0/1, iar la eșec se trimite un POST opțional la `SMOKE_WEBHOOK_URL`. Rulat local pe build-ul de e2e: 10/10 (`SMOKE_SKIP_UPLOAD=1`, fără MinIO).
+**Decizii:** fără job programat în Actions. Un workflow nou cere push cu scope-ul `workflow`, iar rularea din GitHub spre serverul de acasă depinde de rețea. Pentru început: manual, după ce Watchtower preia imaginea.
+**Next:** după merge, `SMOKE_URL=https://casa-spiridus.go.ro/crama SMOKE_EXPECT_VERSION=<sha> npm run smoke:prod`.
+
+### #104 HOME-003 Vin → mâncare: „Ce gătesc cu el?”
+**Făcut:**
+- `utils/pairing.js`: `pairingKey`, `pairingPrompt` (răspuns în română, cel puțin un preparat românesc când se potrivește), `normalizePairing` (3 preparate, temperatură 4–22 °C, decantare 0–240 min).
+- `generateWithAgents` în `aiProviders`: încearcă agenții pe rând, după prioritate, și întoarce consumul fiecărei încercări.
+- `getWinePairing(wineId, { refresh })` cu cache pe `Wine.pairing` + `pairingKey` (migrația `20261012000623_wine_pairing`) și rate limit 20 / 10 min.
+- `components/wines/WinePairing.jsx` pe pagina vinului („Ce gătesc cu el?” / „Alte sugestii”, marcat „Generat de AI”).
+- `utils/aiUsage.js` (`recordAIUsage`) e comun pentru scanare și pairing.
+- Teste: `tests/unit/pairing.test.js`, inclusiv fallback-ul între agenți cu `fetch` simulat.
+
+**Decizii:** cache-ul ține cât timp nu se schimbă identitatea (nume, producător, an, tip, soiuri, regiune). Cantitatea sau ratingul nu îl invalidează. Un agent care eșuează nu blochează: se trece la următorul.
+**Învățat:** primul test e2e după `next start` poate depăși timeout-ul de 5 s al `toHaveURL` (server rece). În CI e acoperit de `retries: 1`.
+
+### #55 CELLAR-009 Căutare inteligentă
+**Făcut:**
+- Migrația `wine_search_trgm`: `CREATE EXTENSION pg_trgm` + indecși GIN trigram pe `name` și `producer`, declarați în schema (`ops: raw("gin_trgm_ops")`), deci CI-ul nu raportează drift.
+- `utils/searchQuery.js` (`parseSearchQuery`) traduce „roșii gata de băut sub 150 lei” în filtre (tip, fereastră de consum, preț min/max, an, favorite, trecute de vârf). Restul textului devine căutare fuzzy (`fuzzyWineMatches`): `word_similarity` pe nume/producător plus `LIKE` în regiune, țară, soiuri, arome, asocieri și note. Rezultatele sunt ordonate după relevanță când nu e aleasă altă sortare.
+- Model `SavedFilter` (migrația `saved_filters`), acțiunile `getSavedFilters/saveFilter/deleteSavedFilter`, componenta `SavedFilters` în Pivniță, cu placeholder nou în căutare.
+- Teste: `tests/unit/searchQuery.test.js`, e2e `tests/e2e/search.spec.js` (greșeală de tastare, limbaj natural, regiune, filtru salvat).
+
+**Decizii:** fără extensia `unaccent`. `translate()` scoate diacriticele românești direct în SQL, iar textul căutat trece prin `foldKey`. „lei”/„€” sunt ignorate, deci prețul se compară cu valoarea salvată (multi-currency = #35).
+**Învățat:** în regex-uri cu alternative, variantele lungi trebuie puse primele („trecute de vârf” înaintea lui „trecute”). `pg_trgm` e o extensie „trusted” (PG13+), deci proprietarul DB-ului o poate crea fără superuser.
+
+### #57 SOCIAL-001 Vinerys Wrapped
+**Făcut:**
+- `utils/wrapped.js` (`buildWrapped`, `wrappedShareText`, funcții pure + teste) și `getWrapped(year)`. Datele vin din `wine_log` CONSUMED (cu `quantityConsumed`) plus vinurile CONSUMED fără log (istoricul vechi, după `consumptionDate`).
+- Pagina `/wrapped` (protejată în `proxy.ts`), cu navigare între ani și buton „Distribuie anul tău” (`navigator.share` sau clipboard). Link din Profil.
+- E2E `tests/e2e/wrapped.spec.js`.
+
+**Decizii:**
+- Topurile sunt ponderate cu numărul de sticle, nu de vinuri.
+- „Preferatele” = favorite sau rating ≥ 4.
+- Prețul folosit e cel de achiziție, cu fallback pe valoarea estimată.
+- Linkul e pus în Profil, nu în navigație, ca să nu intre în conflict cu navigația nouă de pe branch-ul local.
+
+**Rămas:** imaginea „story” generată (OG image) și varianta publică, odată cu „Portretul pivniței” (#94) și designul nou.
+
+### #77 REFACTOR-006 Sentry (opțional)
+**Făcut:**
+- `utils/errorReporting.js` (`parseDsn`, `buildEvent`, `reportError`) trimite evenimente în format envelope Sentry, compatibil și cu GlitchTip self-hosted. Datele trec prin `redact`, are timeout de 3 s și nu aruncă niciodată.
+- `instrumentation.js` (`onRequestError`) loghează structurat și raportează erorile din server components, route handlers și server actions.
+- `app/error.jsx` trimite erorile din browser la `/api/client-errors` (validat cu Zod, rate limit 20 / 10 min).
+- Variabile noi în `.env.example`: `SENTRY_DSN`, `SENTRY_ENVIRONMENT`.
+- Teste: `tests/unit/errorReporting.test.js`. Verificat local cap-coadă: endpoint fals pe portul 9999, envelope-ul ajunge cu `X-Sentry-Auth` corect.
+
+**Decizii:** fără `@sentry/nextjs`. SDK-ul cere `withSentryConfig`, fișiere de config, upload de source maps și adaugă greutate pe Raspberry Pi. Clientul minimal acoperă server + browser + mediu + release. Recomandare: GlitchTip în CasaOS, ca să rămână totul local.
+**Rămas:** source maps (numai cu SDK) și erorile din `global-error` (layout-ul rădăcină).
+
+---
+
 ## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub
 
 **Făcut:**

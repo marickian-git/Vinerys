@@ -91,6 +91,7 @@ export default function AddWinePage() {
             <p className="add-eyebrow">Colecție nouă</p>
             <h1 className="add-title">Adaugă un vin</h1>
             <p className="add-subtitle">Completează detaliile pentru a adăuga vinul în pivnița ta digitală</p>
+            <p className="add-subtitle">Ai o listă în Vivino, CellarTracker sau Excel? <Link href="/wines/import" style={{ color: "#d97a95" }}>Importă din CSV</Link></p>
           </div>
 
           <div className="add-divider" />

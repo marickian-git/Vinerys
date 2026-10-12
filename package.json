@@ -13,6 +13,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "smoke:prod": "node scripts/smoke-prod.mjs",
     "db:dev": "docker compose -f docker-compose.dev.yml up -d postgres"
   },
   "dependencies": {

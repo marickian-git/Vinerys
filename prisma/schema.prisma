@@ -31,6 +31,8 @@ model User {
   wines         Wine[]
   wineLogs      WineLog[]
   aiAgents      AIAgent[]
+  aiUsage       AIUsage[]
+  savedFilters  SavedFilter[]
 
 
   @@map("user")
@@ -158,6 +160,10 @@ model Wine {
   bottleImageUrl       String?
   labelImageUrl        String?
 
+  // „Ce gătesc cu el?” (HOME-003): răspunsul AI cache-uit, valid cât timp pairingKey e același
+  pairing              Json?
+  pairingKey           String?
+
   // Status
   isFavorite           Boolean     @default(false)
   consumptionDate      DateTime?
@@ -173,6 +179,9 @@ model Wine {
   @@index([country])
   @@index([vintage])
   @@index([status])
+  // Căutare fuzzy (CELLAR-009): trigrame pe nume și producător; extensia pg_trgm e creată în migrație
+  @@index([name(ops: raw("gin_trgm_ops"))], type: Gin, map: "Wine_name_trgm_idx")
+  @@index([producer(ops: raw("gin_trgm_ops"))], type: Gin, map: "Wine_producer_trgm_idx")
 }
 
 
@@ -190,6 +199,57 @@ model WineLog {
   @@index([userId])
   @@index([action])
   @@map("wine_log")
+}
+
+// Filtre salvate în Pivniță (CELLAR-009): parametrii din URL, sub un nume
+model SavedFilter {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  params    Json
+  createdAt DateTime @default(now())
+
+  @@unique([userId, name])
+  @@map("saved_filter")
+}
+
+// Cache pentru scanările AI (AI-008): aceeași imagine nu mai costă un apel AI.
+// Nu păstrează imaginea, doar hash-ul ei și rezultatul generic (identificare + îmbogățire).
+model ScanCache {
+  id         String    @id @default(cuid())
+  imageHash  String    @unique
+  result     Json
+  providers  String[]
+  confidence Float
+  hits       Int       @default(0)
+  createdAt  DateTime  @default(now())
+  lastHitAt  DateTime?
+
+  @@index([createdAt])
+  @@map("scan_cache")
+}
+
+// Consum AI per apel (AI-013): tokeni, cost estimat, latență. Agregat în Setări per lună / agent.
+model AIUsage {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agentId      String?
+  provider     String
+  model        String?
+  operation    String
+  inputTokens  Int?
+  outputTokens Int?
+  costUsd      Float?
+  latencyMs    Int?
+  success      Boolean
+  requestId    String?
+  createdAt    DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([agentId])
+  @@map("ai_usage")
 }
 
 // ─────────────────────────────────────────

@@ -4,32 +4,55 @@ import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
+import { cache } from "react";
 import { z } from "zod";
+import { WineInputSchema, parseWineForm } from "../schemas/wine";
+import { duplicateKey } from "./csvImport";
+import { likePattern, parseSearchQuery } from "./searchQuery";
+import { buildWrapped } from "./wrapped";
+import { dedupeLocations, normalizeWineData } from "./normalize";
+import { countsBy, monthlySeries, nearMaturityWines, overdueWines } from "./stats";
+import { CellarNameSchema, PasswordChangeSchema, ProfileInputSchema, firstIssueMessage } from "../schemas/account";
+import { AIAgentInputSchema } from "../schemas/ai";
 import prisma from "./db";
 import { auth } from "./auth";
 import { decryptSecret, encryptSecret } from "./aiSecrets";
 import { getProviderDefinition, isKnownProvider, listProviderDefinitions } from "./aiProviderRegistry";
 import { validateProviderBaseUrl } from "./aiUrlSecurity";
-import { listProviderModels } from "./aiProviders";
+import { generateWithAgents, listProviderModels } from "./aiProviders";
+import { normalizePairing, pairingKey, pairingPrompt } from "./pairing";
+import { recordAIUsage } from "./aiUsage";
 import { shareUrlFor } from "./share";
 import { LIMITS, rateLimit, tooManyRequestsMessage } from "./rateLimit";
 import { listUserObjects, objectKeyFromUrl, removeObjects } from "./storage";
+import { createLogger, serializeError } from './logger';
+import { forbidden, notFound, unauthenticated } from './errors';
+
+const logger = createLogger('actions');
+
+const STATS_WINE_SELECT = {
+  id: true, name: true, producer: true, country: true, type: true, rating: true,
+  purchasePrice: true, estimatedValue: true, quantity: true, purchaseDate: true, vintage: true,
+  agingPotential: true, drinkFrom: true, drinkUntil: true, status: true,
+  labelImageUrl: true, bottleImageUrl: true,
+};
 
 // ─────────────────────────────────────────
 // HELPER - obține userul curent
 // ─────────────────────────────────────────
 
-async function getCurrentUser() {
+// cache(): o singură citire a sesiunii pe request, chiar dacă pagina apelează mai multe acțiuni (DATA-006)
+const getCurrentUser = cache(async () => {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
 
   if (!session?.user) {
-    throw new Error("Neautentificat");
+    throw unauthenticated();
   }
 
   return session.user;
-}
+});
 
 // ─────────────────────────────────────────
 // HELPER - istoric acțiuni (WineLog)
@@ -55,7 +78,7 @@ async function logWineAction({ wineId, userId, action, details }) {
     await prisma.wineLog.create({ data: { wineId, userId, action, details } });
   } catch (error) {
     // Istoricul nu trebuie să blocheze acțiunea principală
-    console.error(`[wine-log] ${action} failed:`, error.message);
+    logger.error('wine log write failed', { action, wineId, userId, error: serializeError(error) });
   }
 }
 
@@ -77,42 +100,6 @@ async function releaseImages(urls) {
   }
   await removeObjects(keys);
 }
-
-// ─────────────────────────────────────────
-// VALIDARE - schema Zod pentru vin
-// ─────────────────────────────────────────
-
-const WineSchema = z.object({
-  name: z.string().min(1, "Numele este obligatoriu"),
-  producer: z.string().optional(),
-  country: z.string().optional(),
-  region: z.string().optional(),
-  subregion: z.string().optional(),
-  type: z.enum(["RED", "WHITE", "ROSE", "SPARKLING", "DESSERT", "FORTIFIED"]),
-  color: z.enum(["RED", "WHITE", "ROSE", "ORANGE"]).optional(),
-  vintage: z.coerce.number().min(1800).max(new Date().getFullYear()).optional(),
-  grapeVarieties: z.array(z.string()).default([]),
-  alcoholPercentage: z.coerce.number().min(0).max(100).optional(),
-  quantity: z.coerce.number().min(0).default(1),
-  cellarLocation: z.string().optional(),
-  purchaseDate: z.coerce.date().optional(),
-  purchasePrice: z.coerce.number().min(0).optional(),
-  estimatedValue: z.coerce.number().min(0).optional(),
-  rating: z.coerce.number().min(1).max(5).optional(),
-  tastingNotes: z.string().optional(),
-  servingTemperature: z.string().optional(),
-  foodPairing: z.array(z.string()).default([]),
-  agingPotential: z.string().optional(),
-  aromaProfile: z.array(z.string()).default([]),
-  drinkFrom: z.coerce.number().min(1900).max(2100).optional().nullable(),
-  drinkUntil: z.coerce.number().min(1900).max(2100).optional().nullable(),
-  bottleSize: z.string().default("0.75L"),
-  bottleImageUrl: z.string().url().optional().or(z.literal("")),
-  labelImageUrl: z.string().url().optional().or(z.literal("")),
-  isFavorite: z.coerce.boolean().default(false),
-  consumptionDate: z.coerce.date().optional(),
-  status: z.enum(["IN_CELLAR", "CONSUMED", "SOLD", "GIFTED"]).default("IN_CELLAR"),
-});
 
 // ─────────────────────────────────────────
 // WINES - CRUD
@@ -137,13 +124,26 @@ export async function getWines(filters = {}) {
   if (filters.ratingMin) where.rating = { gte: parseInt(filters.ratingMin) };
   if (filters.priceMax) where.purchasePrice = { lte: parseFloat(filters.priceMax) };
 
-  if (filters.search) {
-    where.OR = [
-      { name: { contains: filters.search, mode: 'insensitive' } },
-      { producer: { contains: filters.search, mode: 'insensitive' } },
-      { region: { contains: filters.search, mode: 'insensitive' } },
-      { country: { contains: filters.search, mode: 'insensitive' } },
-    ];
+  // CELLAR-009: limbaj natural („roșii gata de băut sub 150 lei”) + text fuzzy (pg_trgm)
+  let relevance = null;
+  if (filters.search?.trim()) {
+    const query = parseSearchQuery(filters.search);
+    const year = new Date().getFullYear();
+    if (query.type && !filters.type) where.type = query.type;
+    if (query.vintage && !filters.vintage) where.vintage = query.vintage;
+    if (query.isFavorite) where.isFavorite = true;
+    if (query.priceMax != null || query.priceMin != null) {
+      where.purchasePrice = { ...(where.purchasePrice ?? {}), ...(query.priceMax != null && { lte: query.priceMax }), ...(query.priceMin != null && { gte: query.priceMin }) };
+    }
+    const windowFilters = [];
+    if (query.readyNow) windowFilters.push({ drinkFrom: { lte: year }, drinkUntil: { gte: year } });
+    if (query.overdue) windowFilters.push({ drinkUntil: { lt: year } });
+    if (query.readyNow || query.overdue) where.status = where.status ?? 'IN_CELLAR';
+    if (windowFilters.length) where.AND = [...(where.AND ?? []), ...windowFilters];
+    if (query.text) {
+      relevance = await fuzzyWineMatches(user.id, query.text);
+      where.id = { in: [...relevance.keys()] };
+    }
   }
 
   const SORT_MAP = {
@@ -164,10 +164,18 @@ export async function getWines(filters = {}) {
   const page = Math.max(1, parseInt(filters.page) || 1);
   const skip = (page - 1) * PAGE_SIZE;
 
-  const [wines, total] = await Promise.all([
-    prisma.wine.findMany({ where, orderBy, skip, take: PAGE_SIZE }),
-    prisma.wine.count({ where }),
-  ]);
+  let wines, total;
+  if (relevance && (!filters.sort || filters.sort === 'newest')) {
+    // Fără sortare explicită, rezultatele căutării vin în ordinea relevanței
+    const all = await prisma.wine.findMany({ where });
+    all.sort((x, y) => (relevance.get(y.id) ?? 0) - (relevance.get(x.id) ?? 0));
+    [wines, total] = [all.slice(skip, skip + PAGE_SIZE), all.length];
+  } else {
+    [wines, total] = await Promise.all([
+      prisma.wine.findMany({ where, orderBy, skip, take: PAGE_SIZE }),
+      prisma.wine.count({ where }),
+    ]);
+  }
 
   return {
     wines,
@@ -176,6 +184,57 @@ export async function getWines(filters = {}) {
     pageSize: PAGE_SIZE,
     totalPages: Math.ceil(total / PAGE_SIZE),
   };
+}
+
+async function userLocations(userId) {
+  const rows = await prisma.wine.findMany({
+    where: { userId, cellarLocation: { not: null } },
+    select: { cellarLocation: true },
+    distinct: ['cellarLocation'],
+  });
+  return dedupeLocations(rows.map((row) => row.cellarLocation));
+}
+
+// Locațiile folosite deja, deduplicate (pentru autocomplete în formular)
+export async function getCellarLocations() {
+  const user = await getCurrentUser();
+  return userLocations(user.id);
+}
+
+// Map id → scor: trigrame pe nume/producător (tolerant la greșeli și diacritice lipsă)
+// plus potrivire exactă în regiune, țară, soiuri, arome, asocieri și note
+async function fuzzyWineMatches(userId, text) {
+  const like = likePattern(text);
+  try {
+    return await trigramWineMatches(userId, text, like);
+  } catch (error) {
+    // Fără pg_trgm (extensia nu a putut fi creată): potrivire simplă, fără toleranță la greșeli
+    logger.warn('trigram search unavailable, falling back to ILIKE', { error: serializeError(error) });
+    const rows = await prisma.$queryRaw`
+      SELECT id FROM "Wine"
+      WHERE "userId" = ${userId} AND translate(lower(concat_ws(' ', name, producer, region, subregion, country,
+        array_to_string("grapeVarieties", ' '), array_to_string("aromaProfile", ' '), array_to_string("foodPairing", ' '), "tastingNotes")),
+        'ăâîșşțţ', 'aaisstt') LIKE ${like}`;
+    return new Map(rows.map((row) => [row.id, 1]));
+  }
+}
+
+async function trigramWineMatches(userId, text, like) {
+  // translate() scoate diacriticele românești fără extensia unaccent; textul căutat e deja fără diacritice (foldKey)
+  const rows = await prisma.$queryRaw`
+    WITH w AS (
+      SELECT id,
+        translate(lower(name), 'ăâîșşțţ', 'aaisstt') AS n,
+        translate(lower(coalesce(producer, '')), 'ăâîșşțţ', 'aaisstt') AS p,
+        translate(lower(concat_ws(' ', region, subregion, country, array_to_string("grapeVarieties", ' '),
+          array_to_string("aromaProfile", ' '), array_to_string("foodPairing", ' '), "tastingNotes")), 'ăâîșşțţ', 'aaisstt') AS other
+      FROM "Wine" WHERE "userId" = ${userId}
+    )
+    SELECT id, GREATEST(word_similarity(${text}, n), word_similarity(${text}, p),
+      CASE WHEN other LIKE ${like} THEN 0.5 ELSE 0 END)::float8 AS score
+    FROM w
+    WHERE ${text} <% n OR ${text} <% p OR n LIKE ${like} OR p LIKE ${like} OR other LIKE ${like}`;
+  return new Map(rows.map((row) => [row.id, row.score]));
 }
 
 export async function getWineCountries() {
@@ -194,8 +253,8 @@ export async function getWineById(id) {
 
   const wine = await prisma.wine.findUnique({ where: { id } });
 
-  if (!wine) throw new Error("Vinul nu a fost găsit");
-  if (wine.userId !== user.id) throw new Error("Acces interzis");
+  if (!wine) throw notFound("Vinul nu a fost găsit");
+  if (wine.userId !== user.id) throw forbidden();
 
   return wine;
 }
@@ -203,34 +262,12 @@ export async function getWineById(id) {
 export async function createWine(formData) {
   const user = await getCurrentUser();
 
-  const raw = Object.fromEntries(formData.entries());
-
-  const grapeVarieties = raw.grapeVarieties ? JSON.parse(raw.grapeVarieties) : [];
-  const foodPairing = raw.foodPairing ? JSON.parse(raw.foodPairing) : [];
-  const aromaProfile = raw.aromaProfile ? JSON.parse(raw.aromaProfile) : [];
-
-  const parsed = WineSchema.safeParse({
-    ...raw,
-    grapeVarieties,
-    foodPairing,
-    aromaProfile,
-    drinkFrom: raw.drinkFrom ? parseInt(raw.drinkFrom) : undefined,
-    drinkUntil: raw.drinkUntil ? parseInt(raw.drinkUntil) : undefined,
-  });
-
-  if (!parsed.success) {
-    return { error: parsed.error.flatten().fieldErrors };
-  }
+  const parsed = parseWineForm(formData);
+  if (parsed.error) return { error: parsed.error };
+  parsed.data = normalizeWineData(parsed.data, { existingLocations: await userLocations(user.id) });
 
   const wine = await prisma.wine.create({
-    data: {
-      ...parsed.data,
-      userId: user.id,
-      bottleImageUrl: parsed.data.bottleImageUrl || null,
-      labelImageUrl: parsed.data.labelImageUrl || null,
-      drinkFrom: parsed.data.drinkFrom ?? null,
-      drinkUntil: parsed.data.drinkUntil ?? null,
-    },
+    data: { ...parsed.data, userId: user.id },
   });
 
   await logWineAction({
@@ -248,37 +285,16 @@ export async function updateWine(id, formData) {
   const user = await getCurrentUser();
 
   const existing = await prisma.wine.findUnique({ where: { id } });
-  if (!existing) throw new Error("Vinul nu a fost găsit");
-  if (existing.userId !== user.id) throw new Error("Acces interzis");
+  if (!existing) throw notFound("Vinul nu a fost găsit");
+  if (existing.userId !== user.id) throw forbidden();
 
-  const raw = Object.fromEntries(formData.entries());
-
-  const grapeVarieties = raw.grapeVarieties ? JSON.parse(raw.grapeVarieties) : [];
-  const foodPairing = raw.foodPairing ? JSON.parse(raw.foodPairing) : [];
-  const aromaProfile = raw.aromaProfile ? JSON.parse(raw.aromaProfile) : [];
-
-  const parsed = WineSchema.safeParse({
-    ...raw,
-    grapeVarieties,
-    foodPairing,
-    aromaProfile,
-    drinkFrom: raw.drinkFrom ? parseInt(raw.drinkFrom) : undefined,
-    drinkUntil: raw.drinkUntil ? parseInt(raw.drinkUntil) : undefined,
-  });
-
-  if (!parsed.success) {
-    return { error: parsed.error.flatten().fieldErrors };
-  }
+  const parsed = parseWineForm(formData);
+  if (parsed.error) return { error: parsed.error };
+  parsed.data = normalizeWineData(parsed.data, { existingLocations: await userLocations(user.id) });
 
   const updated = await prisma.wine.update({
     where: { id },
-    data: {
-      ...parsed.data,
-      bottleImageUrl: parsed.data.bottleImageUrl || null,
-      labelImageUrl: parsed.data.labelImageUrl || null,
-      drinkFrom: parsed.data.drinkFrom ?? null,
-      drinkUntil: parsed.data.drinkUntil ?? null,
-    },
+    data: parsed.data,
   });
 
   await releaseImages(
@@ -301,8 +317,8 @@ export async function deleteWine(id) {
   const user = await getCurrentUser();
 
   const wine = await prisma.wine.findUnique({ where: { id } });
-  if (!wine) throw new Error("Vinul nu a fost găsit");
-  if (wine.userId !== user.id) throw new Error("Acces interzis");
+  if (!wine) throw notFound("Vinul nu a fost găsit");
+  if (wine.userId !== user.id) throw forbidden();
 
   // Log-ul rămâne după ștergere (wineId devine null prin onDelete: SetNull)
   await logWineAction({
@@ -322,7 +338,7 @@ export async function toggleFavorite(id) {
   const user = await getCurrentUser();
 
   const wine = await prisma.wine.findUnique({ where: { id } });
-  if (!wine || wine.userId !== user.id) throw new Error("Acces interzis");
+  if (!wine || wine.userId !== user.id) throw forbidden();
 
   await prisma.wine.update({
     where: { id },
@@ -391,31 +407,26 @@ export async function consumeWine(id, quantity = 1) {
 
 export async function getDashboardStats() {
   const user = await getCurrentUser();
+  const where = { userId: user.id };
 
-  const wines = await prisma.wine.findMany({
-    where: { userId: user.id },
-    select: { type: true, status: true, quantity: true, estimatedValue: true },
-  });
+  // Agregări în DB, fără să încărcăm vinurile în memorie (DATA-006).
+  // Sticle și valoare = doar ce e fizic în pivniță; valoarea e per sticlă × cantitate.
+  const [byTypeRows, byStatusRows, bottles, [value]] = await Promise.all([
+    prisma.wine.groupBy({ by: ['type'], where, _count: { _all: true } }),
+    prisma.wine.groupBy({ by: ['status'], where, _count: { _all: true } }),
+    prisma.wine.aggregate({ where: { ...where, status: 'IN_CELLAR' }, _sum: { quantity: true } }),
+    prisma.$queryRaw`
+      SELECT COALESCE(SUM("estimatedValue" * "quantity"), 0)::float8 AS total
+      FROM "Wine" WHERE "userId" = ${user.id} AND "status" = 'IN_CELLAR'`,
+  ]);
 
-  // Sticle și valoare = doar ce e fizic în pivniță; valoarea e per sticlă × cantitate
-  const inCellar = wines.filter(w => w.status === 'IN_CELLAR');
-  const totalBottles = inCellar.reduce((sum, w) => sum + (w.quantity ?? 0), 0);
-  const totalValue = inCellar.reduce((sum, w) => sum + (w.estimatedValue ?? 0) * (w.quantity ?? 0), 0);
-
-  const byType = wines.reduce((acc, w) => {
-    acc[w.type] = (acc[w.type] ?? 0) + 1;
-    return acc;
-  }, {});
-
-  const byStatus = wines.reduce((acc, w) => {
-    acc[w.status] = (acc[w.status] ?? 0) + 1;
-    return acc;
-  }, {});
+  const byType = countsBy(byTypeRows, 'type');
+  const byStatus = countsBy(byStatusRows, 'status');
 
   return {
-    totalBottles,
-    totalValue,
-    totalWines: wines.length,
+    totalBottles: bottles._sum.quantity ?? 0,
+    totalValue: Number(value?.total ?? 0),
+    totalWines: Object.values(byType).reduce((sum, count) => sum + count, 0),
     byType,
     byStatus,
   };
@@ -440,12 +451,12 @@ export async function getProfile() {
 
 export async function updateProfile(formData) {
   const user = await getCurrentUser();
-  const name = formData.get('name')?.toString().trim();
-  const image = formData.get('image')?.toString().trim() || null;
-
-  if (!name || name.length < 2) {
-    return { error: { name: ['Numele trebuie să aibă minim 2 caractere'] } };
-  }
+  const parsed = ProfileInputSchema.safeParse({
+    name: formData.get('name')?.toString() ?? '',
+    image: formData.get('image')?.toString(),
+  });
+  if (!parsed.success) return { error: z.flattenError(parsed.error).fieldErrors };
+  const { name, image } = parsed.data;
 
   const previous = await prisma.user.findUnique({ where: { id: user.id }, select: { image: true } });
   await prisma.user.update({
@@ -460,19 +471,13 @@ export async function updateProfile(formData) {
 
 export async function updatePassword(formData) {
   const user = await getCurrentUser();
-  const currentPassword = formData.get('currentPassword')?.toString();
-  const newPassword = formData.get('newPassword')?.toString();
-  const confirmPassword = formData.get('confirmPassword')?.toString();
-
-  if (!currentPassword || !newPassword || !confirmPassword) {
-    return { error: 'Completează toate câmpurile' };
-  }
-  if (newPassword.length < 8) {
-    return { error: 'Parola nouă trebuie să aibă minim 8 caractere' };
-  }
-  if (newPassword !== confirmPassword) {
-    return { error: 'Parolele nu coincid' };
-  }
+  const parsed = PasswordChangeSchema.safeParse({
+    currentPassword: formData.get('currentPassword')?.toString(),
+    newPassword: formData.get('newPassword')?.toString(),
+    confirmPassword: formData.get('confirmPassword')?.toString(),
+  });
+  if (!parsed.success) return { error: firstIssueMessage(parsed.error) };
+  const { currentPassword, newPassword } = parsed.data;
 
   const limited = rateLimit(`password:${user.id}`, LIMITS.passwordChange);
   if (!limited.ok) return { error: tooManyRequestsMessage(limited.retryAfter) };
@@ -484,7 +489,7 @@ export async function updatePassword(formData) {
     });
   } catch (error) {
     if (error?.body?.code === 'INVALID_PASSWORD') return { error: 'Parola curentă e incorectă' };
-    console.error('[password] change failed:', error?.body?.code || error?.message);
+    logger.error('password change failed', { userId: user.id, code: error?.body?.code ?? null, error: serializeError(error) });
     return { error: 'Eroare la schimbarea parolei' };
   }
 
@@ -496,7 +501,7 @@ export async function deleteAccount() {
 
   // Imaginile se listează înainte, ca să nu rămână fișiere orfane după ștergerea contului
   const imageKeys = await listUserObjects(user.id).catch((error) => {
-    console.error('[account] list images failed:', error.message);
+    logger.error('list images failed', { userId: user.id, error: serializeError(error) });
     return [];
   });
 
@@ -514,134 +519,52 @@ export async function deleteAccount() {
 
 export async function getAdvancedStats() {
   const user = await getCurrentUser();
-  const wines = await prisma.wine.findMany({
-    where: { userId: user.id },
-    select: {
-      id: true,
-      name: true,
-      producer: true,
-      country: true,
-      type: true,
-      rating: true,
-      purchasePrice: true,
-      estimatedValue: true,
-      quantity: true,
-      purchaseDate: true,
-      vintage: true,
-      agingPotential: true,
-      drinkFrom: true,
-      drinkUntil: true,
-      status: true,
-      labelImageUrl: true,
-      bottleImageUrl: true,
-    },
-  });
-
-  const topWines = wines
-    .filter(w => w.rating != null)
-    .sort((a, b) => b.rating - a.rating)
-    .slice(0, 5);
-
-  const byCountry = wines.reduce((acc, w) => {
-    if (!w.country) return acc;
-    acc[w.country] = (acc[w.country] ?? 0) + 1;
-    return acc;
-  }, {});
-
+  const where = { userId: user.id };
+  const withPrice = { ...where, purchasePrice: { gt: 0 } };
   const now = new Date();
   const currentYear = now.getFullYear();
+  const since = new Date(now.getFullYear(), now.getMonth() - 11, 1);
 
-  const monthlyData = [];
-  for (let i = 11; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const label = d.toLocaleDateString('ro-RO', { month: 'short', year: '2-digit' });
-    const count = wines.filter(w => {
-      if (!w.purchaseDate) return false;
-      const pd = new Date(w.purchaseDate);
-      return pd.getFullYear() === d.getFullYear() && pd.getMonth() === d.getMonth();
-    }).length;
-    monthlyData.push({ label, count });
-  }
-
-  const withPrice = wines.filter(w => w.purchasePrice != null && w.purchasePrice > 0);
-  const prices = withPrice.map(w => w.purchasePrice);
-  const avgPrice = prices.length > 0 ? prices.reduce((a, b) => a + b, 0) / prices.length : 0;
-  const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
-  const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
-  const mostExpensive = [...withPrice].sort((a, b) => b.purchasePrice - a.purchasePrice)[0] ?? null;
-
-  // ── VINURI DEPĂȘITE (trecut de vârf) — drinkUntil < currentYear ──
-  const overdueWines = wines
-    .filter(w => {
-      if (w.status !== 'IN_CELLAR') return false;
-      if (w.drinkUntil != null) return w.drinkUntil < currentYear;
-      // fallback: agingPotential cu an maxim în trecut
-      if (w.agingPotential) {
-        const match = w.agingPotential.match(/(\d{4})/g);
-        if (match) {
-          const maxYear = Math.max(...match.map(Number));
-          return maxYear < currentYear;
-        }
-      }
-      return false;
-    })
-    .map(w => {
-      const drinkFrom = w.drinkFrom ?? null;
-      const drinkUntil = w.drinkUntil ?? null;
-      return { ...w, drinkFrom, drinkUntil };
-    })
-    .sort((a, b) => (a.drinkUntil ?? 0) - (b.drinkUntil ?? 0)); // cele mai vechi primele
-
-  // ── VINURI ÎN FEREASTRĂ sau aproape (nearMaturity) ──
-  const nearMaturity = wines
-    .filter(w => {
-      if (w.status !== 'IN_CELLAR') return false;
-      if (w.drinkFrom != null || w.drinkUntil != null) {
-        const until = w.drinkUntil ?? w.drinkFrom;
-        const from = w.drinkFrom ?? w.drinkUntil;
-        // În fereastră SAU urmează în 3 ani (și nu e depășit)
-        return until >= currentYear && from <= currentYear + 3;
-      }
-      if (!w.agingPotential) return false;
-      const match = w.agingPotential.match(/(\d{4})/g);
-      if (!match) return false;
-      const readyYear = Math.min(...match.map(Number));
-      return readyYear >= currentYear && readyYear <= currentYear + 3;
-    })
-    .map(w => {
-      let readyYear;
-      if (w.drinkFrom != null || w.drinkUntil != null) {
-        readyYear = w.drinkFrom ?? w.drinkUntil;
-      } else {
-        const match = w.agingPotential.match(/(\d{4})/g);
-        readyYear = Math.min(...match.map(Number));
-      }
-      return { ...w, readyYear };
-    })
-    .sort((a, b) => a.readyYear - b.readyYear)
-    .slice(0, 5);
+  const [topWines, countryRows, monthlyRows, priceAgg, mostExpensive, cellarWines] = await Promise.all([
+    prisma.wine.findMany({
+      where: { ...where, rating: { not: null } },
+      orderBy: [{ rating: 'desc' }, { createdAt: 'asc' }],
+      take: 5,
+      select: STATS_WINE_SELECT,
+    }),
+    prisma.wine.groupBy({ by: ['country'], where: { ...where, country: { not: null } }, _count: { _all: true } }),
+    prisma.$queryRaw`
+      SELECT date_trunc('month', "purchaseDate") AS month, COUNT(*)::int AS count
+      FROM "Wine"
+      WHERE "userId" = ${user.id} AND "purchaseDate" >= ${since}
+      GROUP BY 1`,
+    prisma.wine.aggregate({ where: withPrice, _avg: { purchasePrice: true }, _max: { purchasePrice: true }, _min: { purchasePrice: true } }),
+    prisma.wine.findFirst({ where: withPrice, orderBy: { purchasePrice: 'desc' }, select: STATS_WINE_SELECT }),
+    // Doar vinurile din pivniță, cu câmpurile necesare ferestrei de consum
+    prisma.wine.findMany({ where: { ...where, status: 'IN_CELLAR' }, select: STATS_WINE_SELECT }),
+  ]);
 
   return {
     topWines,
-    byCountry,
-    monthlyData,
-    priceStats: { avg: avgPrice, max: maxPrice, min: minPrice, mostExpensive },
-    nearMaturity,
-    overdueWines, // ← NOU
+    byCountry: countsBy(countryRows, 'country'),
+    monthlyData: monthlySeries(monthlyRows, now),
+    priceStats: {
+      avg: priceAgg._avg.purchasePrice ?? 0,
+      max: priceAgg._max.purchasePrice ?? 0,
+      min: priceAgg._min.purchasePrice ?? 0,
+      mostExpensive,
+    },
+    nearMaturity: nearMaturityWines(cellarWines, currentYear),
+    overdueWines: overdueWines(cellarWines, currentYear),
   };
 }
-
 
 export async function updateCellarName(name) {
   const user = await getCurrentUser();
 
-  const trimmed = name?.toString().trim();
-  if (!trimmed || trimmed.length < 1) {
-    return { error: 'Numele nu poate fi gol' };
-  }
-  if (trimmed.length > 50) {
-    return { error: 'Maxim 50 de caractere' };
-  }
+  const parsed = CellarNameSchema.safeParse(name?.toString());
+  if (!parsed.success) return { error: firstIssueMessage(parsed.error) };
+  const trimmed = parsed.data;
 
   await prisma.user.update({
     where: { id: user.id },
@@ -705,15 +628,14 @@ export async function getAIAgents() {
 
 export async function saveAIAgent(input) {
   const user = await getCurrentUser();
-  const name = input?.name?.toString().trim();
-  const provider = input?.provider?.toString();
-  const model = input?.model?.toString().trim();
-  if (!name || name.length > 80) return { error: 'Numele agentului este obligatoriu și are maximum 80 de caractere' };
+  const parsedInput = AIAgentInputSchema.safeParse(input ?? {});
+  if (!parsedInput.success) return { error: firstIssueMessage(parsedInput.error) };
+  input = parsedInput.data;
+  const { name, provider, model } = input;
   if (!isKnownProvider(provider)) return { error: 'Provider AI invalid' };
-  if (!model) return { error: 'Model ID este obligatoriu. Poți introduce manual modelul.' };
 
   const definition = getProviderDefinition(provider);
-  let baseUrl = input.baseUrl?.toString().trim() || definition.baseUrl || null;
+  let baseUrl = input.baseUrl || definition.baseUrl || null;
   if (provider === 'openai-compatible' && !baseUrl) return { error: 'Base URL este obligatoriu pentru providerul custom' };
   if (baseUrl && (provider === 'openai-compatible' || input.providerType === 'custom')) {
     try {
@@ -726,19 +648,19 @@ export async function saveAIAgent(input) {
   const values = {
     name,
     provider,
-    providerType: input.providerType?.toString() || definition.type,
+    providerType: input.providerType || definition.type,
     baseUrl,
     model,
-    billingType: input.billingType?.toString() || definition.billingType || 'UNKNOWN',
+    billingType: input.billingType || definition.billingType || 'UNKNOWN',
     capabilities: input.capabilities || definition.capabilities || {},
     metadata: input.metadata || null,
     enabled: input.enabled !== false,
-    priority: Math.max(0, Number(input.priority) || 0),
-    timeoutMs: Math.min(60000, Math.max(3000, Number(input.timeoutMs) || 20000)),
-    maxRetries: Math.min(3, Math.max(0, Number(input.maxRetries) || 1)),
-    weight: Math.min(10, Math.max(0.1, Number(input.weight) || 1)),
+    priority: input.priority,
+    timeoutMs: input.timeoutMs,
+    maxRetries: input.maxRetries,
+    weight: input.weight,
   };
-  const apiKey = input.apiKey?.toString().trim();
+  const apiKey = input.apiKey;
 
   if (input.id) {
     const existing = await prisma.aIAgent.findFirst({ where: { id: input.id, userId: user.id } });
@@ -841,4 +763,223 @@ export async function deleteAIAgent(id) {
   await prisma.aIAgent.deleteMany({ where: { id, userId: user.id } });
   revalidatePath('/settings');
   return { success: true };
+}
+
+// ─────────────────────────────────────────
+// CONSUM AI (AI-013)
+// ─────────────────────────────────────────
+
+// Rezumat pe ultimele 6 luni: per lună și per agent pentru utilizator; adminul vede și totalul platformei
+export async function getAIUsageSummary() {
+  const user = await getCurrentUser();
+  const since = new Date(new Date().getFullYear(), new Date().getMonth() - 5, 1);
+
+  const [byMonth, byAgent, agents, platform] = await Promise.all([
+    prisma.$queryRaw`
+      SELECT date_trunc('month', "createdAt") AS month,
+             COUNT(*)::int AS calls,
+             COALESCE(SUM("inputTokens"), 0)::int AS "inputTokens",
+             COALESCE(SUM("outputTokens"), 0)::int AS "outputTokens",
+             SUM("costUsd")::float8 AS "costUsd",
+             COUNT(*) FILTER (WHERE NOT "success")::int AS failures
+      FROM "ai_usage" WHERE "userId" = ${user.id} AND "createdAt" >= ${since}
+      GROUP BY 1 ORDER BY 1 DESC`,
+    prisma.aIUsage.groupBy({
+      by: ['agentId', 'provider'],
+      where: { userId: user.id, createdAt: { gte: since } },
+      _count: { _all: true },
+      _sum: { inputTokens: true, outputTokens: true, costUsd: true },
+      _avg: { latencyMs: true },
+    }),
+    prisma.aIAgent.findMany({ where: { userId: user.id }, select: { id: true, name: true } }),
+    user.role === 'ADMIN'
+      ? prisma.$queryRaw`
+          SELECT date_trunc('month', "createdAt") AS month, COUNT(DISTINCT "userId")::int AS users,
+                 COUNT(*)::int AS calls, SUM("costUsd")::float8 AS "costUsd"
+          FROM "ai_usage" WHERE "createdAt" >= ${since} GROUP BY 1 ORDER BY 1 DESC`
+      : Promise.resolve(null),
+  ]);
+
+  const agentNames = new Map(agents.map((agent) => [agent.id, agent.name]));
+  return {
+    byMonth: byMonth.map((row) => ({ ...row, month: new Date(row.month).toISOString().slice(0, 7) })),
+    byAgent: byAgent.map((row) => ({
+      agentId: row.agentId,
+      name: agentNames.get(row.agentId) ?? `${row.provider} (șters)`,
+      provider: row.provider,
+      calls: row._count._all,
+      inputTokens: row._sum.inputTokens ?? 0,
+      outputTokens: row._sum.outputTokens ?? 0,
+      costUsd: row._sum.costUsd,
+      avgLatencyMs: row._avg.latencyMs == null ? null : Math.round(row._avg.latencyMs),
+    })).sort((a, b) => b.calls - a.calls),
+    platform: platform?.map((row) => ({ ...row, month: new Date(row.month).toISOString().slice(0, 7) })) ?? null,
+  };
+}
+
+// ─────────────────────────────────────────
+// IMPORT CSV (INT-001 / INT-002)
+// ─────────────────────────────────────────
+
+const IMPORT_MAX_ROWS = 1000;
+
+// Cheile de duplicat ale colecției, pentru preview-ul din client
+export async function getImportDuplicateKeys() {
+  const user = await getCurrentUser();
+  const wines = await prisma.wine.findMany({ where: { userId: user.id }, select: { name: true, producer: true, vintage: true } });
+  return wines.map(duplicateKey);
+}
+
+// Primește vinurile mapate în client; le revalidează, normalizează și sare peste duplicate
+export async function importWines(rows, { source = 'csv' } = {}) {
+  const user = await getCurrentUser();
+  if (!Array.isArray(rows) || !rows.length) return { error: 'Nimic de importat' };
+  if (rows.length > IMPORT_MAX_ROWS) return { error: `Maximum ${IMPORT_MAX_ROWS} de vinuri pe import` };
+
+  const [existing, existingLocations] = await Promise.all([getImportDuplicateKeys(), userLocations(user.id)]);
+  const seen = new Set(existing);
+  const valid = [];
+  const skipped = [];
+  rows.forEach((row, index) => {
+    const parsed = WineInputSchema.safeParse(row);
+    if (!parsed.success) return skipped.push({ index, reason: firstIssueMessage(parsed.error) });
+    const key = duplicateKey(parsed.data);
+    if (seen.has(key)) return skipped.push({ index, reason: 'duplicat' });
+    seen.add(key);
+    valid.push(normalizeWineData({ ...parsed.data, drinkFrom: parsed.data.drinkFrom ?? null, drinkUntil: parsed.data.drinkUntil ?? null }, { existingLocations }));
+  });
+
+  if (valid.length) {
+    await prisma.$transaction(async (tx) => {
+      const created = await tx.wine.createManyAndReturn({
+        data: valid.map((wine) => ({ ...wine, userId: user.id })),
+        select: { id: true, name: true, quantity: true },
+      });
+      await tx.wineLog.createMany({
+        data: created.map((wine) => ({
+          wineId: wine.id,
+          userId: user.id,
+          action: 'ADDED',
+          details: { name: wine.name, quantity: wine.quantity, source: `import:${source}` },
+        })),
+      });
+    });
+    revalidatePath('/wines');
+    revalidatePath('/dashboard');
+  }
+
+  return { success: true, imported: valid.length, skipped };
+}
+
+// ─────────────────────────────────────────
+// „CE GĂTESC CU EL?” (HOME-003)
+// ─────────────────────────────────────────
+
+const PAIRING_LIMIT = { limit: 20, windowMs: 10 * 60 * 1000 };
+
+// Răspunsul din cache dacă identitatea vinului nu s-a schimbat; altfel (sau la refresh) îl generează cu agenții AI
+export async function getWinePairing(wineId, { refresh = false } = {}) {
+  const user = await getCurrentUser();
+  const wine = await prisma.wine.findFirst({ where: { id: wineId, userId: user.id } });
+  if (!wine) return { error: 'Vinul nu a fost găsit' };
+
+  const key = pairingKey(wine);
+  if (!refresh && wine.pairing && wine.pairingKey === key) return { pairing: wine.pairing, cached: true };
+
+  const limited = rateLimit(`pairing:${user.id}`, PAIRING_LIMIT);
+  if (!limited.ok) return { error: tooManyRequestsMessage(limited.retryAfter) };
+
+  const agents = (await prisma.aIAgent.findMany({ where: { userId: user.id, enabled: true } })).flatMap((agent) => {
+    try {
+      return [{ ...agent, apiKey: decryptSecret(agent.encryptedApiKey) }];
+    } catch {
+      return [];
+    }
+  });
+  if (!agents.length) return { error: 'Configurează un agent AI în Setări ca să primești sugestii.' };
+
+  const requestId = randomBytes(8).toString('hex');
+  const log = logger.child({ requestId, userId: user.id, wineId });
+  try {
+    const { result, usage, provider } = await generateWithAgents(agents, pairingPrompt(wine), normalizePairing, { operation: 'pairing' });
+    await recordAIUsage(user.id, requestId, usage, log);
+    const pairing = { ...result, provider, generatedAt: new Date().toISOString() };
+    await prisma.wine.update({ where: { id: wine.id }, data: { pairing, pairingKey: key } });
+    log.info('pairing generated', { provider });
+    return { pairing, cached: false };
+  } catch (error) {
+    await recordAIUsage(user.id, requestId, error.usage, log);
+    log.warn('pairing failed', { error: serializeError(error) });
+    return { error: 'Sommelierul AI nu a răspuns. Încearcă din nou.' };
+  }
+}
+
+// ─────────────────────────────────────────
+// FILTRE SALVATE (CELLAR-009)
+// ─────────────────────────────────────────
+
+const FILTER_KEYS = ['search', 'type', 'status', 'country', 'sort', 'vintageMin', 'vintageMax', 'ratingMin', 'priceMax', 'isFavorite'];
+
+export async function getSavedFilters() {
+  const user = await getCurrentUser();
+  return prisma.savedFilter.findMany({ where: { userId: user.id }, orderBy: { createdAt: 'asc' }, select: { id: true, name: true, params: true } });
+}
+
+export async function saveFilter(name, params) {
+  const user = await getCurrentUser();
+  const label = name?.toString().trim().slice(0, 40);
+  if (!label) return { error: 'Dă-i un nume filtrului' };
+  const clean = Object.fromEntries(FILTER_KEYS.filter((key) => params?.[key]).map((key) => [key, String(params[key]).slice(0, 200)]));
+  if (!Object.keys(clean).length) return { error: 'Nu există niciun filtru activ' };
+  if ((await prisma.savedFilter.count({ where: { userId: user.id } })) >= 20) return { error: 'Maximum 20 de filtre salvate' };
+  const saved = await prisma.savedFilter.upsert({
+    where: { userId_name: { userId: user.id, name: label } },
+    create: { userId: user.id, name: label, params: clean },
+    update: { params: clean },
+    select: { id: true, name: true, params: true },
+  });
+  revalidatePath('/wines');
+  return { success: true, filter: saved };
+}
+
+export async function deleteSavedFilter(id) {
+  const user = await getCurrentUser();
+  await prisma.savedFilter.deleteMany({ where: { id, userId: user.id } });
+  revalidatePath('/wines');
+  return { success: true };
+}
+
+// ─────────────────────────────────────────
+// VINERYS WRAPPED (SOCIAL-001)
+// ─────────────────────────────────────────
+
+const WRAPPED_WINE_SELECT = {
+  id: true, name: true, producer: true, country: true, type: true, grapeVarieties: true,
+  rating: true, isFavorite: true, purchasePrice: true, estimatedValue: true,
+};
+
+export async function getWrapped(year = new Date().getFullYear()) {
+  const user = await getCurrentUser();
+  const target = Number.parseInt(year, 10) || new Date().getFullYear();
+  const from = new Date(target, 0, 1);
+  const to = new Date(target + 1, 0, 1);
+
+  const [logs, consumedWithoutLog, cellar] = await Promise.all([
+    prisma.wineLog.findMany({
+      where: { userId: user.id, action: 'CONSUMED', createdAt: { gte: from, lt: to } },
+      select: { createdAt: true, details: true, wine: { select: WRAPPED_WINE_SELECT } },
+    }),
+    // Istoricul vechi (dinainte de wine_log): vinurile consumate au doar consumptionDate
+    prisma.wine.findMany({
+      where: { userId: user.id, status: 'CONSUMED', consumptionDate: { gte: from, lt: to }, wineLogs: { none: { action: 'CONSUMED' } } },
+      select: { ...WRAPPED_WINE_SELECT, consumptionDate: true },
+    }),
+    prisma.wine.findMany({ where: { userId: user.id, status: 'IN_CELLAR' }, select: { quantity: true, estimatedValue: true } }),
+  ]);
+
+  const consumptions = [
+    ...logs.map((log) => ({ at: log.createdAt, quantity: Number(log.details?.quantityConsumed) || 1, wine: log.wine })),
+    ...consumedWithoutLog.map(({ consumptionDate, ...wine }) => ({ at: consumptionDate, quantity: 1, wine })),
+  ];
+  return buildWrapped({ year: target, consumptions, cellar });
 }

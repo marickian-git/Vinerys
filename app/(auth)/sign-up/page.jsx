@@ -574,6 +574,10 @@ export default function SignUpPage() {
               <p>
                 Ai deja cont? <Link href="/sign-in">Autentifică-te</Link>
               </p>
+              <p style={{ fontSize: "0.72rem", opacity: 0.7, marginTop: "0.75rem" }}>
+                Prin crearea contului accepți <Link href="/legal/terms">Termenii</Link> și{" "}
+                <Link href="/legal/privacy">Politica de confidențialitate</Link>.
+              </p>
             </div>
           </div>
         </div>

@@ -8,6 +8,8 @@ import { updatePassword, deleteAccount } from "@/utils/actions";
 import toast from "react-hot-toast";
 import ShareLinkSection from "@/components/ShareLinkSection";
 import AISettingsSection from "@/components/AISettingsSection";
+import AIUsageSummary from "@/components/AIUsageSummary";
+import { appPath } from "@/utils/appPath";
 import EmailVerificationBanner from "@/components/EmailVerificationBanner";
 
 export default function SettingsClient({
@@ -18,6 +20,7 @@ export default function SettingsClient({
   aiProvider,
   aiAgents,
   aiProviders,
+  aiUsage,
 }) {
   const router = useRouter();
   const [passwordForm, setPasswordForm] = useState({
@@ -197,6 +200,12 @@ export default function SettingsClient({
             />
           </div>
 
+          {/* Consum AI (AI-013) */}
+          <div className="set-card">
+            <div className="set-card-title">📊 Consum AI</div>
+            <AIUsageSummary usage={aiUsage} />
+          </div>
+
           {/* Partajare colecție */}
           <div className="set-card">
             <div className="set-card-title">🔗 Partajează colecția</div>
@@ -315,6 +324,18 @@ export default function SettingsClient({
           </div>
 
           {/* Danger zone */}
+          {/* Datele tale (GDPR, BIZ-004) */}
+          <div className="set-card">
+            <div className="set-card-title">📦 Datele tale</div>
+            <p className="set-danger-text">
+              Descarcă tot ce știe Vinerys despre tine: profil, vinuri, istoric, agenți AI (fără chei) și consum AI.
+              Detalii în <Link href="/legal/privacy">Politica de confidențialitate</Link>.
+            </p>
+            <a className="set-btn-ghost" style={{ display: "block", textAlign: "center", textDecoration: "none" }} href={appPath("/api/account/export")} download>
+              Descarcă datele (JSON)
+            </a>
+          </div>
+
           <div className="set-card set-card-danger">
             <div className="set-card-title">⚠️ Zonă periculoasă</div>
             <p className="set-danger-text">
