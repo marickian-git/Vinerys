@@ -219,6 +219,17 @@ Primul lot a fost planul inițial (15 issue-uri, pentru bugetul „câteva credi
 Pe pagina vinului apare secțiunea „Jurnal de degustare”. Pagina `/tastings` (protejată) arată toate degustările, cu numărul lor și ratingul mediu; are link din Profil. E2E `tests/e2e/tastings.spec.js` verifică adăugarea, aromele canonice („vanilla” → „vanilie”), pagina `/tastings` și ștergerea.
 **Decizii:** în UI e o singură poză per degustare, pentru simplitate pe mobil; modelul acceptă 6. Nota de degustare AI (`Wine.tastingNotes`) rămâne separată de notele personale din jurnal, cum cerea DATA-REPORT.
 
+### #106 HOME-005 „Deschide sticla” + follow-up
+**Făcut:**
+- `utils/followUp.js` (`pendingFollowUps`): o consumare din ultimele 7 zile, mai veche de N ore, fără degustare pentru același vin din ziua consumului.
+- `getFollowUps({ wineId, minAgeHours })`.
+- Pe pagina vinului, după „Consumă o sticlă”, jurnalul se deschide cu „Ai deschis o sticlă … Cum a fost?”.
+- În Pivniță, `FollowUpBanner` arată sticlele deschise cu cel puțin 12 h în urmă. „Nu acum” se ține minte în `localStorage`, citit cu `useSyncExternalStore`, fără setState în efect.
+- Teste unit + e2e `tests/e2e/followup.spec.js`.
+
+**Decizii:** fără tabel de „dismiss” în DB. Banner-ul dispare singur când notezi degustarea sau după 7 zile. „Consum cu un tap din recomandare” ține de ecranul Acasă de pe `feat/phase-2-design`; aici e acoperit pe pagina vinului.
+**Învățat:** rulat complet, e2e-ul local are uneori eșecuri de timing când mașina e încărcată (o rulare de 1,5 min a picat 3 teste). Rerulate de două ori, trec 17/17. În CI e `retries: 1`.
+
 ---
 
 ## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub

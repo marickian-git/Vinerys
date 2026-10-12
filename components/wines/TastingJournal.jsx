@@ -107,9 +107,9 @@ function TastingItem({ tasting, showWine, onDelete }) {
   );
 }
 
-export default function TastingJournal({ wineId = null, tastings = [], showWine = false }) {
+export default function TastingJournal({ wineId = null, tastings = [], showWine = false, followUpAt = null }) {
   const router = useRouter();
-  const [adding, setAdding] = useState(false);
+  const [adding, setAdding] = useState(Boolean(followUpAt));
 
   const remove = async (id) => {
     if (!window.confirm('Ștergi degustarea?')) return;
@@ -120,6 +120,11 @@ export default function TastingJournal({ wineId = null, tastings = [], showWine 
 
   return (
     <div>
+      {followUpAt && adding && (
+        <p style={{ margin: '0 0 0.75rem', fontSize: '0.95rem' }}>
+          Ai deschis o sticlă {new Date(followUpAt).toLocaleDateString('ro-RO', { weekday: 'long', day: 'numeric', month: 'long' })}. <strong>Cum a fost?</strong>
+        </p>
+      )}
       {wineId && (adding ? (
         <div style={{ marginBottom: '1rem' }}>
           <TastingForm wineId={wineId} onSaved={() => { setAdding(false); router.refresh(); }} />

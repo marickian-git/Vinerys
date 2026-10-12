@@ -10,6 +10,7 @@ import { WineInputSchema, parseWineForm } from "../schemas/wine";
 import { duplicateKey } from "./csvImport";
 import { likePattern, parseSearchQuery } from "./searchQuery";
 import { buildWrapped } from "./wrapped";
+import { pendingFollowUps } from "./followUp";
 import { cleanText, dedupeLocations, normalizeAromas, normalizeList, normalizeWineData } from "./normalize";
 import { countsBy, monthlySeries, nearMaturityWines, overdueWines } from "./stats";
 import { CellarNameSchema, PasswordChangeSchema, ProfileInputSchema, firstIssueMessage } from "../schemas/account";
@@ -1112,4 +1113,25 @@ export async function deleteTasting(id) {
   if (existing.wineId) revalidatePath(`/wines/${existing.wineId}`);
   revalidatePath('/tastings');
   return { success: true };
+}
+
+// ─────────────────────────────────────────
+// „CUM A FOST?” (HOME-005)
+// ─────────────────────────────────────────
+
+export async function getFollowUps({ wineId, minAgeHours = 12 } = {}) {
+  const user = await getCurrentUser();
+  const since = new Date(Date.now() - 7 * 86_400_000);
+  const [logs, tastings] = await Promise.all([
+    prisma.wineLog.findMany({
+      where: { userId: user.id, action: 'CONSUMED', createdAt: { gte: since }, wineId: wineId ?? { not: null } },
+      select: { wineId: true, createdAt: true, wine: { select: { name: true } } },
+    }),
+    prisma.tasting.findMany({ where: { userId: user.id, tastedAt: { gte: new Date(since.getTime() - 86_400_000) } }, select: { wineId: true, tastedAt: true } }),
+  ]);
+  return pendingFollowUps(
+    logs.map((log) => ({ wineId: log.wineId, at: log.createdAt, wineName: log.wine?.name ?? '' })),
+    tastings,
+    { minAgeHours },
+  );
 }

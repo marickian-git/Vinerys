@@ -1,4 +1,4 @@
-import { getTastings, getWineById } from '@/utils/actions';
+import { getFollowUps, getTastings, getWineById } from '@/utils/actions';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import WineActions from '@/components/wines/WineActions';
@@ -57,7 +57,7 @@ export default async function WineDetailPage({ params }) {
   } catch {
     notFound();
   }
-  const tastings = await getTastings({ wineId: wine.id });
+  const [tastings, followUps] = await Promise.all([getTastings({ wineId: wine.id }), getFollowUps({ wineId: wine.id, minAgeHours: 0 })]);
 
   const type = TYPE_CONFIG[wine.type] ?? TYPE_CONFIG.RED;
   const status = STATUS_CONFIG[wine.status] ?? STATUS_CONFIG.IN_CELLAR;
@@ -308,9 +308,9 @@ export default async function WineDetailPage({ params }) {
                 )}
               </div>
             )}
-            <div className="wd-section">
+            <div className="wd-section" id="jurnal">
               <div className="wd-section-title">Jurnal de degustare</div>
-              <TastingJournal wineId={wine.id} tastings={tastings} />
+              <TastingJournal key={followUps[0]?.at?.toISOString() ?? 'none'} wineId={wine.id} tastings={tastings} followUpAt={followUps[0]?.at ?? null} />
             </div>
             {shouldSuggestReorder(wine) && (
               <div className="wd-section">

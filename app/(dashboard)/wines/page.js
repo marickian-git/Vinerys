@@ -1,7 +1,8 @@
-import { getWines, getWineCountries, getSavedFilters } from '@/utils/actions';
+import { getWines, getWineCountries, getSavedFilters, getFollowUps } from '@/utils/actions';
 import WineCard from '@/components/wines/WineCard';
 import WineFilters from '@/components/wines/WineFilters';
 import SavedFilters from '@/components/wines/SavedFilters';
+import FollowUpBanner from '@/components/wines/FollowUpBanner';
 import ExportButton from '@/components/wines/ExportButton';
 import Link from 'next/link';
 
@@ -81,13 +82,15 @@ export default async function WinesPage({ searchParams }) {
   let result = { wines: [], total: 0, page: 1, pageSize: 24, totalPages: 0 };
   let countries = [];
   let savedFilters = [];
+  let followUps = [];
   let error = null;
 
   try {
-    [result, countries, savedFilters] = await Promise.all([
+    [result, countries, savedFilters, followUps] = await Promise.all([
       getWines(filters),
       getWineCountries(),
       getSavedFilters(),
+      getFollowUps(),
     ]);
   } catch (err) {
     error = err.message;
@@ -137,6 +140,7 @@ export default async function WinesPage({ searchParams }) {
             </div>
           </div>
 
+          <FollowUpBanner items={followUps} />
           <WineFilters countries={countries} totalResults={total} />
           <SavedFilters initial={savedFilters} />
 

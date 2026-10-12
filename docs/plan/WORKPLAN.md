@@ -48,7 +48,7 @@ Același flux. Branch-ul a fost repornit din `main` (`137957e`). Un singur merge
 | 16 | #66 | INT-003 „Cumpără din nou” | done | | Card pe pagina vinului când s-a terminat un vin cu rating ≥ 4 sau favorit (issue-ul cere ≥ 5; prea rar pe scara 1–5): linkuri de căutare Vivino / Google Shopping + „L-am cumpărat din nou” (readuce vinul în pivniță cu sticle noi, `wine_log` ADDED restock). Afilierea rămâne pentru BIZ |
 | 17 | #31 | DATA-003 Modelul Tasting | done | | Model `Tasting` (migrație + valoarea `TASTED` în `LogAction`): vin, dată, rating, ocazie, oameni, mâncare, loc, note, poze, arome. Aditiv, fără să atingă `Wine`; primește `bottleId` când vine #30. `Wine.rating` = media degustărilor. CRUD în actions + `schemas/tasting.js`; export GDPR include degustările și filtrele salvate |
 | 18 | #49 | CELLAR-003 Jurnal de degustare | done | | Secțiunea „Jurnal de degustare” pe pagina vinului (formular cu stele, ocazie, oameni, mâncare, loc, arome, note, poză) + pagina `/tastings` cu toate degustările și ratingul mediu. Link din Profil. O singură poză per degustare în UI (modelul acceptă 6) |
-| 19 | #106 | HOME-005 „Deschide sticla” + follow-up | todo | | |
+| 19 | #106 | HOME-005 „Deschide sticla” + follow-up | done | | „Cum a fost?”: imediat după consum, pe pagina vinului se deschide formularul de degustare. În Pivniță apare un banner pentru sticlele deschise acum 12 h – 7 zile fără degustare („Notează” / „Nu acum”, ținut minte în browser). Consumul cu un tap din recomandarea de pe Acasă rămâne la branch-ul de design (ecranul Acasă e acolo) |
 | 20 | #61 | SOCIAL-005 Badge-uri | todo | | |
 | — | | **Checkpoint 4** | | | |
 | 21 | #52 | CELLAR-006 Planificator de consum | todo | | |
