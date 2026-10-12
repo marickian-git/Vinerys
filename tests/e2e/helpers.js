@@ -28,6 +28,7 @@ export async function addWine(page, { name, quantity = 1, estimatedValue } = {})
   }
   await page.getByRole('button', { name: /Degustare|Rating/ }).first().click();
   await page.getByRole('button', { name: /Adaugă/ }).last().click();
-  await expect(page).toHaveURL(new RegExp(`${BASE}/wines$`));
+  // Salvarea + redirectul pot depăși 5 s la primul request pe un server proaspăt pornit
+  await expect(page).toHaveURL(new RegExp(`${BASE}/wines$`), { timeout: 20_000 });
   await expect(page.getByText(name).first()).toBeVisible();
 }
