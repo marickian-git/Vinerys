@@ -303,6 +303,15 @@ Pe pagina vinului apare secțiunea „Jurnal de degustare”. Pagina `/tastings`
 - CLDR `ro` afișează codul („100 EUR”). Cu `currencyDisplay: 'narrowSymbol'` iese „100 €” / „1.235 lei”.
 - În containerul cloud, serverul nu ajunge la BCE, deci e2e-ul acoperă degradarea fără cursuri.
 
+### #46 AI-011 Profil de gust
+**Făcut:**
+- `utils/tasteProfile.js`: `likeSignal` (rating și degustări pe scara -1…+1, favorit 0.8, ≥ 2 sticle consumate 0.3), `featuresOf` (tip, soiuri, țară, regiune, categorii de arome din vocabularul #120), `buildTasteProfile` (top + „de evitat”, `confident` de la 5 vinuri), `predictPreference` (sigmoid, plus motive în care soiul/regiunea au prioritate față de tip), `similarWines` (Jaccard ponderat).
+- `server/taste.js` (`winesWithSignals`, `tasteProfileFor`, `similarInCellar`).
+- Card „Profilul tău de gust” pe Profil și secțiunea „Asemănătoare din pivniță” pe pagina vinului.
+- Teste unit + e2e `tests/e2e/taste.spec.js`.
+
+**Decizii:** fără model ML. Cu zeci de vinuri, un scor pe trăsături e explicabil („pentru că îți place Fetească Neagră”) și nu are nevoie de antrenare. Același profil îl folosesc și „Mâncare → vin” (#105) și Sommelierul (#36).
+
 ---
 
 ## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub

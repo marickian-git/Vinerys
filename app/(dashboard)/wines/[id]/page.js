@@ -1,4 +1,4 @@
-import { getFollowUps, getTastings, getWineById } from '@/utils/actions';
+import { getFollowUps, getSimilarWines, getTastings, getWineById } from '@/utils/actions';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import WineActions from '@/components/wines/WineActions';
@@ -58,7 +58,7 @@ export default async function WineDetailPage({ params }) {
   } catch {
     notFound();
   }
-  const [tastings, followUps] = await Promise.all([getTastings({ wineId: wine.id }), getFollowUps({ wineId: wine.id, minAgeHours: 0 })]);
+  const [tastings, followUps, similar] = await Promise.all([getTastings({ wineId: wine.id }), getFollowUps({ wineId: wine.id, minAgeHours: 0 }), getSimilarWines(wine.id)]);
 
   const type = TYPE_CONFIG[wine.type] ?? TYPE_CONFIG.RED;
   const status = STATUS_CONFIG[wine.status] ?? STATUS_CONFIG.IN_CELLAR;
@@ -314,6 +314,16 @@ export default async function WineDetailPage({ params }) {
               <div className="wd-section-title">Jurnal de degustare</div>
               <TastingJournal key={followUps[0]?.at?.toISOString() ?? 'none'} wineId={wine.id} tastings={tastings} followUpAt={followUps[0]?.at ?? null} />
             </div>
+            {similar.length > 0 && (
+              <div className="wd-section">
+                <div className="wd-section-title">Asemănătoare din pivniță</div>
+                <ul style={{ margin: 0, paddingLeft: '1.1rem' }}>
+                  {similar.map(({ wine: other }) => (
+                    <li key={other.id}><Link href={`/wines/${other.id}`} style={{ color: '#f5e6e8' }}>{other.name}{other.vintage ? ` ${other.vintage}` : ''}</Link></li>
+                  ))}
+                </ul>
+              </div>
+            )}
             {shouldSuggestReorder(wine) && (
               <div className="wd-section">
                 <div className="wd-section-title">Cumpără din nou</div>

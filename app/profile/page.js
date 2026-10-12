@@ -1,4 +1,5 @@
-import { getProfile, getDashboardStats, getBadges } from '@/utils/actions';
+import { getProfile, getDashboardStats, getBadges, getTasteProfile } from '@/utils/actions';
+import TasteProfile from '@/components/profile/TasteProfile';
 import BadgeGrid from '@/components/profile/BadgeGrid';
 import { formatMoney } from '@/utils/currency';
 import Link from 'next/link';
@@ -14,9 +15,10 @@ export default async function ProfilePage() {
   let profile = null;
   let stats = { totalBottles: 0, totalWines: 0, totalValue: 0 };
   let badges = { badges: [], challenge: null };
+  let taste = null;
 
   try {
-    [profile, stats, badges] = await Promise.all([getProfile(), getDashboardStats(), getBadges()]);
+    [profile, stats, badges, taste] = await Promise.all([getProfile(), getDashboardStats(), getBadges(), getTasteProfile()]);
   } catch { }
 
   if (!profile) return null;
@@ -229,6 +231,11 @@ export default async function ProfilePage() {
           </div>
 
           {/* Edit profile form */}
+          <div className="prof-card">
+            <div className="prof-card-title">Profilul tău de gust</div>
+            <TasteProfile data={taste} />
+          </div>
+
           <div className="prof-card">
             <div className="prof-card-title">Badge-uri</div>
             <BadgeGrid badges={badges.badges} challenge={badges.challenge} />

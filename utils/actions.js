@@ -25,6 +25,7 @@ import {
   listWines, toggleFavoriteForUser, updateWineForUser, userLocations,
 } from "../server/wines";
 import { createTastingForUser, listTastings, syncWineRating, tastingData } from "../server/tastings";
+import { similarInCellar, tasteProfileFor } from "../server/taste";
 import { auth } from "./auth";
 import { decryptSecret, encryptSecret } from "./aiSecrets";
 import { getProviderDefinition, isKnownProvider, listProviderDefinitions } from "./aiProviderRegistry";
@@ -903,4 +904,18 @@ export async function updateCurrency(currency) {
 export async function getUserCurrency() {
   const user = await getCurrentUser();
   return (await prisma.user.findUnique({ where: { id: user.id }, select: { currency: true } }))?.currency ?? DEFAULT_CURRENCY;
+}
+
+// ─────────────────────────────────────────
+// PROFIL DE GUST (AI-011)
+// ─────────────────────────────────────────
+
+export async function getTasteProfile() {
+  const user = await getCurrentUser();
+  return tasteProfileFor(user.id);
+}
+
+export async function getSimilarWines(wineId) {
+  const user = await getCurrentUser();
+  return similarInCellar(user.id, wineId);
 }

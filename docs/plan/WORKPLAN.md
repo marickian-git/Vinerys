@@ -58,6 +58,19 @@ Același flux. Branch-ul a fost repornit din `main` (`137957e`). Un singur merge
 | 25 | #35 | DATA-007 Multi-currency | done | `dfa0a21` | `Wine.currency` (moneda originală a prețurilor) + `User.currency` (moneda statisticilor), cu migrație și EUR implicit pentru datele existente. Cursuri BCE zilnice cu cache (12 h; 30 min după eșec; fallback `FX_RATES_JSON`). Statisticile, Wrapped și profilul sunt convertite; prețurile apar cu `Intl` (narrowSymbol: €, lei, $). Select de monedă în formular și în Setări; exportul are coloana Monedă. Filtrul de preț compară în moneda vinului. Formatarea completă per limbă vine cu #100 |
 | — | | **Checkpoint 5** + merge | | | |
 
+## Lot 3 — 2026-10-12 (după PR #126)
+
+| # | Issue | Titlu | Status | Commit | Note / interpretare |
+|---|---|---|---|---|---|
+| 26 | #46 | AI-011 Profil de gust | done | | Profil explicabil, fără ML: fiecare vin votează pentru trăsăturile lui (tip, soiuri, țară, regiune, categorii de arome), ponderat cu cât ți-a plăcut (rating, degustări, favorit, sticle consumate). Pe Profil: preferințe + ce să eviți + „Din pivniță, pe gustul tău” cu % și motive. Pe pagina vinului: „Asemănătoare din pivniță” |
+| 27 | #105 | HOME-004 Mâncare → vin | todo | | |
+| 28 | #37 | AI-002 Tool-uri AI peste colecție | todo | | |
+| 29 | #36 | AI-001 Sommelier conversațional | todo | | |
+| 30 | #54 | CELLAR-008 Istoric de preț și ROI | todo | | |
+| — | | **Checkpoint 6** | | | |
+| 31 | #59 | SOCIAL-003 Wishlist și liste publice | todo | | |
+| 32 | #53 | CELLAR-007 Notificări push | todo | | |
+
 ## Sărite (cu motiv)
 
 | Issue | Motiv |
