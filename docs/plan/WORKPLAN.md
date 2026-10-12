@@ -36,7 +36,7 @@ Consecințe pentru planul ăsta:
 | 11 | #123 | CI-008 Smoke test producție | done | | `scripts/smoke-prod.mjs` + `npm run smoke:prod`: 10 pași, cont de test creat și șters în `finally`, așteaptă `version` din `/health`, webhook la eșec. Verificat local 10/10 (fără MinIO). Fără job programat în GitHub Actions: modificarea workflow-urilor cere scope-ul `workflow`; se rulează manual după deploy |
 | 12 | #104 | HOME-003 Vin → mâncare | done | | Secțiunea „Ce gătesc cu el?” pe pagina vinului: 3 preparate + temperatură + decantare + pahar, generate cu agenții utilizatorului (fallback pe rând), cache pe vin (`pairing`/`pairingKey`, migrație), invalidat când se schimbă identitatea vinului. Consumul AI intră în `ai_usage` |
 | 13 | #55 | CELLAR-009 Căutare fuzzy (pg_trgm) | done | | pg_trgm (`word_similarity` pe nume/producător, fără diacritice cu `translate`) + căutare în regiune/soiuri/arome/asocieri/note + limbaj natural (tip, „gata de băut”, „trecute de vârf”, sub/peste preț, an, favorite). Filtre salvate (max 20). 2 migrații. Moneda în „lei/€” e ignorată; prețul se compară cu valoarea salvată (multi-currency = #35) |
-| 14 | #57 | SOCIAL-001 Vinerys Wrapped | todo | | |
+| 14 | #57 | SOCIAL-001 Vinerys Wrapped | done | | Pagina `/wrapped?year=` ca o poveste verticală de carduri: sticle, țări, soiul anului, ritmul pe luni, producătorul preferat, cea mai scumpă sticlă, preferatele, pivnița azi. Distribuire prin Web Share / clipboard. Istoricul vechi vine din `consumptionDate`. Fără imagine generată și fără pagină publică (vin cu designul nou, #94) |
 | 15 | #77 | REFACTOR-006 Sentry (opțional, pe DSN) | todo | | |
 
 ## Sărite (cu motiv)

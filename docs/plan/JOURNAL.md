@@ -162,6 +162,20 @@ Curățenia contului rulează în `finally`. Raportul OK/FAIL iese cu cod 0/1, i
 **Decizii:** fără extensia `unaccent`. `translate()` scoate diacriticele românești direct în SQL, iar textul căutat trece prin `foldKey`. „lei”/„€” sunt ignorate, deci prețul se compară cu valoarea salvată (multi-currency = #35).
 **Învățat:** în regex-uri cu alternative, variantele lungi trebuie puse primele („trecute de vârf” înaintea lui „trecute”). `pg_trgm` e o extensie „trusted” (PG13+), deci proprietarul DB-ului o poate crea fără superuser.
 
+### #57 SOCIAL-001 Vinerys Wrapped
+**Făcut:**
+- `utils/wrapped.js` (`buildWrapped`, `wrappedShareText`, funcții pure + teste) și `getWrapped(year)`. Datele vin din `wine_log` CONSUMED (cu `quantityConsumed`) plus vinurile CONSUMED fără log (istoricul vechi, după `consumptionDate`).
+- Pagina `/wrapped` (protejată în `proxy.ts`), cu navigare între ani și buton „Distribuie anul tău” (`navigator.share` sau clipboard). Link din Profil.
+- E2E `tests/e2e/wrapped.spec.js`.
+
+**Decizii:**
+- Topurile sunt ponderate cu numărul de sticle, nu de vinuri.
+- „Preferatele” = favorite sau rating ≥ 4.
+- Prețul folosit e cel de achiziție, cu fallback pe valoarea estimată.
+- Linkul e pus în Profil, nu în navigație, ca să nu intre în conflict cu navigația nouă de pe branch-ul local.
+
+**Rămas:** imaginea „story” generată (OG image) și varianta publică, odată cu „Portretul pivniței” (#94) și designul nou.
+
 ---
 
 ## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub

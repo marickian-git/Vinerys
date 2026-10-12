@@ -9,6 +9,7 @@ import { z } from "zod";
 import { WineInputSchema, parseWineForm } from "../schemas/wine";
 import { duplicateKey } from "./csvImport";
 import { likePattern, parseSearchQuery } from "./searchQuery";
+import { buildWrapped } from "./wrapped";
 import { dedupeLocations, normalizeWineData } from "./normalize";
 import { countsBy, monthlySeries, nearMaturityWines, overdueWines } from "./stats";
 import { CellarNameSchema, PasswordChangeSchema, ProfileInputSchema, firstIssueMessage } from "../schemas/account";
@@ -931,4 +932,39 @@ export async function deleteSavedFilter(id) {
   await prisma.savedFilter.deleteMany({ where: { id, userId: user.id } });
   revalidatePath('/wines');
   return { success: true };
+}
+
+// ─────────────────────────────────────────
+// VINERYS WRAPPED (SOCIAL-001)
+// ─────────────────────────────────────────
+
+const WRAPPED_WINE_SELECT = {
+  id: true, name: true, producer: true, country: true, type: true, grapeVarieties: true,
+  rating: true, isFavorite: true, purchasePrice: true, estimatedValue: true,
+};
+
+export async function getWrapped(year = new Date().getFullYear()) {
+  const user = await getCurrentUser();
+  const target = Number.parseInt(year, 10) || new Date().getFullYear();
+  const from = new Date(target, 0, 1);
+  const to = new Date(target + 1, 0, 1);
+
+  const [logs, consumedWithoutLog, cellar] = await Promise.all([
+    prisma.wineLog.findMany({
+      where: { userId: user.id, action: 'CONSUMED', createdAt: { gte: from, lt: to } },
+      select: { createdAt: true, details: true, wine: { select: WRAPPED_WINE_SELECT } },
+    }),
+    // Istoricul vechi (dinainte de wine_log): vinurile consumate au doar consumptionDate
+    prisma.wine.findMany({
+      where: { userId: user.id, status: 'CONSUMED', consumptionDate: { gte: from, lt: to }, wineLogs: { none: { action: 'CONSUMED' } } },
+      select: { ...WRAPPED_WINE_SELECT, consumptionDate: true },
+    }),
+    prisma.wine.findMany({ where: { userId: user.id, status: 'IN_CELLAR' }, select: { quantity: true, estimatedValue: true } }),
+  ]);
+
+  const consumptions = [
+    ...logs.map((log) => ({ at: log.createdAt, quantity: Number(log.details?.quantityConsumed) || 1, wine: log.wine })),
+    ...consumedWithoutLog.map(({ consumptionDate, ...wine }) => ({ at: consumptionDate, quantity: 1, wine })),
+  ];
+  return buildWrapped({ year: target, consumptions, cellar });
 }

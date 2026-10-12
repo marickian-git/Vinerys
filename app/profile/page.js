@@ -203,6 +203,7 @@ export default async function ProfilePage() {
             <div className="prof-actions">
               <Link href="/settings" className="prof-btn-edit">⚙️ Setări</Link>
               <Link href="/wines" className="prof-btn-settings">🍷 Colecție</Link>
+              <Link href="/wrapped" className="prof-btn-settings">✨ Wrapped</Link>
             </div>
           </div>
 
