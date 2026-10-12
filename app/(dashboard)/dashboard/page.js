@@ -3,6 +3,7 @@ import { getDashboardStats, getWines, getAdvancedStats, getProfile } from '@/uti
 import WineCard from '@/components/wines/WineCard';
 import CellarNameEditor from '@/components/CellarNameEditor';
 import { getDisplayImageUrl } from '@/utils/mediaUrl';
+import { formatMoney } from '@/utils/currency';
 import {
   Wine,
   TrendingUp,
@@ -609,9 +610,9 @@ export default async function DashboardPage() {
             />
             <KpiCard
               iconEl={<IconValue color="#c9a84c" />}
-              value={stats.totalValue > 0 ? `${Math.round(stats.totalValue)}€` : '—'}
+              value={stats.totalValue > 0 ? formatMoney(stats.totalValue, stats.currency, { decimals: 0 }) : '—'}
               label="Valoare colecție"
-              sub={advanced.priceStats.avg > 0 ? `Media ${Math.round(advanced.priceStats.avg)}€` : null}
+              sub={advanced.priceStats.avg > 0 ? `Media ${formatMoney(advanced.priceStats.avg, advanced.priceStats.currency, { decimals: 0 })}` : null}
               accentColor="#c9a84c"
               iconBg="rgba(201,168,76,0.1)"
             />
@@ -800,19 +801,19 @@ export default async function DashboardPage() {
                 <>
                   <div className="db-price-grid">
                     <div className="db-price-item">
-                      <div className="db-price-val">{Math.round(advanced.priceStats.avg)}€</div>
+                      <div className="db-price-val">{formatMoney(advanced.priceStats.avg, advanced.priceStats.currency, { decimals: 0 })}</div>
                       <div className="db-price-lbl">Preț mediu</div>
                     </div>
                     <div className="db-price-item">
-                      <div className="db-price-val">{Math.round(advanced.priceStats.max)}€</div>
+                      <div className="db-price-val">{formatMoney(advanced.priceStats.max, advanced.priceStats.currency, { decimals: 0 })}</div>
                       <div className="db-price-lbl">Cel mai scump</div>
                     </div>
                     <div className="db-price-item">
-                      <div className="db-price-val">{Math.round(advanced.priceStats.min)}€</div>
+                      <div className="db-price-val">{formatMoney(advanced.priceStats.min, advanced.priceStats.currency, { decimals: 0 })}</div>
                       <div className="db-price-lbl">Cel mai ieftin</div>
                     </div>
                     <div className="db-price-item">
-                      <div className="db-price-val">{Math.round(stats.totalValue)}€</div>
+                      <div className="db-price-val">{formatMoney(stats.totalValue, stats.currency, { decimals: 0 })}</div>
                       <div className="db-price-lbl">Valoare totală</div>
                     </div>
                   </div>
@@ -822,7 +823,7 @@ export default async function DashboardPage() {
                       <Link href={`/wines/${advanced.priceStats.mostExpensive.id}`} className="db-price-best-name">
                         {advanced.priceStats.mostExpensive.name}
                       </Link>
-                      <div className="db-price-best-val">{advanced.priceStats.mostExpensive.purchasePrice}€</div>
+                      <div className="db-price-best-val">{formatMoney(advanced.priceStats.mostExpensive.purchasePrice, advanced.priceStats.currency)}</div>
                     </div>
                   )}
                 </>

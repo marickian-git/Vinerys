@@ -1,10 +1,14 @@
-import { getWineById } from '@/utils/actions';
+import { getFollowUps, getTastings, getWineById } from '@/utils/actions';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import WineActions from '@/components/wines/WineActions';
 import ConsumeButton from '@/components/wines/ConsumeButton';
 import WinePairing from '@/components/wines/WinePairing';
+import ReorderCard from '@/components/wines/ReorderCard';
+import TastingJournal from '@/components/wines/TastingJournal';
+import { reorderLinks, shouldSuggestReorder } from '@/utils/reorder';
 import { pairingKey } from '@/utils/pairing';
+import { formatMoney } from '@/utils/currency';
 import { DrinkWindowCard } from '@/components/wines/DrinkWindowBadge';
 import AromaProfile from '@/components/wines/AromaProfile';
 import { getDisplayImageUrl } from '@/utils/mediaUrl';
@@ -54,6 +58,7 @@ export default async function WineDetailPage({ params }) {
   } catch {
     notFound();
   }
+  const [tastings, followUps] = await Promise.all([getTastings({ wineId: wine.id }), getFollowUps({ wineId: wine.id, minAgeHours: 0 })]);
 
   const type = TYPE_CONFIG[wine.type] ?? TYPE_CONFIG.RED;
   const status = STATUS_CONFIG[wine.status] ?? STATUS_CONFIG.IN_CELLAR;
@@ -240,6 +245,7 @@ export default async function WineDetailPage({ params }) {
 
               <div className="wd-actions-row">
                 <WineActions wineId={wine.id} isFavorite={wine.isFavorite} />
+                <Link href={`/wines/${wine.id}/labels`} className="wd-qr-link" style={{ fontSize: '0.75rem', color: 'rgba(245,230,232,0.7)', alignSelf: 'center' }}>▦ Etichete QR</Link>
                 {wine.quantity > 0 && <ConsumeButton wineId={wine.id} currentQuantity={wine.quantity} />}
               </div>
             </div>
@@ -274,11 +280,11 @@ export default async function WineDetailPage({ params }) {
               <div className="wd-section-title">Preț & Stocare</div>
               {wine.purchasePrice && (
                 <div style={{ marginBottom: '1rem' }}>
-                  <div className="wd-price-big">{wine.purchasePrice} €</div>
+                  <div className="wd-price-big">{formatMoney(wine.purchasePrice, wine.currency)}</div>
                   <div style={{ fontSize: '0.68rem', color: 'rgba(245,230,232,0.3)', marginTop: '0.2rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Preț achiziție</div>
                 </div>
               )}
-              <InfoRow label="Valoare estimată" value={wine.estimatedValue ? `${wine.estimatedValue} €` : null} />
+              <InfoRow label="Valoare estimată" value={wine.estimatedValue ? formatMoney(wine.estimatedValue, wine.currency) : null} />
               <InfoRow label="Data achiziției" value={wine.purchaseDate ? new Date(wine.purchaseDate).toLocaleDateString('ro-RO') : null} />
               <InfoRow label="Locație pivniță" value={wine.cellarLocation} />
               <InfoRow label="Cantitate" value={`${wine.quantity} ${wine.quantity === 1 ? 'sticlă' : 'sticle'}`} />
@@ -302,6 +308,16 @@ export default async function WineDetailPage({ params }) {
                     </div>
                   </div>
                 )}
+              </div>
+            )}
+            <div className="wd-section" id="jurnal">
+              <div className="wd-section-title">Jurnal de degustare</div>
+              <TastingJournal key={followUps[0]?.at?.toISOString() ?? 'none'} wineId={wine.id} tastings={tastings} followUpAt={followUps[0]?.at ?? null} />
+            </div>
+            {shouldSuggestReorder(wine) && (
+              <div className="wd-section">
+                <div className="wd-section-title">Cumpără din nou</div>
+                <ReorderCard wineId={wine.id} links={reorderLinks(wine)} />
               </div>
             )}
             <div className="wd-section">

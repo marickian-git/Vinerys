@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { createWine, getCellarLocations, updateWine } from "@/utils/actions";
+import { createWine, getCellarLocations, getUserCurrency, updateWine } from "@/utils/actions";
+import { CURRENCIES } from "@/utils/currency";
 import { CANONICAL_COUNTRIES } from "@/utils/normalize";
 import toast from "react-hot-toast";
 import ImageUpload from "@/components/wines/ImageUpload";
@@ -102,6 +103,7 @@ const defaultForm = {
   purchaseDate: "",
   purchasePrice: "",
   estimatedValue: "",
+  currency: "",
   rating: "",
   tastingNotes: "",
   servingTemperature: "",
@@ -121,8 +123,11 @@ const defaultForm = {
 export default function WineForm({ wine = null }) {
   // Locațiile deja folosite, pentru autocomplete (DATA-010)
   const [locations, setLocations] = useState([]);
+  // Moneda implicită a vinurilor noi = moneda preferată din Setări (DATA-007)
+  const [defaultCurrency, setDefaultCurrency] = useState("EUR");
   useEffect(() => {
     getCellarLocations().then(setLocations).catch(() => {});
+    getUserCurrency().then(setDefaultCurrency).catch(() => {});
   }, []);
   const router = useRouter();
   const isEdit = !!wine;
@@ -177,6 +182,7 @@ export default function WineForm({ wine = null }) {
           quantity: wine.quantity?.toString() || "1",
           purchasePrice: wine.purchasePrice?.toString() || "",
           estimatedValue: wine.estimatedValue?.toString() || "",
+          currency: wine.currency || "EUR",
           rating: wine.rating?.toString() || "",
           purchaseDate: wine.purchaseDate
             ? new Date(wine.purchaseDate).toISOString().split("T")[0]
@@ -334,6 +340,7 @@ export default function WineForm({ wine = null }) {
         fd.append(k, v);
       }
     });
+    if (!form.currency) fd.append("currency", defaultCurrency);
 
     try {
       const result = isEdit
@@ -1020,7 +1027,17 @@ export default function WineForm({ wine = null }) {
         <div className={`wf-section ${section === 3 ? "active" : ""}`}>
           <div className="wf-grid">
             <div className="wf-field">
-              <label className="wf-label">Preț achiziție (€)</label>
+              <label className="wf-label" htmlFor="wf-currency">Monedă</label>
+              <select
+                id="wf-currency"
+                className="wf-input"
+                value={form.currency || defaultCurrency}
+                onChange={(e) => set("currency", e.target.value)}>
+                {CURRENCIES.map((code) => <option key={code} value={code}>{code}</option>)}
+              </select>
+            </div>
+            <div className="wf-field">
+              <label className="wf-label">Preț achiziție</label>
               <input
                 className="wf-input"
                 type="number"
@@ -1032,7 +1049,7 @@ export default function WineForm({ wine = null }) {
               />
             </div>
             <div className="wf-field">
-              <label className="wf-label">Valoare estimată (€)</label>
+              <label className="wf-label">Valoare estimată</label>
               <input
                 className="wf-input"
                 type="number"

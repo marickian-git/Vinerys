@@ -17,7 +17,7 @@ export const GET = withApiHandler('account-export', async () => {
   if (!limited.ok) throw rateLimited(tooManyRequestsMessage(limited.retryAfter), limited.retryAfter);
 
   const userId = session.user.id;
-  const [user, wines, wineLogs, aiAgents, aiUsage, sessions] = await Promise.all([
+  const [user, wines, wineLogs, aiAgents, aiUsage, sessions, tastings, savedFilters] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -36,6 +36,8 @@ export const GET = withApiHandler('account-export', async () => {
     }),
     prisma.aIUsage.findMany({ where: { userId }, orderBy: { createdAt: 'asc' } }),
     prisma.session.findMany({ where: { userId }, select: { createdAt: true, expiresAt: true, ipAddress: true, userAgent: true } }),
+    prisma.tasting.findMany({ where: { userId }, orderBy: { tastedAt: 'asc' } }),
+    prisma.savedFilter.findMany({ where: { userId } }),
   ]);
 
   const body = {
@@ -49,6 +51,8 @@ export const GET = withApiHandler('account-export', async () => {
     aiAgents,
     aiUsage,
     sessions,
+    tastings,
+    savedFilters,
   };
 
   return new NextResponse(JSON.stringify(body, null, 2), {

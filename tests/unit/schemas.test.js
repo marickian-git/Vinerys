@@ -24,6 +24,12 @@ describe('parseWineForm', () => {
     });
   });
 
+  it('isFavorite: „false” din formular rămâne false', () => {
+    expect(parseWineForm(form({ name: 'X', type: 'RED', isFavorite: 'false' })).data.isFavorite).toBe(false);
+    expect(parseWineForm(form({ name: 'X', type: 'RED', isFavorite: 'true' })).data.isFavorite).toBe(true);
+    expect(parseWineForm(form({ name: 'X', type: 'RED' })).data.isFavorite).toBe(false);
+  });
+
   it('întoarce erorile pe câmpuri', () => {
     const { error } = parseWineForm(form({ name: '', type: 'BLUE' }));
     expect(error.name).toEqual(['Numele este obligatoriu']);

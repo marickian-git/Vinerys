@@ -3,6 +3,7 @@ import { headers } from 'next/headers';
 import { auth } from '@/utils/auth';
 import prisma from '@/utils/db';
 import { escapeHtml as h, escapeCsv } from '@/utils/escape';
+import { formatMoney } from '@/utils/currency';
 import { unauthenticated, validationError, withApiHandler } from '@/utils/errors';
 
 const TYPE_LABELS   = { RED: 'Roșu', WHITE: 'Alb', ROSE: 'Roze', SPARKLING: 'Spumant', DESSERT: 'Desert', FORTIFIED: 'Fortifiat' };
@@ -31,7 +32,7 @@ function toCSV(wines) {
   const cols = [
     'Nume', 'Producător', 'Țară', 'Regiune', 'Tip', 'Culoare', 'An recoltă',
     'Soiuri struguri', 'Alcool %', 'Cantitate', 'Locație pivniță',
-    'Data achiziție', 'Preț achiziție (€)', 'Valoare estimată (€)',
+    'Data achiziție', 'Preț achiziție', 'Valoare estimată', 'Monedă',
     'Rating (1-5)', 'Note degustare', 'Temperatura servire', 'Asocieri gastronomice',
     'Potențial îmbătrânire', 'Dimensiune sticlă', 'Status', 'Favorit', 'Adăugat la',
   ];
@@ -50,6 +51,7 @@ function toCSV(wines) {
     w.purchaseDate ? new Date(w.purchaseDate).toLocaleDateString('ro-RO') : '',
     w.purchasePrice ?? '',
     w.estimatedValue ?? '',
+    w.currency ?? 'EUR',
     w.rating ?? '',
     w.tastingNotes ?? '',
     w.servingTemperature ?? '',
@@ -78,12 +80,19 @@ function toPDFHTML(wines, userName) {
       <td>${h(w.country ?? '—')}${w.region ? `<br><span class="sub">${h(w.region)}</span>` : ''}</td>
       <td class="center">${h(w.quantity ?? 1)}</td>
       <td class="center">${w.rating ? '★'.repeat(w.rating) + '☆'.repeat(5 - w.rating) : '—'}</td>
-      <td class="right">${w.purchasePrice ? h(w.purchasePrice) + ' €' : '—'}</td>
+      <td class="right">${w.purchasePrice ? h(formatMoney(w.purchasePrice, w.currency)) : '—'}</td>
       <td>${h(STATUS_LABELS[w.status] ?? w.status)}</td>
     </tr>
   `).join('');
 
-  const totalValue = wines.reduce((s, w) => s + (w.estimatedValue || w.purchasePrice || 0) * (w.quantity ?? 1), 0);
+  // Valoarea pe monede (nu adunăm lei cu euro)
+  const totals = wines.reduce((acc, w) => {
+    const value = (w.estimatedValue || w.purchasePrice || 0) * (w.quantity ?? 1);
+    if (value) acc[w.currency ?? 'EUR'] = (acc[w.currency ?? 'EUR'] ?? 0) + value;
+    return acc;
+  }, {});
+  const totalValue = Object.values(totals).reduce((sum, value) => sum + value, 0);
+  const totalLabel = Object.entries(totals).map(([currency, value]) => formatMoney(value, currency, { decimals: 0 })).join(' · ');
   const totalBottles = wines.reduce((s, w) => s + (w.quantity || 1), 0);
 
   return `<!DOCTYPE html>
@@ -146,7 +155,7 @@ function toPDFHTML(wines, userName) {
         <div class="cover-stat-label">Sticle totale</div>
       </div>
       ${totalValue > 0 ? `<div class="cover-stat">
-        <div class="cover-stat-val">${Math.round(totalValue)} €</div>
+        <div class="cover-stat-val">${h(totalLabel)}</div>
         <div class="cover-stat-label">Valoare estimată</div>
       </div>` : ''}
     </div>

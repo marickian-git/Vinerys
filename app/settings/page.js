@@ -11,7 +11,7 @@ export default async function SettingsPage() {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = session?.user ? await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { shareId: true, shareEnabled: true, aiProvider: true },
+    select: { shareId: true, shareEnabled: true, aiProvider: true, currency: true },
   }) : null;
 
   const shareUrl = shareUrlFor(user?.shareId);
@@ -21,5 +21,5 @@ export default async function SettingsPage() {
   const aiProviders = await getAIProviderCatalog();
   const aiUsage = await getAIUsageSummary().catch(() => null);
 
-  return <SettingsClient email={session?.user?.email} emailVerified={Boolean(session?.user?.emailVerified)} shareUrl={shareUrl} shareEnabled={shareEnabled} aiProvider={aiProvider} aiAgents={aiAgents} aiProviders={aiProviders} aiUsage={aiUsage} />;
+  return <SettingsClient email={session?.user?.email} emailVerified={Boolean(session?.user?.emailVerified)} shareUrl={shareUrl} shareEnabled={shareEnabled} aiProvider={aiProvider} aiAgents={aiAgents} aiProviders={aiProviders} aiUsage={aiUsage} currency={user?.currency ?? 'EUR'} />;
 }

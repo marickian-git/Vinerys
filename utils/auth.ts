@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
+import { bearer } from "better-auth/plugins";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import prisma from "./db";
 import { configuredAppURL, configuredAuthURL, configuredOrigin } from "./appPath.mjs";
@@ -13,7 +14,8 @@ const appLink = (path: string) => `${configuredAppURL()}${path}`;
 export const auth = betterAuth({
   baseURL: configuredAuthURL(),
   basePath: "/api/auth",
-  plugins: [nextCookies()],
+  // bearer: aplicația mobilă (ARCH-008) trimite tokenul de sesiune în Authorization: Bearer <token>
+  plugins: [nextCookies(), bearer()],
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),

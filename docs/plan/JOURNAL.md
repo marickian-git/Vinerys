@@ -187,6 +187,122 @@ Curățenia contului rulează în `finally`. Raportul OK/FAIL iese cu cod 0/1, i
 **Decizii:** fără `@sentry/nextjs`. SDK-ul cere `withSentryConfig`, fișiere de config, upload de source maps și adaugă greutate pe Raspberry Pi. Clientul minimal acoperă server + browser + mediu + release. Recomandare: GlitchTip în CasaOS, ca să rămână totul local.
 **Rămas:** source maps (numai cu SDK) și erorile din `global-error` (layout-ul rădăcină).
 
+### Lot 2 (12.10) — de ce am continuat
+Primul lot a fost planul inițial (15 issue-uri, pentru bugetul „câteva credite”). După merge, utilizatorul a întrebat de ce m-am oprit. Continui cu lotul 2 din `WORKPLAN.md`, pe același branch repornit din `main`.
+
+### #66 INT-003 „Cumpără din nou”
+**Făcut:** `utils/reorder.js` (`shouldSuggestReorder`, `reorderLinks`), acțiunea `restockWine(id, { quantity, purchasePrice })`, `components/wines/ReorderCard.jsx` pe pagina vinului. Teste unit + e2e `tests/e2e/reorder.spec.js`.
+**Decizii:**
+- Pragul e rating ≥ 4 sau favorit: issue-ul spune ≥ 5, dar pe scara 1–5 asta ar exclude aproape tot.
+- Recumpărarea reactivează aceeași fișă (sticle noi, status IN_CELLAR), nu creează un vin nou. Rămâne așa până la modelul `Bottle` (#30).
+
+**Învățat — bug găsit de e2e (`de51761`):** `z.coerce.boolean("false")` dă `true`. Formularul trimite `isFavorite` ca text, deci orice vin salvat din formular devenea favorit și nu mai putea fi scos de la favorite prin editare. Bug-ul exista și înainte de #28 (schema era la fel în `actions.js`). De verificat în producție câte vinuri sunt marcate favorite fără să fi fost alese.
+
+### #31 DATA-003 Modelul Tasting
+**Făcut:**
+- Model `Tasting` (`tasting`): `wineId` cu `SetNull` + `wineName` ca instantaneu, `tastedAt`, `rating`, `occasion`, `people[]`, `food`, `location`, `notes`, `photoUrls[]`, `aromas[]`. `LogAction.TASTED` nou. Migrația `20261012063610_tasting`.
+- Acțiuni `getTastings`/`createTasting`/`updateTasting`/`deleteTasting`; aromele și persoanele trec prin normalizatori (#120).
+- Pozele merg în folderul `tastings` (whitelist-ul de upload). `releaseImages` numără și referințele din degustări.
+- `Wine.rating` se sincronizează cu media degustărilor.
+- Exportul GDPR include degustările și filtrele salvate.
+
+**Decizii:**
+- Model aditiv: nu schimbă `Wine`, deci decizia mare Wine/Bottle (#30) rămâne deschisă.
+- O degustare supraviețuiește ștergerii vinului (jurnalul e al utilizatorului).
+- Ratingul vinului e media rotunjită, ca listele, filtrele și Wrapped să meargă fără modificări.
+
+### #49 CELLAR-003 Jurnal de degustare
+**Făcut:** `components/wines/TastingJournal.jsx`:
+- `TastingForm`: rating cu stele (butoane cu `aria-pressed`), dată, ocazie, cu cine, mâncare, unde, arome, note și o poză din folderul `tastings`;
+- lista de degustări, cu ștergere.
+
+Pe pagina vinului apare secțiunea „Jurnal de degustare”. Pagina `/tastings` (protejată) arată toate degustările, cu numărul lor și ratingul mediu; are link din Profil. E2E `tests/e2e/tastings.spec.js` verifică adăugarea, aromele canonice („vanilla” → „vanilie”), pagina `/tastings` și ștergerea.
+**Decizii:** în UI e o singură poză per degustare, pentru simplitate pe mobil; modelul acceptă 6. Nota de degustare AI (`Wine.tastingNotes`) rămâne separată de notele personale din jurnal, cum cerea DATA-REPORT.
+
+### #106 HOME-005 „Deschide sticla” + follow-up
+**Făcut:**
+- `utils/followUp.js` (`pendingFollowUps`): o consumare din ultimele 7 zile, mai veche de N ore, fără degustare pentru același vin din ziua consumului.
+- `getFollowUps({ wineId, minAgeHours })`.
+- Pe pagina vinului, după „Consumă o sticlă”, jurnalul se deschide cu „Ai deschis o sticlă … Cum a fost?”.
+- În Pivniță, `FollowUpBanner` arată sticlele deschise cu cel puțin 12 h în urmă. „Nu acum” se ține minte în `localStorage`, citit cu `useSyncExternalStore`, fără setState în efect.
+- Teste unit + e2e `tests/e2e/followup.spec.js`.
+
+**Decizii:** fără tabel de „dismiss” în DB. Banner-ul dispare singur când notezi degustarea sau după 7 zile. „Consum cu un tap din recomandare” ține de ecranul Acasă de pe `feat/phase-2-design`; aici e acoperit pe pagina vinului.
+**Învățat:** rulat complet, e2e-ul local are uneori eșecuri de timing când mașina e încărcată (o rulare de 1,5 min a picat 3 teste). Rerulate de două ori, trec 17/17. În CI e `retries: 1`.
+
+### #61 SOCIAL-005 Badge-uri și provocări
+**Făcut:** `utils/badges.js` (`BADGES`, `evaluateBadges`, `nextChallenge`) și `getBadges()`: două interogări SQL agregate, cu sticlele consumate luate din `wine_log` plus istoricul vechi. `components/profile/BadgeGrid.jsx` pe Profil, cu `progressbar` accesibil. Teste unit + e2e `tests/e2e/badges.spec.js`.
+**Decizii:**
+- Badge-urile se calculează mereu din date, nu se salvează. Nu trebuie migrare, iar progresul nu se poate desincroniza. Data obținerii lipsește; se poate adăuga cu un `BadgeAward` când vin notificările (#53).
+- „Toate DOC-urile din România” e aproximat prin regiunile românești până la RO-002 (#63).
+
+### #52 CELLAR-006 Planificator de consum
+**Făcut:** `utils/planner.js`:
+- `drinkWindow`, cu fallback pe anii din `agingPotential`, pe care HOME-001 îl cerea și el;
+- `spreadBottles`: distribuție uniformă, sau ciclică dacă sunt mai multe sticle decât ani;
+- `buildPlan`: orizont de 10 ani; depășitele intră în anul curent; „mai târziu” pentru ce trece de orizont; „fără fereastră” separat.
+
+`getConsumptionPlan()` și pagina `/planner` (protejată, link din Profil): grafic pe ani, apoi secțiuni pe ani cu statusul fiecărui vin (trecut de vârf / ultimul an / în fereastră). Teste unit + e2e `tests/e2e/planner.spec.js`.
+**Decizii:** planul e calculat la fiecare afișare, nu salvat. Alocarea manuală a sticlelor pe ani („assign bottles to years”) cere sticle individuale, deci vine cu modelul `Bottle` (#30).
+
+### #48 CELLAR-002 QR pentru fiecare sticlă
+**Făcut:**
+- `utils/qr.js` (`bottleUrl`, `qrSvg` cu pachetul `qrcode` 1.5.4, corecție M).
+- Pagina de printat `/wines/[id]/labels` (`?count=N`, CSS `@media print`, `PrintButton`), link „Etichete QR” pe pagina vinului.
+- Pagina de scanare `/q/[id]` (protejată), cu `QuickConsume`: un tap = o sticlă consumată, apoi „Notează cum a fost” spre jurnal (#106).
+- Teste unit + e2e `tests/e2e/qr.spec.js`.
+
+**Decizii:**
+- QR-ul e per vin până la modelul `Bottle` (#30). Atunci URL-ul devine `/q/<bottleId>`, iar `/q/<wineId>` rămâne compatibil.
+- Pe `/q`, scanarea ține loc de confirmare, deci consumul e fără al doilea click (spre deosebire de butonul din pagina vinului).
+
+**Învățat:** cu `loading.jsx`, `notFound()` dintr-o pagină trimisă în flux întoarce status 200 cu conținutul 404. Testele verifică conținutul, nu statusul.
+
+### #87 AI-012 AI găzduit: chei de platformă + cote
+**Făcut:**
+- `utils/platformAI.js` (`platformAgents` din `PLATFORM_AI_AGENTS`, `quotaFor`, `chooseAgents`, `quotaMessage`, `monthStart`).
+- `ai_usage.source` (`byo`/`platform`), cu migrația `ai_usage_source` și un index nou. `platformRequestsThisMonth` numără requestId-uri distincte.
+- `/api/ai-scan` și `getWinePairing` aleg agenții: întâi cei proprii, apoi platforma cât mai e cotă. Peste cotă dau 429 (scan) sau mesaj de eroare (pairing), cu sugestia de a adăuga o cheie proprie.
+- Cardul „Consum AI” arată „Scanări incluse luna asta: X / 20”.
+- `.env.example` documentat. Teste: `tests/unit/platformAI.test.js`.
+
+**Decizii:**
+- Cheile platformei stau în env, nu în DB: nu sunt ale unui utilizator, iar rotația se face din CasaOS.
+- Cotele sunt pe rol (ADMIN nelimitat) până la planurile Free/Pro (#112).
+- Hit-urile din cache-ul de scanări (#43) nu consumă cotă, pentru că verificarea cache-ului e înaintea alegerii agenților.
+
+### #84 ARCH-008 API REST /api/v1 (+ parte din #27)
+**Făcut:**
+- Refactor `1a7d535`: `server/wines.js` (listă/căutare, CRUD, consum, statistici, cu `userId` explicit) și `server/media.js`. Actions devin wrapper-e subțiri. Aici apoi `server/tastings.js`.
+- `bearer()` în better-auth: tokenul vine în headerul `set-auth-token` la sign-in/sign-up.
+- `server/api.js` (`apiRoute`: autentificare cookie sau bearer, rate limit 120/min, `readJson` cu Zod).
+- Rute: `GET /me`, `GET|POST /wines`, `GET|PATCH|DELETE /wines/:id`, `POST /wines/:id/consume`, `GET|POST /wines/:id/tastings`, `GET /wines/:id/pairing`, `GET /stats`, `GET /openapi.json` (OpenAPI 3.1, `server/openapi.js`).
+- E2E `tests/e2e/api-v1.spec.js`, într-un context fără cookie-uri, doar cu `Authorization: Bearer`: CRUD, normalizare, căutare, consum peste stoc (400 VALIDATION), degustare care propagă ratingul, pairing fără agenți (400 clar), statistici, 401 fără token. Unit: `tests/unit/openapi.test.js` (toate `$ref`-urile există).
+
+**Decizii:**
+- PATCH schimbă doar câmpurile trimise efectiv; valorile implicite din schemă nu suprascriu datele.
+- Erorile au același format ca restul API-ului (`error`, `code`, `requestId`).
+- `bottles` vine cu modelul `Bottle` (#30).
+
+**Învățat:** `headers()` din `next/headers` include și `Authorization`, deci acțiunile existente care citesc sesiunea (ex. `getWinePairing`) merg și cu bearer token.
+
+### #35 DATA-007 Multi-currency
+**Făcut:**
+- Migrația `currency`: `Wine.currency` și `User.currency`, implicit EUR, deci datele existente rămân corecte.
+- `utils/currency.js` (`CURRENCIES`, `convert`, `formatMoney` cu `Intl` + `narrowSymbol`, `parseEcbXml`, `sumInCurrency`) și `server/fx.js` (`getRates`: BCE zilnic, cache 12 h, cache de eșec 30 min, fallback `FX_RATES_JSON`).
+- `dashboardStats` însumează pe monede și convertește în moneda utilizatorului; ce nu se poate converti apare în `unconvertedValue`, nu e ignorat în tăcere. `getAdvancedStats` (prețuri) și Wrapped convertesc la fel.
+- UI: select de monedă în formularul de vin (implicit moneda din Setări), cardul „Monedă” în Setări, toate `€` hardcodate înlocuite cu `formatMoney`.
+- Exportul CSV are coloana „Monedă”, iar copertei PDF îi arată totalul pe monede.
+- Teste: `tests/unit/currency.test.js` și e2e `tests/e2e/currency.spec.js` (RON → „150 lei” pe dashboard).
+
+**Decizii:**
+- Prețul se păstrează în moneda originală și se convertește doar la afișarea agregatelor (issue: „păstrarea monedei originale”).
+- Cursurile vin de la BCE, care include RON, fără cheie API.
+
+**Învățat:**
+- CLDR `ro` afișează codul („100 EUR”). Cu `currencyDisplay: 'narrowSymbol'` iese „100 €” / „1.235 lei”.
+- În containerul cloud, serverul nu ajunge la BCE, deci e2e-ul acoperă degradarea fără cursuri.
+
 ---
 
 ## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub

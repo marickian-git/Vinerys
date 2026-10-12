@@ -22,12 +22,30 @@ function Table({ caption, head, rows }) {
   );
 }
 
+function Quotas({ quotas }) {
+  if (!quotas) return null;
+  const label = { scan: 'Scanări incluse', text: 'Sugestii AI incluse' };
+  return (
+    <ul style={{ listStyle: 'none', margin: '0 0 0.75rem', padding: 0, display: 'flex', flexWrap: 'wrap', gap: '1rem', fontSize: '0.8rem' }}>
+      {quotas.map((q) => (
+        <li key={q.kind}>{label[q.kind]} luna asta: <strong>{q.used}{q.limit == null ? '' : ` / ${q.limit}`}</strong>{q.limit == null && ' (nelimitat)'}</li>
+      ))}
+    </ul>
+  );
+}
+
 export default function AIUsageSummary({ usage }) {
   if (!usage?.byMonth?.length) {
-    return <p style={{ fontSize: '0.8rem', opacity: 0.6, margin: 0 }}>Încă nu există scanări AI înregistrate.</p>;
+    return (
+      <>
+        <Quotas quotas={usage?.quotas} />
+        <p style={{ fontSize: '0.8rem', opacity: 0.6, margin: 0 }}>Încă nu există scanări AI înregistrate.</p>
+      </>
+    );
   }
   return (
     <div>
+      <Quotas quotas={usage.quotas} />
       <Table
         caption="Pe lună"
         head={['Luna', 'Apeluri', 'Tokeni (in / out)', 'Cost estimat', 'Eșuate']}
