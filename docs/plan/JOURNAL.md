@@ -327,6 +327,16 @@ Pe pagina vinului apare secțiunea „Jurnal de degustare”. Pagina `/tastings`
 
 **Decizii:** varianta fără AI contează: `foodPairing` e completat la 100% de scanare (DATA-REPORT), deci funcționează și pentru cine nu are chei. Urgența ordonează și în interiorul ferestrei, cum cerea raportul de date.
 
+### #37 AI-002 Tool-uri AI pentru interogarea colecției
+**Făcut:** `server/sommelierTools.js` cu `SOMMELIER_TOOLS`:
+- `searchWines(query?, type?, maxPrice?, inCellarOnly?, limit?)`, peste `listWines` (fuzzy + limbaj natural din #55);
+- `getWine(id)`;
+- `getAvailableBottles(type?, limit?)`, ordonate după `urgencyScore`;
+- `getUserPreferences()`, din profilul de gust #46.
+
+Plus `describeTools()` (textul pentru prompt) și `runTool(userId, name, args)` (validare Zod; erorile devin mesaje, nu excepții). Teste unit pentru validare. Verificat ad-hoc pe DB-ul local: căutare, detalii, izolare (alt utilizator primește „Acces interzis”), preferințe.
+**Decizii:** protocol JSON propriu în loc de tool calling nativ. Agenții pot fi Gemini, Claude sau OpenAI-compatibil, fiecare cu alt format; un singur protocol text merge cu toți și cu ensemble-ul existent. Rezultatele sunt compacte (fără URL-uri de imagini sau ID-uri interne inutile), ca promptul să rămână mic.
+
 ---
 
 ## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub
