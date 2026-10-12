@@ -37,7 +37,8 @@ export const WineInputSchema = z.object({
   bottleSize: z.string().default('0.75L'),
   bottleImageUrl: z.string().url().optional().or(z.literal('')),
   labelImageUrl: z.string().url().optional().or(z.literal('')),
-  isFavorite: z.coerce.boolean().default(false),
+  // z.coerce.boolean('false') ar da true: formularul trimite booleenii ca text
+  isFavorite: z.preprocess((value) => value === true || value === 'true' || value === 'on' || value === '1', z.boolean()),
   consumptionDate: z.coerce.date().optional(),
   status: WineStatusSchema.default('IN_CELLAR'),
 });
