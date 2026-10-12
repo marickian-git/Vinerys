@@ -1,10 +1,11 @@
-import { getWineById } from '@/utils/actions';
+import { getTastings, getWineById } from '@/utils/actions';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import WineActions from '@/components/wines/WineActions';
 import ConsumeButton from '@/components/wines/ConsumeButton';
 import WinePairing from '@/components/wines/WinePairing';
 import ReorderCard from '@/components/wines/ReorderCard';
+import TastingJournal from '@/components/wines/TastingJournal';
 import { reorderLinks, shouldSuggestReorder } from '@/utils/reorder';
 import { pairingKey } from '@/utils/pairing';
 import { DrinkWindowCard } from '@/components/wines/DrinkWindowBadge';
@@ -56,6 +57,7 @@ export default async function WineDetailPage({ params }) {
   } catch {
     notFound();
   }
+  const tastings = await getTastings({ wineId: wine.id });
 
   const type = TYPE_CONFIG[wine.type] ?? TYPE_CONFIG.RED;
   const status = STATUS_CONFIG[wine.status] ?? STATUS_CONFIG.IN_CELLAR;
@@ -306,6 +308,10 @@ export default async function WineDetailPage({ params }) {
                 )}
               </div>
             )}
+            <div className="wd-section">
+              <div className="wd-section-title">Jurnal de degustare</div>
+              <TastingJournal wineId={wine.id} tastings={tastings} />
+            </div>
             {shouldSuggestReorder(wine) && (
               <div className="wd-section">
                 <div className="wd-section-title">Cumpără din nou</div>

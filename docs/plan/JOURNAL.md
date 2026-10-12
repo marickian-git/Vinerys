@@ -211,6 +211,14 @@ Primul lot a fost planul inițial (15 issue-uri, pentru bugetul „câteva credi
 - O degustare supraviețuiește ștergerii vinului (jurnalul e al utilizatorului).
 - Ratingul vinului e media rotunjită, ca listele, filtrele și Wrapped să meargă fără modificări.
 
+### #49 CELLAR-003 Jurnal de degustare
+**Făcut:** `components/wines/TastingJournal.jsx`:
+- `TastingForm`: rating cu stele (butoane cu `aria-pressed`), dată, ocazie, cu cine, mâncare, unde, arome, note și o poză din folderul `tastings`;
+- lista de degustări, cu ștergere.
+
+Pe pagina vinului apare secțiunea „Jurnal de degustare”. Pagina `/tastings` (protejată) arată toate degustările, cu numărul lor și ratingul mediu; are link din Profil. E2E `tests/e2e/tastings.spec.js` verifică adăugarea, aromele canonice („vanilla” → „vanilie”), pagina `/tastings` și ștergerea.
+**Decizii:** în UI e o singură poză per degustare, pentru simplitate pe mobil; modelul acceptă 6. Nota de degustare AI (`Wine.tastingNotes`) rămâne separată de notele personale din jurnal, cum cerea DATA-REPORT.
+
 ---
 
 ## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub
