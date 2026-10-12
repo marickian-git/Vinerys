@@ -119,6 +119,10 @@ Tokenii sunt în `docs/design/proposed-themes.tokens.json`, iar `tests/unit/prop
 - Duplicat = nume + producător + an, comparate fără diacritice. Duplicatele sunt sărite, nu actualizate.
 - Formatul exact al exportului Vivino nu e documentat public. Aliasurile acoperă variantele cunoscute, iar maparea se poate corecta manual.
 
+### #65 INT-002 Import CSV CellarTracker
+**Făcut:** am adăugat presetul `cellartracker` în `SOURCES`, detectat după coloana `iWine`, cu mapare pentru `Producer`, `SubRegion`/`Appellation`, `Varietal`, `Size`, `Valuation`, `Location`/`Bin`, `BeginConsume`/`EndConsume` și `PScore`. Teste: fixture `tests/fixtures/cellartracker.csv` (tipuri compuse, 375 ml, NV).
+**Învățat:** CellarTracker marchează non-vintage cu anul `1001`. `parseYear` acceptă doar anii 1800–2100, deci NV rămâne fără an. Tipurile vin compuse („Rosé - Sparkling”), așa că ordinea regulilor contează: spumant/fortifiat/desert înaintea culorii.
+
 ---
 
 ## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub

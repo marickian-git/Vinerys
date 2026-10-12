@@ -68,3 +68,25 @@ describe('Vivino', () => {
     expect(mapRow({ W: 'Davino', V: '2020', T: 'Red' }, { producer: 'W', vintage: 'V', type: 'T' }).wine.name).toBe('Davino 2020');
   });
 });
+
+describe('CellarTracker', () => {
+  const { headers, rows } = parseCsv(fixture('cellartracker.csv'));
+
+  it('detectează formatul după iWine și mapează coloanele', () => {
+    expect(detectSource(headers)).toBe('cellartracker');
+    expect(autoMapColumns(headers, 'cellartracker')).toMatchObject({
+      name: 'Wine', producer: 'Producer', subregion: 'SubRegion', grapeVarieties: 'Varietal',
+      bottleSize: 'Size', estimatedValue: 'Valuation', cellarLocation: 'Location', drinkFrom: 'BeginConsume', rating: 'PScore',
+    });
+  });
+
+  it('convertește tipurile compuse, mărimea, fereastra și scorul pe 100', () => {
+    const preview = buildPreview(rows, autoMapColumns(headers, 'cellartracker'));
+    expect(preview.map((row) => row.status)).toEqual(['ok', 'ok', 'ok']);
+    const [musar, tokaji, champagne] = preview.map((row) => row.wine);
+    expect(musar).toMatchObject({ type: 'RED', bottleSize: '0.75L', quantity: 2, purchasePrice: 45, estimatedValue: 80, drinkFrom: 2022, drinkUntil: 2035, rating: 4, cellarLocation: 'Cellar' });
+    expect(tokaji).toMatchObject({ type: 'DESSERT', bottleSize: '0.375L' });
+    expect(champagne).toMatchObject({ type: 'SPARKLING', drinkFrom: null });
+    expect(champagne.vintage).toBeUndefined(); // 1001 = NV în CellarTracker
+  });
+});

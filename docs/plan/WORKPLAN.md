@@ -31,7 +31,7 @@ Consecințe pentru planul ăsta:
 | 7 | #88 | AI-013 Tracking cost AI | done | | Tabela `ai_usage` (migrație): o linie per apel de agent (identificare + îmbogățire), cu tokeni, cost, latență și succes. Costul se ia din prețuri configurate (`agent.metadata.pricing` sau `AI_PRICING_JSON`), nu hardcodate. Card „Consum AI” în Setări; adminul vede și totalul platformei |
 | 8 | #111 | BIZ-004 GDPR: export date + pagini legale | done | | Export JSON complet (`/api/account/export`, fără secrete, rate limit). Paginile `/legal/privacy` și `/legal/terms` sunt schițe RO cu [PLACEHOLDER] pentru operator, contact și găzduire: **cer revizuire juridică**. Cookie consent: nu e necesar, avem doar cookie-uri strict necesare (scris în politică). Ștergerea contului exista deja |
 | 9 | #64 | INT-001 Import CSV Vivino | done | | Pagina `/wines/import`: upload, auto-detectare format, mapare coloane editabilă, preview cu Nou/Duplicat/Eroare, import în tranzacție + `wine_log` ADDED. Motor comun `utils/csvImport.js` (și pentru #65 și CSV generic, inclusiv exportul Vinerys). Rating 1–5 rotunjit; zecimalele Vivino se pierd |
-| 10 | #65 | INT-002 Import CSV CellarTracker | todo | | |
+| 10 | #65 | INT-002 Import CSV CellarTracker | done | | Preset CellarTracker (detectat după `iWine`) peste motorul din #64: tipuri compuse („White - Sweet/Dessert”), mărime în ml, BeginConsume/EndConsume, Valuation, Location, scor pe 100 → 1–5, NV (1001) → fără an |
 | — | | **Checkpoint 2** | | | |
 | 11 | #123 | CI-008 Smoke test producție | todo | | |
 | 12 | #104 | HOME-003 Vin → mâncare | todo | | |
