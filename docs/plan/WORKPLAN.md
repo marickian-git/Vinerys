@@ -39,6 +39,25 @@ Consecințe pentru planul ăsta:
 | 14 | #57 | SOCIAL-001 Vinerys Wrapped | done | `609e4c5` | Pagina `/wrapped?year=` ca o poveste verticală de carduri: sticle, țări, soiul anului, ritmul pe luni, producătorul preferat, cea mai scumpă sticlă, preferatele, pivnița azi. Distribuire prin Web Share / clipboard. Istoricul vechi vine din `consumptionDate`. Fără imagine generată și fără pagină publică (vin cu designul nou, #94) |
 | 15 | #77 | REFACTOR-006 Sentry (opțional, pe DSN) | done | `a7f92d0` | Fără SDK: client minimal compatibil Sentry/GlitchTip (`utils/errorReporting.js`), activ doar cu `SENTRY_DSN`. Server: `instrumentation.js` → `onRequestError`. Browser: `app/error.jsx` → `/api/client-errors`. Release = `APP_VERSION`, mediul = `SENTRY_ENVIRONMENT`. Verificat cap-coadă cu un endpoint fals. Fără source maps (cer SDK + upload la build) |
 
+## Lot 2 — 2026-10-12 (după merge-ul PR #124)
+
+Același flux. Branch-ul a fost repornit din `main` (`137957e`). Un singur merge la final, ca deploy-urile să rămână rare.
+
+| # | Issue | Titlu | Status | Commit | Note / interpretare |
+|---|---|---|---|---|---|
+| 16 | #66 | INT-003 „Cumpără din nou” | done | | Card pe pagina vinului când s-a terminat un vin cu rating ≥ 4 sau favorit (issue-ul cere ≥ 5; prea rar pe scara 1–5): linkuri de căutare Vivino / Google Shopping + „L-am cumpărat din nou” (readuce vinul în pivniță cu sticle noi, `wine_log` ADDED restock). Afilierea rămâne pentru BIZ |
+| 17 | #31 | DATA-003 Modelul Tasting | todo | | Aditiv: legat de `Wine` acum, de `Bottle` când vine modelul nou (#30) |
+| 18 | #49 | CELLAR-003 Jurnal de degustare | todo | | |
+| 19 | #106 | HOME-005 „Deschide sticla” + follow-up | todo | | |
+| 20 | #61 | SOCIAL-005 Badge-uri | todo | | |
+| — | | **Checkpoint 4** | | | |
+| 21 | #52 | CELLAR-006 Planificator de consum | todo | | |
+| 22 | #48 | CELLAR-002 QR per sticlă | todo | | |
+| 23 | #87 | AI-012 Chei de platformă + cote | todo | | |
+| 24 | #84 | ARCH-008 API REST /api/v1 | todo | | |
+| 25 | #35 | DATA-007 Multi-currency | todo | | |
+| — | | **Checkpoint 5** + merge | | | |
+
 ## Sărite (cu motiv)
 
 | Issue | Motiv |

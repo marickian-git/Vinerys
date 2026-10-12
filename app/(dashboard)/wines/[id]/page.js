@@ -4,6 +4,8 @@ import { notFound } from 'next/navigation';
 import WineActions from '@/components/wines/WineActions';
 import ConsumeButton from '@/components/wines/ConsumeButton';
 import WinePairing from '@/components/wines/WinePairing';
+import ReorderCard from '@/components/wines/ReorderCard';
+import { reorderLinks, shouldSuggestReorder } from '@/utils/reorder';
 import { pairingKey } from '@/utils/pairing';
 import { DrinkWindowCard } from '@/components/wines/DrinkWindowBadge';
 import AromaProfile from '@/components/wines/AromaProfile';
@@ -302,6 +304,12 @@ export default async function WineDetailPage({ params }) {
                     </div>
                   </div>
                 )}
+              </div>
+            )}
+            {shouldSuggestReorder(wine) && (
+              <div className="wd-section">
+                <div className="wd-section-title">Cumpără din nou</div>
+                <ReorderCard wineId={wine.id} links={reorderLinks(wine)} />
               </div>
             )}
             <div className="wd-section">

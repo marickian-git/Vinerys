@@ -187,6 +187,17 @@ Curățenia contului rulează în `finally`. Raportul OK/FAIL iese cu cod 0/1, i
 **Decizii:** fără `@sentry/nextjs`. SDK-ul cere `withSentryConfig`, fișiere de config, upload de source maps și adaugă greutate pe Raspberry Pi. Clientul minimal acoperă server + browser + mediu + release. Recomandare: GlitchTip în CasaOS, ca să rămână totul local.
 **Rămas:** source maps (numai cu SDK) și erorile din `global-error` (layout-ul rădăcină).
 
+### Lot 2 (12.10) — de ce am continuat
+Primul lot a fost planul inițial (15 issue-uri, pentru bugetul „câteva credite”). După merge, utilizatorul a întrebat de ce m-am oprit. Continui cu lotul 2 din `WORKPLAN.md`, pe același branch repornit din `main`.
+
+### #66 INT-003 „Cumpără din nou”
+**Făcut:** `utils/reorder.js` (`shouldSuggestReorder`, `reorderLinks`), acțiunea `restockWine(id, { quantity, purchasePrice })`, `components/wines/ReorderCard.jsx` pe pagina vinului. Teste unit + e2e `tests/e2e/reorder.spec.js`.
+**Decizii:**
+- Pragul e rating ≥ 4 sau favorit: issue-ul spune ≥ 5, dar pe scara 1–5 asta ar exclude aproape tot.
+- Recumpărarea reactivează aceeași fișă (sticle noi, status IN_CELLAR), nu creează un vin nou. Rămâne așa până la modelul `Bottle` (#30).
+
+**Învățat — bug găsit de e2e (`de51761`):** `z.coerce.boolean("false")` dă `true`. Formularul trimite `isFavorite` ca text, deci orice vin salvat din formular devenea favorit și nu mai putea fi scos de la favorite prin editare. Bug-ul exista și înainte de #28 (schema era la fel în `actions.js`). De verificat în producție câte vinuri sunt marcate favorite fără să fi fost alese.
+
 ---
 
 ## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub

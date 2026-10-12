@@ -983,3 +983,40 @@ export async function getWrapped(year = new Date().getFullYear()) {
   ];
   return buildWrapped({ year: target, consumptions, cellar });
 }
+
+// ─────────────────────────────────────────
+// „CUMPĂRĂ DIN NOU” (INT-003)
+// ─────────────────────────────────────────
+
+// Readuce în pivniță un vin terminat (aceeași fișă, sticle noi), cu istoric ADDED { restock: true }
+export async function restockWine(id, input = {}) {
+  const user = await getCurrentUser();
+  const quantity = Number.parseInt(input.quantity, 10);
+  if (!Number.isInteger(quantity) || quantity < 1 || quantity > 500) return { error: 'Cantitate invalidă' };
+  const price = input.purchasePrice === '' || input.purchasePrice == null ? null : Number(input.purchasePrice);
+  if (price != null && (!Number.isFinite(price) || price < 0)) return { error: 'Preț invalid' };
+
+  const wine = await prisma.wine.findFirst({ where: { id, userId: user.id } });
+  if (!wine) return { error: 'Vinul nu a fost găsit' };
+
+  await prisma.$transaction([
+    prisma.wine.update({
+      where: { id },
+      data: {
+        quantity: { increment: quantity },
+        status: 'IN_CELLAR',
+        consumptionDate: null,
+        purchaseDate: new Date(),
+        ...(price != null && { purchasePrice: price }),
+      },
+    }),
+    prisma.wineLog.create({
+      data: { wineId: id, userId: user.id, action: 'ADDED', details: { restock: true, quantity, purchasePrice: price } },
+    }),
+  ]);
+
+  revalidatePath('/wines');
+  revalidatePath(`/wines/${id}`);
+  revalidatePath('/dashboard');
+  return { success: true };
+}
