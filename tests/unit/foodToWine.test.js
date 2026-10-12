@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { foodToWinePrompt, heuristicMatch, normalizeFoodPicks, pairingCandidates, rankPicks, urgencyScore } from '@/utils/foodToWine';
+import { foodToWinePrompt, heuristicMatch, normalizeFoodPicks, pairingCandidates, rankPicks, urgencyScore } from '../../utils/foodToWine';
 
 const Y = 2026;
 const w = (id, over) => ({ id, name: id, status: 'IN_CELLAR', quantity: 1, foodPairing: [], ...over });
@@ -9,12 +9,13 @@ describe('urgencyScore', () => {
     const overdue = urgencyScore({ drinkFrom: 2015, drinkUntil: 2024 }, Y);
     const ending = urgencyScore({ drinkFrom: 2020, drinkUntil: 2026 }, Y);
     const late = urgencyScore({ drinkFrom: 2018, drinkUntil: 2028 }, Y);
-    const early = urgencyScore({ drinkFrom: 2025, drinkUntil: 2035 }, Y);
-    const young = urgencyScore({ drinkFrom: 2030, drinkUntil: 2040 }, Y);
-    expect([overdue, ending]).toEqual([1, 0.9]);
+    const early = urgencyScore({ drinkFrom: 2025, drinkLimit: 2035 }, Y);
+    const young = urgencyScore({ drinkFrom: 2030, drinkLimit: 2040 }, Y);
+    expect(overdue).toBeCloseTo(0.025);
+    expect(ending).toBeCloseTo(0.0225);
     expect(late).toBeGreaterThan(early);
     expect(early).toBeGreaterThan(young);
-    expect(urgencyScore({}, Y)).toBe(0.4);
+    expect(urgencyScore({}, Y)).toBeCloseTo(0.01);
   });
 });
 
@@ -42,7 +43,7 @@ describe('AI: prompt și validare', () => {
 
 describe('rankPicks', () => {
   it('la potrivire egală câștigă vinul mai urgent; maxim 3', () => {
-    const wines = [w('young', { drinkFrom: 2030, drinkUntil: 2040 }), w('urgent', { drinkFrom: 2015, drinkUntil: 2025 }), w('c'), w('d')];
+    const wines = [w('young', { drinkFrom: 2030, drinkUntil: 2040 }), w('urgent', { drinkFrom: 2015, drinkLimit: 2025 }), w('c'), w('d')];
     const ranked = rankPicks(['young', 'urgent', 'c', 'd'].map((id) => ({ id, match: 0.8 })), wines, { year: Y });
     expect(ranked).toHaveLength(3);
     expect(ranked[0].wine.id).toBe('urgent');

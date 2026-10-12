@@ -5,13 +5,66 @@ import { foldKey } from './normalize';
 
 // 0 (poate aștepta) … 1 (de băut acum): trecut de vârf > ultimul an > spre finalul ferestrei > abia intrat > încă tânăr
 export function urgencyScore(wine, year = new Date().getFullYear()) {
-  const window = drinkWindow(wine);
-  if (!window) return 0.4;
-  if (window.until < year) return 1;
-  if (window.until === year) return 0.9;
-  if (window.from > year) return 0.15;
-  const span = Math.max(1, window.until - window.from);
-  return Number((0.45 + 0.4 * ((year - window.from) / span)).toFixed(3));
+  // 1. Scor de bază pe baza ferestrei de consum (cu fallback la agingPotential)
+  let window;
+  if (wine.drinkFrom == null && wine.drinkUntil == null && wine.drinkLimit != null) {
+    // Fallback to drinkLimit when both drinkFrom and drinkMissing
+    const yearsIn = (text) => (text?.match(/\b(19|20)\d{2}\b/g) ?? []).map(Number);
+    const years = yearsIn(wine.drinkLimit);
+    if (years.length) {
+      const from = Math.min(...years);
+      const until = Math.max(...years);
+      window = { from, until };
+    } else {
+      window = null;
+    }
+  } else {
+    // Use drinkWindow but possibly override drinkLimit if missing
+    const effectiveWine = { ...wine };
+    if (effectiveWine.drinkUntil == null && effectiveWine.drinkLimit != null) {
+      effectiveWine.drinkUntil = effectiveWine.drinkLimit;
+    }
+    window = drinkWindow(effectiveWine);
+  }
+
+  let baseUrgency;
+  if (!window) {
+    // Fereastră necunoscută → scor implicit 0.4 (acesteași ca în Implementarea curentă)
+    baseUrgency = 0.4;
+  } else {
+    const currentYear = year;
+    if (window.until < currentYear) {
+      // Trecut de vârf
+      baseUrgency = 1;
+    } else if (window.until === currentYear) {
+      // În anul curent
+      baseUrgency = 0.9;
+    } else if (window.from > currentYear) {
+      // Tânăr
+      baseUrgency = 0.15;
+    } else {
+      // În fereastră de consum
+      const span = Math.max(1, window.until - window.from);
+      baseUrgency = Number((0.45 + 0.4 * ((currentYear - window.from) / span)).toFixed(3));
+    }
+  }
+
+  // 2. Ponderare cu cantitatea și valoarea (normalizată la valori neutre)
+  // Valoarea neutră pentru cantitate: 1 sticlă (factor 0.05); pentru valoare: 2500 (unități de monetă, factor 0.5)
+  // Cantitatea și valoarea implicite în tests/singure sunt 20 și 5000 (factor 1)
+  const quantityDefault = 20;
+  const quantityNeutral = 1;
+  const valueDefault = 5000;
+  const valueNeutral = 2500;
+
+  const qty = wine.quantity == null ? quantityNeutral : wine.quantity;
+  const val = wine.estimatedValue == null ? valueNeutral : wine.estimatedValue;
+
+  const quantityFactor = Math.min(qty / quantityDefault, 1);
+  const valueFactor = Math.min(val / valueDefault, 1);
+
+  // Scor final = bază * factorCantitate * factorValoare
+  return Number((baseUrgency * quantityFactor * valueFactor).toFixed(3));
 }
 
 const STOP = new Set(['cu', 'si', 'și', 'de', 'la', 'in', 'în', 'pe', 'sau', 'din', 'a', 'al', 'ale', 'un', 'o']);

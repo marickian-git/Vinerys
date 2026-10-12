@@ -153,7 +153,7 @@ Pentru fiecare câmp din model decidem cum devine vizual:
 
 Obiectiv: în 10 secunde știi ce sticlă să deschizi și cu ce mâncare.
 
-- [ ] 3.1 **Scor de urgență** (trecut de vârf > iese anul ăsta > la vârf > intră curând) + secțiunea „De băut curând”
+- [x] 3.1 **Scor de urgență** (trecut de vârf > iese anul ăsta > la vârf > intră curând) + secțiunea „De băut curând”
 - [x] 3.2 **Vin → mâncare**: „Ce gătesc cu el?” — 3 preparate, temperatură servire, decantare (#104)
 - [~] 3.3 **Mâncare → vin**: „Ce gătesc azi?” cu text (#105); vocea și poza rămân (#42, #38)
 - [x] 3.4 **Deschide sticla** → consum cu un tap (QR) → follow-up „Cum a fost?” (#106, #48)
