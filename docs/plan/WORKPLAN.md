@@ -45,11 +45,11 @@ Același flux. Branch-ul a fost repornit din `main` (`137957e`). Un singur merge
 
 | # | Issue | Titlu | Status | Commit | Note / interpretare |
 |---|---|---|---|---|---|
-| 16 | #66 | INT-003 „Cumpără din nou” | done | | Card pe pagina vinului când s-a terminat un vin cu rating ≥ 4 sau favorit (issue-ul cere ≥ 5; prea rar pe scara 1–5): linkuri de căutare Vivino / Google Shopping + „L-am cumpărat din nou” (readuce vinul în pivniță cu sticle noi, `wine_log` ADDED restock). Afilierea rămâne pentru BIZ |
-| 17 | #31 | DATA-003 Modelul Tasting | done | | Model `Tasting` (migrație + valoarea `TASTED` în `LogAction`): vin, dată, rating, ocazie, oameni, mâncare, loc, note, poze, arome. Aditiv, fără să atingă `Wine`; primește `bottleId` când vine #30. `Wine.rating` = media degustărilor. CRUD în actions + `schemas/tasting.js`; export GDPR include degustările și filtrele salvate |
-| 18 | #49 | CELLAR-003 Jurnal de degustare | done | | Secțiunea „Jurnal de degustare” pe pagina vinului (formular cu stele, ocazie, oameni, mâncare, loc, arome, note, poză) + pagina `/tastings` cu toate degustările și ratingul mediu. Link din Profil. O singură poză per degustare în UI (modelul acceptă 6) |
-| 19 | #106 | HOME-005 „Deschide sticla” + follow-up | done | | „Cum a fost?”: imediat după consum, pe pagina vinului se deschide formularul de degustare. În Pivniță apare un banner pentru sticlele deschise acum 12 h – 7 zile fără degustare („Notează” / „Nu acum”, ținut minte în browser). Consumul cu un tap din recomandarea de pe Acasă rămâne la branch-ul de design (ecranul Acasă e acolo) |
-| 20 | #61 | SOCIAL-005 Badge-uri | done | | 8 badge-uri cu 4 niveluri (Bronz → Platină) calculate din date, fără tabel nou: țări, soiuri, degustări, sticle consumate, pivniță, regiuni românești, deschise în fereastră, scanări AI. Card pe Profil, cu „Următoarea provocare”. „Toate DOC-urile din România” așteaptă baza DOC (RO-002, #63); până atunci se numără regiunile |
+| 16 | #66 | INT-003 „Cumpără din nou” | done | `b6ec4b3` | Card pe pagina vinului când s-a terminat un vin cu rating ≥ 4 sau favorit (issue-ul cere ≥ 5; prea rar pe scara 1–5): linkuri de căutare Vivino / Google Shopping + „L-am cumpărat din nou” (readuce vinul în pivniță cu sticle noi, `wine_log` ADDED restock). Afilierea rămâne pentru BIZ |
+| 17 | #31 | DATA-003 Modelul Tasting | done | `4500563` | Model `Tasting` (migrație + valoarea `TASTED` în `LogAction`): vin, dată, rating, ocazie, oameni, mâncare, loc, note, poze, arome. Aditiv, fără să atingă `Wine`; primește `bottleId` când vine #30. `Wine.rating` = media degustărilor. CRUD în actions + `schemas/tasting.js`; export GDPR include degustările și filtrele salvate |
+| 18 | #49 | CELLAR-003 Jurnal de degustare | done | `174c5e3` | Secțiunea „Jurnal de degustare” pe pagina vinului (formular cu stele, ocazie, oameni, mâncare, loc, arome, note, poză) + pagina `/tastings` cu toate degustările și ratingul mediu. Link din Profil. O singură poză per degustare în UI (modelul acceptă 6) |
+| 19 | #106 | HOME-005 „Deschide sticla” + follow-up | done | `2abf4e1` | „Cum a fost?”: imediat după consum, pe pagina vinului se deschide formularul de degustare. În Pivniță apare un banner pentru sticlele deschise acum 12 h – 7 zile fără degustare („Notează” / „Nu acum”, ținut minte în browser). Consumul cu un tap din recomandarea de pe Acasă rămâne la branch-ul de design (ecranul Acasă e acolo) |
+| 20 | #61 | SOCIAL-005 Badge-uri | done | `efd008a` | 8 badge-uri cu 4 niveluri (Bronz → Platină) calculate din date, fără tabel nou: țări, soiuri, degustări, sticle consumate, pivniță, regiuni românești, deschise în fereastră, scanări AI. Card pe Profil, cu „Următoarea provocare”. „Toate DOC-urile din România” așteaptă baza DOC (RO-002, #63); până atunci se numără regiunile |
 | — | | **Checkpoint 4** | | | |
 | 21 | #52 | CELLAR-006 Planificator de consum | todo | | |
 | 22 | #48 | CELLAR-002 QR per sticlă | todo | | |
@@ -128,4 +128,12 @@ Același flux. Branch-ul a fost repornit din `main` (`137957e`). Un singur merge
   - modelul de date nou (#29–#33, #85), care cere aprobare;
   - #27 strat de servicii, #84 API v1, #87 cote AI;
   - push (#53), i18n (#98–#101).
+
+### Checkpoint 4 — 2026-10-12
+
+- **Terminate (5):** #66 „Cumpără din nou”, #31 modelul Tasting, #49 jurnal de degustare, #106 „Cum a fost?”, #61 badge-uri.
+- **Bug găsit de e2e:** `de51761` (`z.coerce.boolean("false") === true`). Orice vin salvat din formular devenea favorit. **De verificat în producție:** câte vinuri sunt favorite fără să fi fost alese.
+- **Teste:** 193 unit, e2e 18/18 (rulat de două ori; o rulare lentă a avut eșecuri de timing, trecute la rerulare).
+- **Migrație nouă:** `tasting` (+ `LogAction.TASTED`).
+- **Rămase în lotul 2:** #52, #48, #87, #84, #35.
 
