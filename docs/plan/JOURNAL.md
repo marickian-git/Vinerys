@@ -420,6 +420,13 @@ Plus `describeTools()` (textul pentru prompt) și `runTool(userId, name, args)` 
 - **Învățat:** micșorarea în browser ține poza sub limita implicită de 1 MB a server actions. Next are propriul `role=alert` (route announcer), deci testele caută după text.
 - **Next:** #44 (progres SSE la scanare).
 
+### #44 AI-009 Progres scanare prin SSE
+
+- **Făcut:** `utils/sse.js` (răspuns stream + parser incremental), `onProgress` în `analyzeWineLabelEnsemble`, rută `/api/ai-scan` cu `runScan(onProgress)` + variantă SSE, `utils/scanClient.js` (`scanLabel`, `progressLabel`), integrat în `ScanLabelButton` și `AddWineFAB`. Teste: 7 unit (`scanProgress.test.js`), 2 e2e (`scan.spec.js`).
+- **Decizii:** SSE doar la cerere (`Accept`), deci contractul JSON rămâne neschimbat. Header-ul `X-Accel-Buffering: no` oprește nginx să țină evenimentele în buffer. Dacă clientul închide conexiunea, scanarea continuă pe server, ca să se salveze cache-ul și consumul.
+- **Învățat:** un `const body` din handler intra în conflict cu destructurarea rezultatului, așa că variabila a devenit `scan`. Un stream fără eveniment `result` înseamnă conexiune întreruptă și primește un mesaj explicit.
+- **Next:** #78 (accesibilitate).
+
 ---
 
 ## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub
