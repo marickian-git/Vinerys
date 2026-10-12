@@ -27,6 +27,7 @@ import {
 import { createTastingForUser, listTastings, syncWineRating, tastingData } from "../server/tastings";
 import { similarInCellar, tasteProfileFor } from "../server/taste";
 import { parseSommelierReply, runSommelier } from "../server/sommelier";
+import { valueReportFor } from "../server/valuation";
 import { runTool } from "../server/sommelierTools";
 import { predictPreference } from "./tasteProfile";
 import { foodToWinePrompt, heuristicMatch, normalizeFoodPicks, pairingCandidates, rankPicks } from "./foodToWine";
@@ -598,8 +599,14 @@ export async function importWines(rows, { source = 'csv' } = {}) {
     await prisma.$transaction(async (tx) => {
       const created = await tx.wine.createManyAndReturn({
         data: valid.map((wine) => ({ ...wine, userId: user.id })),
-        select: { id: true, name: true, quantity: true },
+        select: { id: true, name: true, quantity: true, estimatedValue: true, currency: true },
       });
+      const valued = created.filter((wine) => wine.estimatedValue != null);
+      if (valued.length) {
+        await tx.wineValuation.createMany({
+          data: valued.map((wine) => ({ wineId: wine.id, userId: user.id, value: wine.estimatedValue, currency: wine.currency, source: 'import' })),
+        });
+      }
       await tx.wineLog.createMany({
         data: created.map((wine) => ({
           wineId: wine.id,
@@ -1005,4 +1012,18 @@ export async function askSommelier(messages) {
     log.warn('sommelier failed', { error: serializeError(error) });
     return { error: 'Sommelierul nu a răspuns. Încearcă din nou.' };
   }
+}
+
+// ─────────────────────────────────────────
+// VALOARE ȘI ROI (CELLAR-008)
+// ─────────────────────────────────────────
+
+export async function getValueReport() {
+  const user = await getCurrentUser();
+  return valueReportFor(user.id);
+}
+
+export async function getWineValuations(wineId) {
+  const user = await getCurrentUser();
+  return prisma.wineValuation.findMany({ where: { wineId, userId: user.id }, orderBy: { recordedAt: 'asc' }, select: { value: true, currency: true, recordedAt: true, source: true } });
 }

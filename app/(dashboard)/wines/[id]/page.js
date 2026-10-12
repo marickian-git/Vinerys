@@ -1,4 +1,5 @@
-import { getFollowUps, getSimilarWines, getTastings, getWineById } from '@/utils/actions';
+import { getFollowUps, getSimilarWines, getTastings, getWineById, getWineValuations } from '@/utils/actions';
+import ValueHistory from '@/components/wines/ValueHistory';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import WineActions from '@/components/wines/WineActions';
@@ -58,7 +59,7 @@ export default async function WineDetailPage({ params }) {
   } catch {
     notFound();
   }
-  const [tastings, followUps, similar] = await Promise.all([getTastings({ wineId: wine.id }), getFollowUps({ wineId: wine.id, minAgeHours: 0 }), getSimilarWines(wine.id)]);
+  const [tastings, followUps, similar, valuations] = await Promise.all([getTastings({ wineId: wine.id }), getFollowUps({ wineId: wine.id, minAgeHours: 0 }), getSimilarWines(wine.id), getWineValuations(wine.id)]);
 
   const type = TYPE_CONFIG[wine.type] ?? TYPE_CONFIG.RED;
   const status = STATUS_CONFIG[wine.status] ?? STATUS_CONFIG.IN_CELLAR;
@@ -314,6 +315,12 @@ export default async function WineDetailPage({ params }) {
               <div className="wd-section-title">Jurnal de degustare</div>
               <TastingJournal key={followUps[0]?.at?.toISOString() ?? 'none'} wineId={wine.id} tastings={tastings} followUpAt={followUps[0]?.at ?? null} />
             </div>
+            {(valuations.length > 1 || (wine.purchasePrice && wine.estimatedValue)) && (
+              <div className="wd-section">
+                <div className="wd-section-title">Valoare în timp</div>
+                <ValueHistory wine={wine} valuations={valuations} />
+              </div>
+            )}
             {similar.length > 0 && (
               <div className="wd-section">
                 <div className="wd-section-title">Asemănătoare din pivniță</div>

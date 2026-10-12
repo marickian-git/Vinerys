@@ -179,6 +179,7 @@ model Wine {
 
   wineLogs             WineLog[]
   tastings             Tasting[]
+  valuations           WineValuation[]
 
   @@index([userId])
   @@index([type])
@@ -231,6 +232,22 @@ model Tasting {
   @@index([userId, tastedAt])
   @@index([wineId])
   @@map("tasting")
+}
+
+// Istoricul valorii estimate (CELLAR-008): o înregistrare la fiecare schimbare a valorii unui vin
+model WineValuation {
+  id         String   @id @default(cuid())
+  wineId     String
+  wine       Wine     @relation(fields: [wineId], references: [id], onDelete: Cascade)
+  userId     String
+  value      Float
+  currency   String   @default("EUR")
+  source     String   @default("manual")
+  recordedAt DateTime @default(now())
+
+  @@index([wineId, recordedAt])
+  @@index([userId])
+  @@map("wine_valuation")
 }
 
 // Filtre salvate în Pivniță (CELLAR-009): parametrii din URL, sub un nume

@@ -352,6 +352,19 @@ Plus `describeTools()` (textul pentru prompt) și `runTool(userId, name, args)` 
 **Bug reparat pe drum:** `callProviderWithModel` respingea modelele marcate fără suport de imagini și pentru cererile doar text. Acum verificarea se face doar când se trimite o imagine.
 **Decizii:** istoricul conversației stă în browser și se trimite la fiecare întrebare (maximum 20 de mesaje). Nu e nevoie de tabel până nu se cere continuarea pe alt dispozitiv.
 
+### #54 CELLAR-008 Istoric de preț și ROI
+**Făcut:**
+- Model `WineValuation` (`wine_valuation`, migrația `wine_valuation`, cu backfill SQL: 52/52 de vinuri cu valoare primesc punctul inițial, la data adăugării vinului). `recordValuation` rulează în `createWineForUser` / `updateWineForUser` (doar la schimbarea valorii sau monedei), iar importul CSV scrie valorile în aceeași tranzacție.
+- `utils/valuation.js` (`roi`, `formatRoi`, `portfolio`, `sparklinePath`) și `server/valuation.js` (`valueReportFor`, convertit în moneda utilizatorului, #35).
+- UI: secțiunea „Valoare în timp” pe pagina vinului (SVG cu `aria-label`), pagina `/value` și `/value/report` (printabil / „Salvează ca PDF”, cu notă că valorile sunt estimări).
+- Teste unit + e2e `tests/e2e/value.spec.js`.
+
+**Decizii:**
+- Nu există o sursă publică gratuită de prețuri de piață, deci istoricul se construiește din valorile introduse sau sugerate de AI.
+- ROI-ul folosește doar vinurile care au și preț, și valoare; celelalte sunt numărate separat.
+
+**Învățat:** primul test e2e avea aritmetica greșită (+52% în loc de +31%), nu codul. Verifică valorile așteptate de mână înainte să ajustezi codul.
+
 ---
 
 ## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub

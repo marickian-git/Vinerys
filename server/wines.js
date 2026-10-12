@@ -164,6 +164,19 @@ export async function listWines(userId, filters = {}) {
   };
 }
 
+// ── Istoric valoare (CELLAR-008) ──
+
+export async function recordValuation(wine, source = 'manual') {
+  if (wine.estimatedValue == null) return;
+  try {
+    await prisma.wineValuation.create({
+      data: { wineId: wine.id, userId: wine.userId, value: wine.estimatedValue, currency: wine.currency ?? 'EUR', source },
+    });
+  } catch (error) {
+    logger.error('valuation write failed', { wineId: wine.id, error: serializeError(error) });
+  }
+}
+
 // ── Citire ──
 
 export async function getWineForUser(userId, id) {
@@ -178,6 +191,7 @@ export async function getWineForUser(userId, id) {
 export async function createWineForUser(userId, data) {
   const normalized = normalizeWineData(data, { existingLocations: await userLocations(userId) });
   const wine = await prisma.wine.create({ data: { ...normalized, userId } });
+  await recordValuation(wine, 'initial');
   await logWineAction({
     wineId: wine.id,
     userId,
@@ -197,6 +211,7 @@ export async function updateWineForUser(userId, id, data) {
       (url) => url && url !== updated.labelImageUrl && url !== updated.bottleImageUrl,
     ),
   );
+  if (updated.estimatedValue !== existing.estimatedValue || updated.currency !== existing.currency) await recordValuation(updated, 'manual');
   const changes = diffWine(existing, updated);
   if (Object.keys(changes).length) {
     await logWineAction({ wineId: id, userId, action: 'UPDATED', details: { changes } });
