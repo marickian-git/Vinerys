@@ -11,8 +11,13 @@ test('listă de cadouri publică: vizitatorul rezervă, proprietarul vede doar �
 
   await page.getByLabel('Vin', { exact: true }).fill('Barolo Monfortino');
   await page.getByLabel('Producător').fill('Giacomo Conterno');
-  await page.getByRole('button', { name: 'Adaugă' }).click();
-  await expect(page.getByText(/Barolo Monfortino · Giacomo Conterno/)).toBeVisible();
+  await page.getByRole('button', { name: 'Adaugă', exact: true }).click();
+  // Fie apare elementul, fie o eroare (raportată explicit, ca să fie vizibilă în CI)
+  const added = page.getByText(/Barolo Monfortino · Giacomo Conterno/);
+  await expect(added.or(page.locator('form [role=alert]'))).toBeVisible({ timeout: 15_000 });
+  const alertText = await page.locator('form [role=alert]').allTextContents();
+  expect(alertText, 'eroare la adăugare').toEqual([]);
+  await expect(added).toBeVisible();
 
   await page.getByRole('button', { name: 'Privată' }).click();
   await expect(page.getByRole('button', { name: 'Publică' })).toBeVisible();

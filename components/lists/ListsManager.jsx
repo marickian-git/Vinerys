@@ -35,10 +35,15 @@ function NewListForm({ onDone }) {
 
 function AddItemForm({ listId, wines, onDone }) {
   const [item, setItem] = useState({ wineId: '', name: '', producer: '', vintage: '', note: '', url: '' });
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
   const submit = async (event) => {
     event.preventDefault();
-    const result = await addToList(listId, { ...item, wineId: item.wineId || null });
-    if (result.error) return toast.error(result.error);
+    setSaving(true);
+    setError('');
+    const result = await addToList(listId, { ...item, wineId: item.wineId || null }).catch(() => ({ error: 'Eroare de rețea' }));
+    setSaving(false);
+    if (result.error) return setError(result.error);
     setItem({ wineId: '', name: '', producer: '', vintage: '', note: '', url: '' });
     onDone();
   };
@@ -59,7 +64,8 @@ function AddItemForm({ listId, wines, onDone }) {
       )}
       <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: '0.72rem' }}>Notă<input value={item.note} onChange={(e) => setItem({ ...item, note: e.target.value })} placeholder="de ce / pentru cine" style={field} /></label>
       <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: '0.72rem' }}>Link magazin<input value={item.url} onChange={(e) => setItem({ ...item, url: e.target.value })} placeholder="https://…" style={field} /></label>
-      <button type="submit" style={{ ...field, background: '#8b1a2e', borderColor: '#8b1a2e', cursor: 'pointer', alignSelf: 'end' }}>Adaugă</button>
+      <button type="submit" disabled={saving} style={{ ...field, background: '#8b1a2e', borderColor: '#8b1a2e', cursor: 'pointer', alignSelf: 'end' }}>{saving ? 'Se adaugă…' : 'Adaugă'}</button>
+      {error && <p role="alert" style={{ gridColumn: '1 / -1', color: '#ff8f8f', margin: 0, fontSize: '0.82rem' }}>{error}</p>}
     </form>
   );
 }
