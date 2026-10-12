@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionCookie } from "better-auth/cookies";
 import { normalizeBasePath } from "./utils/appPath";
 
-const PROTECTED_ROUTES = ["/dashboard", "/wines", "/settings", "/profile", "/wrapped", "/tastings", "/planner", "/q", "/pairing", "/sommelier", "/value"];
+const PROTECTED_ROUTES = ["/dashboard", "/wines", "/settings", "/profile", "/wrapped", "/tastings", "/planner", "/q", "/pairing", "/sommelier", "/value", "/lists"];
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;

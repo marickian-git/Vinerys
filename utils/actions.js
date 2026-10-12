@@ -28,6 +28,8 @@ import { createTastingForUser, listTastings, syncWineRating, tastingData } from 
 import { similarInCellar, tasteProfileFor } from "../server/taste";
 import { parseSommelierReply, runSommelier } from "../server/sommelier";
 import { valueReportFor } from "../server/valuation";
+import { addItem, createList, deleteList, listsFor, removeItem, reserveItem, togglePurchased, updateList } from "../server/lists";
+import { ListInputSchema, ListItemInputSchema, ReserveSchema } from "../schemas/list";
 import { runTool } from "../server/sommelierTools";
 import { predictPreference } from "./tasteProfile";
 import { foodToWinePrompt, heuristicMatch, normalizeFoodPicks, pairingCandidates, rankPicks } from "./foodToWine";
@@ -39,7 +41,7 @@ import { generateWithAgents, listProviderModels } from "./aiProviders";
 import { normalizePairing, pairingKey, pairingPrompt } from "./pairing";
 import { platformRequestsThisMonth, recordAIUsage } from "./aiUsage";
 import { chooseAgents, monthStart, platformAgents, quotaFor, quotaMessage } from "./platformAI";
-import { shareUrlFor } from "./share";
+import { listShareUrlFor, shareUrlFor } from "./share";
 import { LIMITS, rateLimit, tooManyRequestsMessage } from "./rateLimit";
 import { listUserObjects, removeObjects } from "./storage";
 import { createLogger, serializeError } from './logger';
@@ -1026,4 +1028,70 @@ export async function getValueReport() {
 export async function getWineValuations(wineId) {
   const user = await getCurrentUser();
   return prisma.wineValuation.findMany({ where: { wineId, userId: user.id }, orderBy: { recordedAt: 'asc' }, select: { value: true, currency: true, recordedAt: true, source: true } });
+}
+
+// ─────────────────────────────────────────
+// LISTE DE VINURI (SOCIAL-003)
+// ─────────────────────────────────────────
+
+export async function getLists() {
+  const user = await getCurrentUser();
+  const lists = await listsFor(user.id);
+  // Proprietarul unei liste de cadouri nu vede cine a rezervat (ar strica surpriza)
+  return lists.map((list) => ({
+    ...list,
+    shareUrl: listShareUrlFor(list.shareId),
+    items: list.items.map(({ reservedBy, ...item }) => ({ ...item, reserved: Boolean(item.reservedAt) })),
+  }));
+}
+
+export async function saveList(input, listId = null) {
+  const user = await getCurrentUser();
+  const parsed = ListInputSchema.safeParse(input ?? {});
+  if (!parsed.success) return { error: firstIssueMessage(parsed.error) };
+  const list = listId ? await updateList(user.id, listId, parsed.data) : await createList(user.id, parsed.data);
+  revalidatePath('/lists');
+  return { success: true, list };
+}
+
+export async function removeList(listId) {
+  const user = await getCurrentUser();
+  await deleteList(user.id, listId);
+  revalidatePath('/lists');
+  return { success: true };
+}
+
+export async function addToList(listId, input) {
+  const user = await getCurrentUser();
+  const parsed = ListItemInputSchema.safeParse(input ?? {});
+  if (!parsed.success) return { error: firstIssueMessage(parsed.error) };
+  const item = await addItem(user.id, listId, parsed.data);
+  revalidatePath('/lists');
+  return { success: true, item };
+}
+
+export async function removeFromList(itemId) {
+  const user = await getCurrentUser();
+  await removeItem(user.id, itemId);
+  revalidatePath('/lists');
+  return { success: true };
+}
+
+export async function toggleListItemPurchased(itemId) {
+  const user = await getCurrentUser();
+  await togglePurchased(user.id, itemId);
+  revalidatePath('/lists');
+  return { success: true };
+}
+
+// Public (fără cont): rezervarea unui cadou de pe o listă publică
+export async function reserveGift(shareId, itemId, name) {
+  const parsed = ReserveSchema.safeParse({ name });
+  if (!parsed.success) return { error: firstIssueMessage(parsed.error) };
+  const ip = (await headers()).get('x-real-ip') || (await headers()).get('x-forwarded-for')?.split(',')[0] || 'unknown';
+  if (!rateLimit(`reserve:${ip}`, { limit: 10, windowMs: 60 * 60 * 1000 }).ok) return { error: 'Prea multe rezervări. Încearcă mai târziu.' };
+  const ok = await reserveItem(shareId, itemId, parsed.data.name);
+  if (!ok) return { error: 'Cadoul a fost deja rezervat de altcineva.' };
+  revalidatePath(`/l/${shareId}`);
+  return { success: true };
 }

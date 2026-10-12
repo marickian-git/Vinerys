@@ -212,6 +212,7 @@ export default async function ProfilePage() {
               <Link href="/pairing" className="prof-btn-settings">🍽️ Ce gătesc azi?</Link>
               <Link href="/planner" className="prof-btn-settings">🗓️ Plan de consum</Link>
               <Link href="/value" className="prof-btn-settings">📈 Valoare</Link>
+              <Link href="/lists" className="prof-btn-settings">📝 Liste</Link>
               <Link href="/tastings" className="prof-btn-settings">📓 Degustări</Link>
               <Link href="/wrapped" className="prof-btn-settings">✨ Wrapped</Link>
             </div>

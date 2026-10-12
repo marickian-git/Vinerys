@@ -68,7 +68,7 @@ Același flux. Branch-ul a fost repornit din `main` (`137957e`). Un singur merge
 | 29 | #36 | AI-001 Sommelier conversațional | done | `6ddee97` | Chat `/sommelier` + `POST /api/v1/sommelier`. Bucla agent (`server/sommelier.js`): maximum 4 apeluri de tool (#37), apoi răspuns. Recomandă doar vinuri apărute în rezultatele tool-urilor (id-urile inventate sunt eliminate), respectă prețul și tipul cerut, explică. Verificat cap-coadă cu un LLM fals local + DB real. Istoricul conversației stă în browser (fără tabel). Fix: modelele fără imagini nu mai sunt respinse la cererile doar text |
 | 30 | #54 | CELLAR-008 Istoric de preț și ROI | done | `12c1b79` | Tabela `wine_valuation` (migrație cu backfill: valoarea curentă devine primul punct). Se scrie la creare, la import și la schimbarea valorii sau monedei. Pe pagina vinului: sparkline + ROI. Pagina `/value`: valoare, cost, câștig, ROI, top câștiguri/pierderi, în moneda utilizatorului. `/value/report`: raport printabil/PDF pentru asigurare. Fără prețuri de piață automate (nu există o sursă publică) |
 | — | | **Checkpoint 6** | | | |
-| 31 | #59 | SOCIAL-003 Wishlist și liste publice | todo | | |
+| 31 | #59 | SOCIAL-003 Wishlist și liste publice | done | | Liste (`wine_list` + `wine_list_item`, migrație): wishlist, recomandări, cadouri. Elementele vin din pivniță sau sunt vinuri noi, cu notă și link spre magazin. Fiecare listă poate fi publică prin link (`/l/<id>`, fără cont, noindex). Cadouri: vizitatorul rezervă cu numele, proprietarul vede doar „rezervat” (surpriza rămâne), iar „cumpărat” se bifează. Exportul GDPR include listele |
 | 32 | #53 | CELLAR-007 Notificări push | todo | | |
 
 ## Sărite (cu motiv)

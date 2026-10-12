@@ -365,6 +365,15 @@ Plus `describeTools()` (textul pentru prompt) și `runTool(userId, name, args)` 
 
 **Învățat:** primul test e2e avea aritmetica greșită (+52% în loc de +31%), nu codul. Verifică valorile așteptate de mână înainte să ajustezi codul.
 
+### #59 SOCIAL-003 Wishlist și liste publice
+**Făcut:**
+- Modelele `WineList` (`kind`: WISHLIST / RECOMMENDATIONS / GIFTS, `isPublic`, `shareId` aleator) și `WineListItem` (vin din pivniță sau text liber, notă, link, `reservedBy` / `reservedAt`, `purchased`). Migrația `wine_lists`.
+- `server/lists.js` și `schemas/list.js`. Acțiunile `getLists/saveList/removeList/addToList/removeFromList/toggleListItemPurchased`, plus `reserveGift`: publică, cu rate limit pe IP, unde prima rezervare câștigă (`updateMany` condiționat de `reservedAt: null`).
+- UI: `/lists` (`ListsManager`: creare, publicare, link copiabil, elemente, bifă „cumpărat”) și pagina publică `/l/[shareId]` (noindex, buton „Îl dăruiesc eu”). Link din Profil. Exportul GDPR include listele.
+- E2E `tests/e2e/lists.spec.js`: listă de cadouri publică, rezervare din alt browser, numele nu apare nici la vizitator, nici la proprietar.
+
+**Decizii:** numele celui care rezervă se păstrează, dar nu e afișat nimănui, inclusiv proprietarului, pentru surpriză. Poate fi arătat după o dată aleasă, într-o versiune viitoare.
+
 ---
 
 ## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub
