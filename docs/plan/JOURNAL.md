@@ -123,6 +123,23 @@ Tokenii sunt în `docs/design/proposed-themes.tokens.json`, iar `tests/unit/prop
 **Făcut:** am adăugat presetul `cellartracker` în `SOURCES`, detectat după coloana `iWine`, cu mapare pentru `Producer`, `SubRegion`/`Appellation`, `Varietal`, `Size`, `Valuation`, `Location`/`Bin`, `BeginConsume`/`EndConsume` și `PScore`. Teste: fixture `tests/fixtures/cellartracker.csv` (tipuri compuse, 375 ml, NV).
 **Învățat:** CellarTracker marchează non-vintage cu anul `1001`. `parseYear` acceptă doar anii 1800–2100, deci NV rămâne fără an. Tipurile vin compuse („Rosé - Sparkling”), așa că ordinea regulilor contează: spumant/fortifiat/desert înaintea culorii.
 
+### #123 CI-008 Test de fum în producție
+**Făcut:** `scripts/smoke-prod.mjs` (`npm run smoke:prod`, Playwright), cu 10 pași:
+1. health + versiunea așteptată (`SMOKE_EXPECT_VERSION`, polling până la 15 min);
+2. cont de test `smoke+<ts>@vinerys.test`;
+3. vin cu poză (PNG generat cu sharp, verificat că ajunge WebP), 2 × 50 €;
+4. dashboard 2 sticle / 100 €;
+5. poza se încarcă prin `/api/media`;
+6. consum → 1 sticlă / 50 €;
+7. link public privat → activ → dezactivat;
+8. schimbare parolă;
+9. ștergere vin + poza dă 404;
+10. ștergere cont, verificat că login-ul nu mai merge.
+
+Curățenia contului rulează în `finally`. Raportul OK/FAIL iese cu cod 0/1, iar la eșec se trimite un POST opțional la `SMOKE_WEBHOOK_URL`. Rulat local pe build-ul de e2e: 10/10 (`SMOKE_SKIP_UPLOAD=1`, fără MinIO).
+**Decizii:** fără job programat în Actions. Un workflow nou cere push cu scope-ul `workflow`, iar rularea din GitHub spre serverul de acasă depinde de rețea. Pentru început: manual, după ce Watchtower preia imaginea.
+**Next:** după merge, `SMOKE_URL=https://casa-spiridus.go.ro/crama SMOKE_EXPECT_VERSION=<sha> npm run smoke:prod`.
+
 ---
 
 ## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub

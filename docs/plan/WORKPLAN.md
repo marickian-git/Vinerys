@@ -33,7 +33,7 @@ Consecințe pentru planul ăsta:
 | 9 | #64 | INT-001 Import CSV Vivino | done | `c542d27` | Pagina `/wines/import`: upload, auto-detectare format, mapare coloane editabilă, preview cu Nou/Duplicat/Eroare, import în tranzacție + `wine_log` ADDED. Motor comun `utils/csvImport.js` (și pentru #65 și CSV generic, inclusiv exportul Vinerys). Rating 1–5 rotunjit; zecimalele Vivino se pierd |
 | 10 | #65 | INT-002 Import CSV CellarTracker | done | `be5fa76` | Preset CellarTracker (detectat după `iWine`) peste motorul din #64: tipuri compuse („White - Sweet/Dessert”), mărime în ml, BeginConsume/EndConsume, Valuation, Location, scor pe 100 → 1–5, NV (1001) → fără an |
 | — | | **Checkpoint 2** | | | |
-| 11 | #123 | CI-008 Smoke test producție | todo | | |
+| 11 | #123 | CI-008 Smoke test producție | done | | `scripts/smoke-prod.mjs` + `npm run smoke:prod`: 10 pași, cont de test creat și șters în `finally`, așteaptă `version` din `/health`, webhook la eșec. Verificat local 10/10 (fără MinIO). Fără job programat în GitHub Actions: modificarea workflow-urilor cere scope-ul `workflow`; se rulează manual după deploy |
 | 12 | #104 | HOME-003 Vin → mâncare | todo | | |
 | 13 | #55 | CELLAR-009 Căutare fuzzy (pg_trgm) | todo | | |
 | 14 | #57 | SOCIAL-001 Vinerys Wrapped | todo | | |
