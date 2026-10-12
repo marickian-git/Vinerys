@@ -149,17 +149,17 @@ Pentru fiecare câmp din model decidem cum devine vizual:
 
 ---
 
-## Faza 3 — „Ce bem diseară?” (uz personal)  `⬜`
+## Faza 3 — „Ce bem diseară?” (uz personal)  `🟨` (3.1 parțial local; 3.2, 3.4, 3.6, 3.7 gata)
 
 Obiectiv: în 10 secunde știi ce sticlă să deschizi și cu ce mâncare.
 
 - [ ] 3.1 **Scor de urgență** (trecut de vârf > iese anul ăsta > la vârf > intră curând) + secțiunea „De băut curând”
 - [x] 3.2 **Vin → mâncare**: „Ce gătesc cu el?” — 3 preparate, temperatură servire, decantare (#104)
-- [ ] 3.3 **Mâncare → vin**: „Ce gătesc azi?” (text / voce / poză) → top 3 sticle din pivniță, scor = potrivire × urgență, cu explicație
+- [~] 3.3 **Mâncare → vin**: „Ce gătesc azi?” cu text (#105); vocea și poza rămân (#42, #38)
 - [x] 3.4 **Deschide sticla** → consum cu un tap (QR) → follow-up „Cum a fost?” (#106, #48)
-- [ ] 3.5 **Notificări push**: plan de weekend, vinuri care intră/ies din fereastră
-- [ ] 3.6 **Profil de gust** din ratinguri → recomandări personalizate
-- [ ] 3.7 **Sommelier conversațional** (chat cu tool-uri peste pivnița reală)
+- [~] 3.5 **Notificări push**: rezumat lunar al ferestrelor (#53); planul de weekend rămâne (#107)
+- [x] 3.6 **Profil de gust** din ratinguri → recomandări personalizate (#46)
+- [x] 3.7 **Sommelier conversațional** (chat cu tool-uri peste pivnița reală) (#36, #37)
 
 ---
 
@@ -168,7 +168,7 @@ Obiectiv: în 10 secunde știi ce sticlă să deschizi și cu ce mâncare.
 - [ ] 4.1 Hartă vizuală pivniță (rafturi, drag & drop, „unde e sticla X?”)
 - [x] 4.2 Etichete QR per sticlă → scan = consum / detalii (#48; per vin până la modelul Bottle)
 - [~] 4.3 Planificator de consum pe ani (#52); curba de maturitate vine cu designul (#93)
-- [~] 4.4 Multi-monedă gata (#35); valoare în timp / ROI rămâne (#54)
+- [x] 4.4 Valoare în timp, ROI, multi-monedă, raport pentru asigurare (#54, #35)
 - [x] 4.5 Căutare fuzzy (`pg_trgm`) + limbaj natural + filtre salvate (#55)
 - [x] 4.6 Import Vivino / CellarTracker / CSV generic (#64, #65)
 - [ ] 4.7 Scanare raft (mai multe sticle) / bon / factură

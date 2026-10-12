@@ -68,8 +68,8 @@ Același flux. Branch-ul a fost repornit din `main` (`137957e`). Un singur merge
 | 29 | #36 | AI-001 Sommelier conversațional | done | `6ddee97` | Chat `/sommelier` + `POST /api/v1/sommelier`. Bucla agent (`server/sommelier.js`): maximum 4 apeluri de tool (#37), apoi răspuns. Recomandă doar vinuri apărute în rezultatele tool-urilor (id-urile inventate sunt eliminate), respectă prețul și tipul cerut, explică. Verificat cap-coadă cu un LLM fals local + DB real. Istoricul conversației stă în browser (fără tabel). Fix: modelele fără imagini nu mai sunt respinse la cererile doar text |
 | 30 | #54 | CELLAR-008 Istoric de preț și ROI | done | `12c1b79` | Tabela `wine_valuation` (migrație cu backfill: valoarea curentă devine primul punct). Se scrie la creare, la import și la schimbarea valorii sau monedei. Pe pagina vinului: sparkline + ROI. Pagina `/value`: valoare, cost, câștig, ROI, top câștiguri/pierderi, în moneda utilizatorului. `/value/report`: raport printabil/PDF pentru asigurare. Fără prețuri de piață automate (nu există o sursă publică) |
 | — | | **Checkpoint 6** | | | |
-| 31 | #59 | SOCIAL-003 Wishlist și liste publice | done | | Liste (`wine_list` + `wine_list_item`, migrație): wishlist, recomandări, cadouri. Elementele vin din pivniță sau sunt vinuri noi, cu notă și link spre magazin. Fiecare listă poate fi publică prin link (`/l/<id>`, fără cont, noindex). Cadouri: vizitatorul rezervă cu numele, proprietarul vede doar „rezervat” (surpriza rămâne), iar „cumpărat” se bifează. Exportul GDPR include listele |
-| 32 | #53 | CELLAR-007 Notificări push | done | | Web Push (VAPID, `web-push`), cu migrație pentru abonamente + jurnal anti-dubluri. Service worker separat `push-sw.js` (fără cache). Activare din Setări. Rezumat lunar: trecute de vârf / ies anul acesta / intră anul acesta, cu link spre vin sau plan. Trimis de `POST /api/cron/digest` (`CRON_SECRET`), rulat de un cron extern. Abonamentele expirate se șterg. Dezactivat elegant fără chei VAPID. Plan de weekend (#107) poate folosi același canal |
+| 31 | #59 | SOCIAL-003 Wishlist și liste publice | done | `390fbaf` | Liste (`wine_list` + `wine_list_item`, migrație): wishlist, recomandări, cadouri. Elementele vin din pivniță sau sunt vinuri noi, cu notă și link spre magazin. Fiecare listă poate fi publică prin link (`/l/<id>`, fără cont, noindex). Cadouri: vizitatorul rezervă cu numele, proprietarul vede doar „rezervat” (surpriza rămâne), iar „cumpărat” se bifează. Exportul GDPR include listele |
+| 32 | #53 | CELLAR-007 Notificări push | done | `9769d4d` | Web Push (VAPID, `web-push`), cu migrație pentru abonamente + jurnal anti-dubluri. Service worker separat `push-sw.js` (fără cache). Activare din Setări. Rezumat lunar: trecute de vârf / ies anul acesta / intră anul acesta, cu link spre vin sau plan. Trimis de `POST /api/cron/digest` (`CRON_SECRET`), rulat de un cron extern. Abonamentele expirate se șterg. Dezactivat elegant fără chei VAPID. Plan de weekend (#107) poate folosi același canal |
 
 ## Sărite (cu motiv)
 
@@ -168,4 +168,16 @@ Același flux. Branch-ul a fost repornit din `main` (`137957e`). Un singur merge
 - **Bug reparat:** modelele fără suport de imagini erau respinse și la cererile doar text.
 - **Migrație nouă:** `wine_valuation`, cu backfill.
 - **Rămase în lotul 3:** #59, #53.
+
+### Checkpoint 7 — 2026-10-12 (lotul 3 terminat)
+
+- **Terminate în lotul 3 (7):** #46, #105, #37, #36, #54, #59, #53.
+- **Teste:** 236 unit, e2e 30/30, drift = 0.
+- **Migrații noi:** `wine_valuation` (cu backfill), `wine_lists`, `push_notifications`.
+- **Dependență nouă:** `web-push`.
+- **Env nou (opțional):** `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `CRON_SECRET`.
+- **După deploy:**
+  - smoke test;
+  - opțional, chei VAPID + cron lunar pentru notificări;
+  - opțional, `PLATFORM_AI_AGENTS` ca Sommelierul să meargă și fără chei proprii.
 
