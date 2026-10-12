@@ -413,6 +413,13 @@ Plus `describeTools()` (textul pentru prompt) și `runTool(userId, name, args)` 
 - **Învățat:** `getByLabel('An')` prinde și eticheta „Tip”, fiindcă textul ei include opțiunile („Spumant”), deci testul folosește `exact: true`. Prefixele „Crama/Cramele/Domeniul” trebuie potrivite indiferent de majusculă.
 - **Next:** #38 (poză cu mâncarea → vin).
 
+### #38 AI-003 Pairing invers din fotografie
+
+- **Făcut:** `generateWithAgents` acceptă `image` și păstrează doar agenții cu imagini. Am adăugat `dishFromPhotoPrompt` / `normalizeDish`, acțiunea `identifyDishFromPhoto`, `utils/imageResize.js` și butonul din `DishPairing`. Teste: 4 unit (`dishPhoto.test.js`), 1 e2e.
+- **Decizii:** poza nu se salvează. Se recunoaște doar felul de mâncare, iar recomandarea refolosește fluxul text (o singură logică de potrivire). Consumul intră în cota de scanări, fiindcă e un apel cu imagine. `resolveTextAgents` a devenit `resolveAgents(userId, kind)`.
+- **Învățat:** micșorarea în browser ține poza sub limita implicită de 1 MB a server actions. Next are propriul `role=alert` (route announcer), deci testele caută după text.
+- **Next:** #44 (progres SSE la scanare).
+
 ---
 
 ## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub

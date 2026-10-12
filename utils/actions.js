@@ -34,7 +34,7 @@ import { ListInputSchema, ListItemInputSchema, ReserveSchema } from "../schemas/
 import { runTool } from "../server/sommelierTools";
 import { predictPreference } from "./tasteProfile";
 import { mergeVoiceResult, parseWineSpeech, voicePrompt } from "./voiceParse";
-import { foodToWinePrompt, heuristicMatch, normalizeFoodPicks, pairingCandidates, rankPicks } from "./foodToWine";
+import { dishFromPhotoPrompt, foodToWinePrompt, heuristicMatch, normalizeDish, normalizeFoodPicks, pairingCandidates, rankPicks } from "./foodToWine";
 import { auth } from "./auth";
 import { decryptSecret, encryptSecret } from "./aiSecrets";
 import { getProviderDefinition, isKnownProvider, listProviderDefinitions } from "./aiProviderRegistry";
@@ -634,7 +634,7 @@ export async function importWines(rows, { source = 'csv' } = {}) {
 const PAIRING_LIMIT = { limit: 20, windowMs: 10 * 60 * 1000 };
 
 // Agenții pentru un răspuns text: proprii, altfel ai platformei în limita cotei (AI-012)
-async function resolveTextAgents(userId) {
+async function resolveAgents(userId, kind = 'text') {
   const agents = (await prisma.aIAgent.findMany({ where: { userId, enabled: true } })).flatMap((agent) => {
     try {
       return [{ ...agent, apiKey: decryptSecret(agent.encryptedApiKey) }];
@@ -643,8 +643,8 @@ async function resolveTextAgents(userId) {
     }
   });
   const platform = platformAgents();
-  const quota = quotaFor(await prisma.user.findUnique({ where: { id: userId }, select: { role: true } }), 'text');
-  const used = agents.length || !platform.length ? 0 : await platformRequestsThisMonth(userId, 'text', monthStart());
+  const quota = quotaFor(await prisma.user.findUnique({ where: { id: userId }, select: { role: true } }), kind);
+  const used = agents.length || !platform.length ? 0 : await platformRequestsThisMonth(userId, kind, monthStart());
   const choice = chooseAgents({ ownAgents: agents, platform, used, quota });
   return choice.error ? { error: choice.error, message: quotaMessage(choice.error, quota) } : choice;
 }
@@ -661,7 +661,7 @@ export async function getWinePairing(wineId, { refresh = false } = {}) {
   const limited = rateLimit(`pairing:${user.id}`, PAIRING_LIMIT);
   if (!limited.ok) return { error: tooManyRequestsMessage(limited.retryAfter) };
 
-  const choice = await resolveTextAgents(user.id);
+  const choice = await resolveAgents(user.id);
   if (choice.error) return { error: choice.message };
 
   const requestId = randomBytes(8).toString('hex');
@@ -958,7 +958,7 @@ export async function suggestWinesForDish(dish) {
   if (!wines.length) return { error: 'Pivnița e goală: adaugă vinuri ca să primești sugestii.' };
 
   const candidates = pairingCandidates(wines);
-  const choice = await resolveTextAgents(user.id);
+  const choice = await resolveAgents(user.id);
   if (!choice.error) {
     const requestId = randomBytes(8).toString('hex');
     const log = logger.child({ requestId, userId: user.id });
@@ -981,6 +981,31 @@ export async function suggestWinesForDish(dish) {
   return { source: 'saved', dish: text, results: rankPicks(picks, wines, { taste }), aiUnavailable: choice.error ? choice.message : null };
 }
 
+// AI-003: poza farfuriei → felul de mâncare (agent cu imagini, cota de scanări); vinurile vin apoi din suggestWinesForDish
+const DISH_PHOTO_MAX = 2_000_000; // base64; clientul micșorează poza la ~1024 px
+
+export async function identifyDishFromPhoto(imageBase64, mimeType = 'image/jpeg') {
+  const user = await getCurrentUser();
+  if (typeof imageBase64 !== 'string' || imageBase64.length < 100 || !/^image\/(jpeg|png|webp)$/.test(mimeType)) return { error: 'Imagine invalidă' };
+  if (imageBase64.length > DISH_PHOTO_MAX) return { error: 'Poza e prea mare' };
+  const limited = rateLimit(`dish-photo:${user.id}`, PAIRING_LIMIT);
+  if (!limited.ok) return { error: tooManyRequestsMessage(limited.retryAfter) };
+
+  const choice = await resolveAgents(user.id, 'scan');
+  if (choice.error) return { error: choice.error === 'QUOTA_EXCEEDED' ? choice.message : 'Recunoașterea din poză are nevoie de un agent AI (Setări → AI). Poți scrie felul de mâncare mai jos.' };
+  const requestId = randomBytes(8).toString('hex');
+  const log = logger.child({ requestId, userId: user.id });
+  try {
+    const { result, usage } = await generateWithAgents(choice.agents, dishFromPhotoPrompt(), normalizeDish, { operation: 'dish_photo', image: { base64: imageBase64, mimeType } });
+    await recordAIUsage(user.id, requestId, usage, log);
+    return result;
+  } catch (error) {
+    await recordAIUsage(user.id, requestId, error.usage, log);
+    log.warn('dish photo failed', { error: serializeError(error) });
+    return { error: error.providerStatus === 'NOT_FOOD' ? 'Nu am recunoscut mâncare în poză. Încearcă una mai clară sau scrie felul.' : 'Nu am putut analiza poza. Încearcă din nou sau scrie felul de mâncare.' };
+  }
+}
+
 // ─────────────────────────────────────────
 // ADĂUGARE VOCALĂ (AI-007)
 // ─────────────────────────────────────────
@@ -994,7 +1019,7 @@ export async function parseWineText(input) {
   if (!limited.ok) return { error: tooManyRequestsMessage(limited.retryAfter) };
 
   const heuristic = parseWineSpeech(text);
-  const choice = await resolveTextAgents(user.id);
+  const choice = await resolveAgents(user.id);
   if (!choice.error) {
     const requestId = randomBytes(8).toString('hex');
     const log = logger.child({ requestId, userId: user.id });
@@ -1037,7 +1062,7 @@ export async function askSommelier(messages) {
   const limited = rateLimit(`sommelier:${user.id}`, PAIRING_LIMIT);
   if (!limited.ok) return { error: tooManyRequestsMessage(limited.retryAfter) };
 
-  const choice = await resolveTextAgents(user.id);
+  const choice = await resolveAgents(user.id);
   if (choice.error) return { error: choice.message };
 
   const requestId = randomBytes(8).toString('hex');

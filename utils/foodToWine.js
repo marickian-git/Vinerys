@@ -72,3 +72,15 @@ export function rankPicks(picks, wines, { taste = () => 0.5, year } = {}) {
     .sort((a, b) => b.score - a.score)
     .slice(0, 3);
 }
+
+// AI-003: poza farfuriei → numele felului de mâncare (apoi același flux ca la text)
+export function dishFromPhotoPrompt(language = 'ro') {
+  return `Look at this photo. If it shows food or a dish, name it the way a waiter would, in ${language === 'ro' ? 'Romanian' : 'English'}, with the main ingredient and cooking method (e.g. "miel la cuptor cu rozmarin"). Return ONLY JSON: {"isFood":true,"dish":"","confidence":0.0}. If it is not food, return {"isFood":false,"dish":"","confidence":0}.`;
+}
+
+export function normalizeDish(raw) {
+  if (raw?.isFood === false) throw Object.assign(new Error('Poza nu pare să arate mâncare'), { providerStatus: 'NOT_FOOD' });
+  const dish = typeof raw?.dish === 'string' ? raw.dish.replace(/\s+/g, ' ').trim().slice(0, 120) : '';
+  if (dish.length < 3) throw Object.assign(new Error('Răspuns AI fără fel de mâncare'), { providerStatus: 'INVALID_RESULT' });
+  return { dish, confidence: Math.max(0, Math.min(1, Number(raw.confidence) || 0)) };
+}

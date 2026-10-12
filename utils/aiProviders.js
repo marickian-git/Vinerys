@@ -295,18 +295,20 @@ export async function analyzeWineLabel(imageBase64, mimeType, provider, apiKey, 
     return response.result;
 }
 
-// Un singur răspuns text (fără imagine): agenții se încearcă pe rând, după prioritate, până reușește unul.
-// Folosit de pairing (HOME-003). Întoarce rezultatul normalizat și consumul fiecărei încercări.
-export async function generateWithAgents(agents, prompt, normalize, { operation = 'text' } = {}) {
+// Un singur răspuns: agenții se încearcă pe rând, după prioritate, până reușește unul.
+// Folosit de pairing (HOME-003). Cu `image` ({ base64, mimeType }) rămân doar agenții care acceptă imagini (AI-003).
+// Întoarce rezultatul normalizat și consumul fiecărei încercări.
+export async function generateWithAgents(agents, prompt, normalize, { operation = 'text', image = null } = {}) {
     const usable = agents
         .filter((agent) => agent.enabled !== false && agent.apiKey?.trim() && AI_PROVIDERS[agent.provider] && !['Invalid credentials'].includes(agent.lastStatus))
+        .filter((agent) => !image || (agent.capabilities || getProviderDefinition(agent.provider).capabilities || {}).imageInput !== false)
         .sort((a, b) => (a.priority || 0) - (b.priority || 0));
     if (!usable.length) throw new Error('Niciun agent AI activ și configurat');
     const usage = [];
     let lastError;
     for (const agent of usable) {
         try {
-            const response = await withRetry({ ...agent, maxRetries: Math.min(agent.maxRetries ?? 1, 1) }, prompt, null, null, normalize);
+            const response = await withRetry({ ...agent, maxRetries: Math.min(agent.maxRetries ?? 1, 1) }, prompt, image?.base64 ?? null, image?.mimeType ?? null, normalize);
             usage.push(usageEntry(operation, agent, { status: 'fulfilled', value: response }));
             return { result: response.result, provider: agent.provider, usage };
         } catch (error) {

@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { suggestWinesForDish } from '@/utils/actions';
+import { identifyDishFromPhoto, suggestWinesForDish } from '@/utils/actions';
+import { resizeImageToBase64 } from '@/utils/imageResize';
 
 const EXAMPLES = ['Miel la cuptor cu rozmarin', 'Sarmale cu mămăligă', 'Somon la grătar', 'Paste carbonara', 'Brânzeturi maturate'];
 
@@ -10,6 +11,7 @@ const EXAMPLES = ['Miel la cuptor cu rozmarin', 'Sarmale cu mămăligă', 'Somon
 export default function DishPairing() {
   const [dish, setDish] = useState('');
   const [state, setState] = useState({ loading: false, data: null, error: null });
+  const [photo, setPhoto] = useState({ loading: false, dish: null });
 
   const ask = async (value) => {
     const text = (value ?? dish).trim();
@@ -18,6 +20,21 @@ export default function DishPairing() {
     setState({ loading: true, data: null, error: null });
     const result = await suggestWinesForDish(text).catch(() => ({ error: 'Eroare de rețea' }));
     setState({ loading: false, data: result.error ? null : result, error: result.error ?? null });
+  };
+
+  // AI-003: poza farfuriei → felul recunoscut (editabil în câmp) → aceleași sugestii ca la text
+  const fromPhoto = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    setPhoto({ loading: true, dish: null });
+    setState({ loading: false, data: null, error: null });
+    const result = await resizeImageToBase64(file)
+      .then(({ base64, mimeType }) => identifyDishFromPhoto(base64, mimeType))
+      .catch(() => ({ error: 'Nu am putut citi poza' }));
+    setPhoto({ loading: false, dish: result.dish ?? null });
+    if (result.error) return setState({ loading: false, data: null, error: result.error });
+    ask(result.dish);
   };
 
   const field = { flexGrow: 1, minWidth: 0, background: '#1a0f12', color: '#f5e6e8', border: '1px solid rgba(196,69,105,0.35)', borderRadius: 10, padding: '0.8rem 1rem', fontSize: '1rem' };
@@ -30,6 +47,11 @@ export default function DishPairing() {
           {state.loading ? 'Caut…' : 'Ce vin deschid?'}
         </button>
       </form>
+      <label style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.75rem', padding: '0.5rem 0.9rem', borderRadius: 10, border: '1px dashed rgba(196,69,105,0.45)', color: '#f5e6e8', fontSize: '0.85rem', cursor: photo.loading ? 'wait' : 'pointer' }}>
+        <span aria-hidden="true">📷</span>{photo.loading ? 'Mă uit la farfurie…' : 'Fotografiază mâncarea'}
+        <input type="file" accept="image/*" capture="environment" onChange={fromPhoto} disabled={photo.loading} aria-label="Fotografiază mâncarea" style={{ position: 'absolute', width: 1, height: 1, opacity: 0 }} />
+      </label>
+      {photo.dish && <p role="status" style={{ fontSize: '0.85rem', margin: '0.5rem 0 0' }}>Am recunoscut: <strong>{photo.dish}</strong>. Dacă nu e corect, scrie felul de mâncare mai sus.</p>}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.75rem' }}>
         {EXAMPLES.map((example) => (
           <button key={example} type="button" onClick={() => ask(example)} style={{ padding: '0.35rem 0.8rem', borderRadius: 999, border: '1px solid rgba(196,69,105,0.3)', background: 'transparent', color: 'rgba(245,230,232,0.8)', fontSize: '0.78rem', cursor: 'pointer' }}>

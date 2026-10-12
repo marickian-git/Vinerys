@@ -24,3 +24,12 @@ test('„Ce gătesc azi?” fără AI folosește asocierile salvate și nu inven
   await page.getByRole('button', { name: 'Somon la grătar' }).click();
   await expect(page.getByRole('link', { name: 'Sauvignon Test' })).toBeVisible();
 });
+
+test('poza cu mâncarea fără agent AI explică ce lipsește și lasă varianta scrisă', async ({ page }) => {
+  await signUpViaApi(page);
+  await page.goto(`${BASE}/pairing`);
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
+  await page.getByLabel('Fotografiază mâncarea').setInputFiles({ name: 'farfurie.png', mimeType: 'image/png', buffer: png });
+  await expect(page.getByText(/are nevoie de un agent AI/)).toBeVisible();
+  await expect(page.getByLabel('Ce gătești?')).toBeEditable();
+});
