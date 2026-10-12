@@ -33,6 +33,7 @@ import { addItem, createList, deleteList, listsFor, removeItem, reserveItem, tog
 import { ListInputSchema, ListItemInputSchema, ReserveSchema } from "../schemas/list";
 import { runTool } from "../server/sommelierTools";
 import { predictPreference } from "./tasteProfile";
+import { mergeVoiceResult, parseWineSpeech, voicePrompt } from "./voiceParse";
 import { foodToWinePrompt, heuristicMatch, normalizeFoodPicks, pairingCandidates, rankPicks } from "./foodToWine";
 import { auth } from "./auth";
 import { decryptSecret, encryptSecret } from "./aiSecrets";
@@ -978,6 +979,46 @@ export async function suggestWinesForDish(dish) {
   // Fără AI (sau AI indisponibil): asocierile salvate pe fiecare vin
   const picks = wines.map((wine) => ({ id: wine.id, ...heuristicMatch(text, wine) }));
   return { source: 'saved', dish: text, results: rankPicks(picks, wines, { taste }), aiUnavailable: choice.error ? choice.message : null };
+}
+
+// ─────────────────────────────────────────
+// ADĂUGARE VOCALĂ (AI-007)
+// ─────────────────────────────────────────
+
+// Fraza dictată → câmpuri de vin; AI dacă există agenți (cu euristica drept completare), altfel doar euristica
+export async function parseWineText(input) {
+  const user = await getCurrentUser();
+  const text = input?.toString().trim().slice(0, 300);
+  if (!text || text.length < 3) return { error: 'Spune sau scrie ce ai cumpărat (ex. „6 Fetească Neagră 2021 de la Davino cu 80 lei”)' };
+  const limited = rateLimit(`voice:${user.id}`, PAIRING_LIMIT);
+  if (!limited.ok) return { error: tooManyRequestsMessage(limited.retryAfter) };
+
+  const heuristic = parseWineSpeech(text);
+  const choice = await resolveTextAgents(user.id);
+  if (!choice.error) {
+    const requestId = randomBytes(8).toString('hex');
+    const log = logger.child({ requestId, userId: user.id });
+    try {
+      const { result, usage } = await generateWithAgents(choice.agents, voicePrompt(text), (raw) => mergeVoiceResult(raw, heuristic), { operation: 'voice' });
+      await recordAIUsage(user.id, requestId, usage, log);
+      return { source: 'ai', text, wine: result };
+    } catch (error) {
+      await recordAIUsage(user.id, requestId, error.usage, log);
+      log.warn('voice parse AI failed, using heuristic', { error: serializeError(error) });
+    }
+  }
+  if (!heuristic.name) return { error: 'Nu am înțeles numele vinului. Încearcă din nou.' };
+  return { source: 'heuristic', text, wine: heuristic };
+}
+
+// Salvează vinul confirmat din previzualizare
+export async function quickAddWine(data) {
+  const user = await getCurrentUser();
+  const parsed = WineInputSchema.safeParse({ ...data, currency: isCurrency(data?.currency) ? data.currency : undefined });
+  if (!parsed.success) return { error: firstIssueMessage(parsed.error) };
+  const wine = await createWineForUser(user.id, parsed.data);
+  revalidatePath('/wines');
+  return { id: wine.id, name: wine.name };
 }
 
 // ─────────────────────────────────────────

@@ -28,7 +28,7 @@ export async function recordAIUsage(userId, requestId, entries = [], log) {
 }
 
 // AI-012: câte cereri pe cheile platformei a făcut utilizatorul luna aceasta (o cerere = un requestId)
-const OPERATIONS = { scan: ['scan_identify'], text: ['pairing', 'sommelier'] };
+const OPERATIONS = { scan: ['scan_identify'], text: ['pairing', 'sommelier', 'voice'] };
 
 export async function platformRequestsThisMonth(userId, kind, since) {
   const rows = await prisma.aIUsage.findMany({

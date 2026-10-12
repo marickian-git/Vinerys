@@ -406,6 +406,13 @@ Plus `describeTools()` (textul pentru prompt) și `runTool(userId, name, args)` 
 
 **Învățat:** pentru date în fusul orar local se folosește formatul local, nu `toISOString()`, care mută ziua în fusurile din fața UTC.
 
+### #42 AI-007 Adăugare vocală
+
+- **Făcut:** `utils/voiceParse.js` (parser euristic + prompt + `mergeVoiceResult`), acțiunile `parseWineText` / `quickAddWine`, componenta `VoiceAdd` pe `/wines/add`. Teste: 7 unit, 1 e2e (`voice.spec.js`).
+- **Decizii:** recunoașterea vocală rulează în browser (Web Speech API, gratuit, fără upload audio). Pe server ajunge doar textul. Cu AI, câmpurile invalide sau lipsă din răspuns se completează din euristică. Fără AI, se folosește doar euristica. Salvarea cere confirmare.
+- **Învățat:** `getByLabel('An')` prinde și eticheta „Tip”, fiindcă textul ei include opțiunile („Spumant”), deci testul folosește `exact: true`. Prefixele „Crama/Cramele/Domeniul” trebuie potrivite indiferent de majusculă.
+- **Next:** #38 (poză cu mâncarea → vin).
+
 ---
 
 ## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub

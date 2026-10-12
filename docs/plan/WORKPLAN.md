@@ -75,8 +75,8 @@ Același flux. Branch-ul a fost repornit din `main` (`137957e`). Un singur merge
 
 | # | Issue | Titlu | Status | Commit | Note / interpretare |
 |---|---|---|---|---|---|
-| 33 | #107 | HOME-006 Plan de weekend | done | | Plan de weekend (vineri / sâmbătă / duminică): cele mai urgente sticle, apoi gustul (#46), cel mult două de același tip, cu mâncare, temperatură și locație. Apare în Sommelier („Planul weekendului”, ca în machetă) și pe `/planner`. Notificarea de vineri vine prin `/api/cron/digest?kind=weekend` (o dată pe weekend). Fără AI. Construirea planului din conversație rămâne pentru o versiune viitoare |
-| 34 | #42 | AI-007 Adăugare vocală | todo | | |
+| 33 | #107 | HOME-006 Plan de weekend | done | `d466a41` | Plan de weekend (vineri / sâmbătă / duminică): cele mai urgente sticle, apoi gustul (#46), cel mult două de același tip, cu mâncare, temperatură și locație. Apare în Sommelier („Planul weekendului”, ca în machetă) și pe `/planner`. Notificarea de vineri vine prin `/api/cron/digest?kind=weekend` (o dată pe weekend). Fără AI. Construirea planului din conversație rămâne pentru o versiune viitoare |
+| 34 | #42 | AI-007 Adăugare vocală | done | | Bloc „Adăugare rapidă” pe /wines/add: microfon (Web Speech API, ro-RO, doar unde browserul îl are) sau text. Fraza trece prin agenții AI (operația `voice`, intră în cota text), cu parserul euristic `utils/voiceParse.js` drept completare și fallback fără AI (cantitate în cifre sau cuvinte, an, producător după „de la”, preț + monedă, tip din text sau soi). Rezultatul apare ca previzualizare editabilă și se salvează doar la confirmare. Interpretare: doar vinuri, nu și consumuri („am deschis…”) |
 | 35 | #38 | AI-003 Pairing din fotografie | todo | | |
 | 36 | #44 | AI-009 Progres scanare (SSE) | todo | | |
 | 37 | #78 | REFACTOR-007 Accesibilitate | todo | | |

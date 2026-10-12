@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import WineForm from '@/components/wines/WineForm';
+import VoiceAdd from '@/components/wines/VoiceAdd';
 
 export const metadata = {
   title: 'Adaugă vin — Vinerys',
@@ -93,6 +94,8 @@ export default function AddWinePage() {
             <p className="add-subtitle">Completează detaliile pentru a adăuga vinul în pivnița ta digitală</p>
             <p className="add-subtitle">Ai o listă în Vivino, CellarTracker sau Excel? <Link href="/wines/import" style={{ color: "#d97a95" }}>Importă din CSV</Link></p>
           </div>
+
+          <VoiceAdd />
 
           <div className="add-divider" />
 
