@@ -94,7 +94,7 @@ export default function ScanLabelButton({ onScan }) {
         .scan-btn:disabled { opacity: 0.6; cursor: wait; }
 
         .scan-hint {
-          font-size: 0.68rem; color: rgba(245,230,232,0.25);
+          font-size: 0.68rem; color: rgba(245,230,232,0.6);
           text-align: center; margin-top: 0.5rem; line-height: 1.5;
         }
 

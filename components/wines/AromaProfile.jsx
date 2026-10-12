@@ -4,7 +4,7 @@
 const AROMA_CATEGORIES = {
   fructe: {
     label: 'Fructe',
-    color: 'rgba(196,69,105,0.8)',
+    color: '#d97a95',
     bg: 'rgba(196,69,105,0.08)',
     border: 'rgba(196,69,105,0.2)',
     keywords: ['cireșe', 'fructe roșii', 'fructe negre', 'zmeură', 'afine', 'prune', 'coacăze',
@@ -78,7 +78,7 @@ export default function AromaProfile({ aromas = [], compact = false }) {
           <span style={{
             padding: '0.12rem 0.45rem', borderRadius: '20px',
             background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
-            fontSize: '0.6rem', color: 'rgba(245,230,232,0.25)',
+            fontSize: '0.6rem', color: 'rgba(245,230,232,0.6)',
             fontFamily: "'Jost', sans-serif",
           }}>
             +{rest}

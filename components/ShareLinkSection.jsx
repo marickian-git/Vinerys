@@ -59,7 +59,7 @@ export default function ShareLinkSection({ initialUrl, initialEnabled }) {
           flex: 1; padding: 0.72rem 1rem;
           background: rgba(255,255,255,0.03);
           border: 1px solid rgba(196,69,105,0.12);
-          border-radius: 8px; color: rgba(245,230,232,0.5);
+          border-radius: 8px; color: rgba(245,230,232,0.6);
           font-family: 'Jost', sans-serif; font-size: 0.78rem;
           font-weight: 300; outline: none;
           overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -79,7 +79,7 @@ export default function ShareLinkSection({ initialUrl, initialEnabled }) {
           padding: 0.72rem 0.9rem;
           background: transparent;
           border: 1px solid rgba(196,69,105,0.2);
-          border-radius: 8px; color: rgba(245,230,232,0.45);
+          border-radius: 8px; color: rgba(245,230,232,0.6);
           font-family: 'Jost', sans-serif; font-size: 0.78rem;
           cursor: pointer; transition: all 0.2s; white-space: nowrap;
           text-decoration: none; display: flex; align-items: center;
@@ -102,11 +102,11 @@ export default function ShareLinkSection({ initialUrl, initialEnabled }) {
         .share-regen-btn {
           margin-top: 0.75rem; padding: 0.5rem 0.9rem; background: transparent;
           border: 1px solid rgba(196,69,105,0.2); border-radius: 8px;
-          color: rgba(245,230,232,0.45); font-family: 'Jost', sans-serif; font-size: 0.72rem;
+          color: rgba(245,230,232,0.6); font-family: 'Jost', sans-serif; font-size: 0.72rem;
           cursor: pointer; transition: all 0.2s;
         }
         .share-regen-btn:hover, .share-regen-btn.confirm { border-color: rgba(196,69,105,0.5); color: rgba(245,230,232,0.85); }
-        .share-hint { font-size: 0.68rem; color: rgba(245,230,232,0.25); margin-top: 0.6rem; font-weight: 300; line-height: 1.6; }
+        .share-hint { font-size: 0.68rem; color: rgba(245,230,232,0.6); margin-top: 0.6rem; font-weight: 300; line-height: 1.6; }
       `}</style>
 
       <div className="share-toggle-row">

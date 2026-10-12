@@ -378,12 +378,12 @@ export default function WineForm({ wine = null }) {
         .wf-tab {
           padding: 0.65rem 1.1rem; font-size: 0.72rem; font-weight: 400;
           letter-spacing: 0.1em; text-transform: uppercase;
-          color: rgba(245,230,232,0.35); background: none; border: none;
+          color: rgba(245,230,232,0.6); background: none; border: none;
           border-bottom: 2px solid transparent; cursor: pointer; transition: all 0.2s;
           white-space: nowrap; font-family: 'Jost', sans-serif; margin-bottom: -1px;
         }
         .wf-tab:hover { color: rgba(245,230,232,0.65); }
-        .wf-tab.active { color: #c44569; border-bottom-color: #c44569; }
+        .wf-tab.active { color: #d97a95; border-bottom-color: #c44569; }
 
         /* ── MOBILE HEADER ── */
         .wf-mobile-header { display: none; margin-bottom: 1.25rem; }
@@ -395,7 +395,7 @@ export default function WineForm({ wine = null }) {
           display: flex; align-items: center; gap: 0.5rem;
           font-size: 1.05rem; font-weight: 500; color: #f5e6e8;
         }
-        .wf-mobile-count { font-size: 0.7rem; color: rgba(245,230,232,0.35); font-weight: 300; }
+        .wf-mobile-count { font-size: 0.7rem; color: rgba(245,230,232,0.6); font-weight: 300; }
         .wf-progress-bar { height: 3px; background: rgba(196,69,105,0.15); border-radius: 2px; overflow: hidden; }
         .wf-progress-fill {
           height: 100%; background: linear-gradient(90deg, #8b1a2e, #c44569);
@@ -412,9 +412,9 @@ export default function WineForm({ wine = null }) {
         .wf-full { grid-column: 1 / -1; }
         .wf-label {
           display: block; font-size: 0.68rem; text-transform: uppercase;
-          letter-spacing: 0.15em; color: rgba(245,230,232,0.45); margin-bottom: 0.5rem; font-weight: 400;
+          letter-spacing: 0.15em; color: rgba(245,230,232,0.6); margin-bottom: 0.5rem; font-weight: 400;
         }
-        .wf-label.required::after { content: ' *'; color: #c44569; }
+        .wf-label.required::after { content: ' *'; color: #d97a95; }
 
         .wf-input, .wf-select, .wf-textarea {
           width: 100%; padding: 0.75rem 1rem;
@@ -438,10 +438,10 @@ export default function WineForm({ wine = null }) {
         }
         .wf-select option { background: #1a0810; }
         .wf-textarea { resize: vertical; min-height: 100px; line-height: 1.6; }
-        .wf-error-msg { font-size: 0.68rem; color: rgba(220,80,80,0.8); margin-top: 0.35rem; }
+        .wf-error-msg { font-size: 0.68rem; color: #e06b6b; margin-top: 0.35rem; }
 
         .wf-img-hint {
-          font-size: 0.78rem; color: rgba(245,230,232,0.35); font-weight: 300;
+          font-size: 0.78rem; color: rgba(245,230,232,0.6); font-weight: 300;
           margin-bottom: 1.5rem; padding: 0.85rem 1rem;
           background: rgba(196,69,105,0.05); border: 1px solid rgba(196,69,105,0.1);
           border-radius: 10px; line-height: 1.7;
@@ -449,7 +449,7 @@ export default function WineForm({ wine = null }) {
 
         /* ── STARS ── */
         .wf-stars { display: flex; gap: 0.5rem; padding: 0.6rem 0; }
-        .wf-star { font-size: 2rem; cursor: pointer; transition: transform 0.15s; line-height: 1; color: rgba(245,230,232,0.15); padding: 0.15rem; }
+        .wf-star { font-size: 2rem; cursor: pointer; transition: transform 0.15s; line-height: 1; color: rgba(245,230,232,0.6); padding: 0.15rem; }
         .wf-star:hover, .wf-star.filled { color: #d4af37; }
         .wf-star:hover { transform: scale(1.2); }
 
@@ -482,11 +482,11 @@ export default function WineForm({ wine = null }) {
           font-size: 0.78rem; color: rgba(245,230,232,0.8); font-weight: 300;
         }
         .wf-aroma-remove {
-          background: none; border: none; cursor: pointer; color: rgba(196,69,105,0.6);
+          background: none; border: none; cursor: pointer; color: #d97a95;
           font-size: 1rem; line-height: 1; padding: 0; min-width: 24px; min-height: 24px;
           display: flex; align-items: center; justify-content: center; transition: color 0.15s;
         }
-        .wf-aroma-remove:hover { color: #c44569; }
+        .wf-aroma-remove:hover { color: #d97a95; }
         .wf-aroma-input {
           background: none; border: none; outline: none; color: #f5e6e8;
           font-family: 'Jost', sans-serif; font-size: 16px; font-weight: 300; width: 100%; padding: 0.25rem 0;
@@ -496,7 +496,7 @@ export default function WineForm({ wine = null }) {
         .wf-aroma-suggestion {
           padding: 0.3rem 0.7rem; border-radius: 20px; font-size: 0.75rem;
           background: rgba(255,255,255,0.04); border: 1px solid rgba(196,69,105,0.12);
-          color: rgba(245,230,232,0.45); cursor: pointer; transition: all 0.15s;
+          color: rgba(245,230,232,0.6); cursor: pointer; transition: all 0.15s;
           font-family: 'Jost', sans-serif; min-height: 34px; display: flex; align-items: center;
         }
         .wf-aroma-suggestion:hover, .wf-aroma-suggestion:active {
@@ -505,7 +505,7 @@ export default function WineForm({ wine = null }) {
 
         /* ── DRINK WINDOW ── */
         .wf-drink-window { display: grid; grid-template-columns: 1fr auto 1fr; gap: 0.75rem; align-items: end; }
-        .wf-drink-sep { font-size: 0.75rem; color: rgba(245,230,232,0.3); text-align: center; padding-bottom: 0.85rem; }
+        .wf-drink-sep { font-size: 0.75rem; color: rgba(245,230,232,0.6); text-align: center; padding-bottom: 0.85rem; }
 
         /* ── DESKTOP NAV ── */
         .wf-nav {
@@ -516,7 +516,7 @@ export default function WineForm({ wine = null }) {
         .wf-btn-back {
           padding: 0.7rem 1.25rem; background: transparent;
           border: 1px solid rgba(196,69,105,0.2); border-radius: 10px;
-          color: rgba(245,230,232,0.5); font-family: 'Jost', sans-serif;
+          color: rgba(245,230,232,0.6); font-family: 'Jost', sans-serif;
           font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase;
           cursor: pointer; transition: all 0.2s; white-space: nowrap;
         }
@@ -619,10 +619,10 @@ export default function WineForm({ wine = null }) {
         .wf-bar-lbl {
           font-size: 0.59rem; font-family: 'Jost', sans-serif;
           font-weight: 400; letter-spacing: 0.03em;
-          color: rgba(245,230,232,0.28); transition: color 0.2s; white-space: nowrap;
+          color: rgba(245,230,232,0.6); transition: color 0.2s; white-space: nowrap;
         }
-        .wf-bar-tab.active .wf-bar-lbl { color: #c44569; font-weight: 500; }
-        .wf-bar-tab.done  .wf-bar-lbl  { color: rgba(196,69,105,0.5); }
+        .wf-bar-tab.active .wf-bar-lbl { color: #d97a95; font-weight: 500; }
+        .wf-bar-tab.done  .wf-bar-lbl  { color: #d97a95; }
 
         /* ── RESPONSIVE ── */
         @media (max-width: 640px) {
@@ -727,8 +727,8 @@ export default function WineForm({ wine = null }) {
           <ScanLabelButton onScan={handleAIScan} />
           <div className="wf-grid">
             <div className="wf-field wf-full">
-              <label className="wf-label required">Nume vin</label>
-              <input
+              <label className="wf-label required" htmlFor="wf-nume-vin">Nume vin</label>
+              <input id="wf-nume-vin"
                 className={`wf-input ${errors.name ? "error" : ""}`}
                 placeholder="ex. Château Margaux"
                 value={form.name}
@@ -738,8 +738,8 @@ export default function WineForm({ wine = null }) {
               {errors.name && <p className="wf-error-msg">{errors.name[0]}</p>}
             </div>
             <div className="wf-field">
-              <label className="wf-label">Producător</label>
-              <input
+              <label className="wf-label" htmlFor="wf-producator">Producător</label>
+              <input id="wf-producator"
                 className="wf-input"
                 placeholder="ex. Domaine Leflaive"
                 value={form.producer}
@@ -747,8 +747,8 @@ export default function WineForm({ wine = null }) {
               />
             </div>
             <div className="wf-field">
-              <label className="wf-label required">Tip vin</label>
-              <select
+              <label className="wf-label required" htmlFor="wf-tip-vin">Tip vin</label>
+              <select id="wf-tip-vin"
                 className="wf-select"
                 value={form.type}
                 onChange={(e) => set("type", e.target.value)}
@@ -761,8 +761,8 @@ export default function WineForm({ wine = null }) {
               </select>
             </div>
             <div className="wf-field">
-              <label className="wf-label">Culoare</label>
-              <select
+              <label className="wf-label" htmlFor="wf-culoare">Culoare</label>
+              <select id="wf-culoare"
                 className="wf-select"
                 value={form.color}
                 onChange={(e) => set("color", e.target.value)}>
@@ -774,8 +774,8 @@ export default function WineForm({ wine = null }) {
               </select>
             </div>
             <div className="wf-field">
-              <label className="wf-label">Țară</label>
-              <input
+              <label className="wf-label" htmlFor="wf-tara">Țară</label>
+              <input id="wf-tara"
                 className="wf-input"
                 placeholder="ex. Franța, România"
                 list="wf-countries"
@@ -787,8 +787,8 @@ export default function WineForm({ wine = null }) {
               </datalist>
             </div>
             <div className="wf-field">
-              <label className="wf-label">Regiune</label>
-              <input
+              <label className="wf-label" htmlFor="wf-regiune">Regiune</label>
+              <input id="wf-regiune"
                 className="wf-input"
                 placeholder="ex. Bordeaux, Dealu Mare"
                 value={form.region}
@@ -796,8 +796,8 @@ export default function WineForm({ wine = null }) {
               />
             </div>
             <div className="wf-field">
-              <label className="wf-label">Subregiune</label>
-              <input
+              <label className="wf-label" htmlFor="wf-subregiune">Subregiune</label>
+              <input id="wf-subregiune"
                 className="wf-input"
                 placeholder="ex. Pauillac"
                 value={form.subregion}
@@ -805,8 +805,8 @@ export default function WineForm({ wine = null }) {
               />
             </div>
             <div className="wf-field">
-              <label className="wf-label">An recoltă</label>
-              <input
+              <label className="wf-label" htmlFor="wf-an-recolta">An recoltă</label>
+              <input id="wf-an-recolta"
                 className="wf-input"
                 type="number"
                 placeholder="ex. 2018"
@@ -817,8 +817,8 @@ export default function WineForm({ wine = null }) {
               />
             </div>
             <div className="wf-field">
-              <label className="wf-label">Status</label>
-              <select
+              <label className="wf-label" htmlFor="wf-status">Status</label>
+              <select id="wf-status"
                 className="wf-select"
                 value={form.status}
                 onChange={(e) => set("status", e.target.value)}>
@@ -862,8 +862,8 @@ export default function WineForm({ wine = null }) {
         <div className={`wf-section ${section === 2 ? "active" : ""}`}>
           <div className="wf-grid">
             <div className="wf-field">
-              <label className="wf-label">Alcool (%)</label>
-              <input
+              <label className="wf-label" htmlFor="wf-alcool">Alcool (%)</label>
+              <input id="wf-alcool"
                 className="wf-input"
                 type="number"
                 step="0.1"
@@ -875,8 +875,8 @@ export default function WineForm({ wine = null }) {
               />
             </div>
             <div className="wf-field">
-              <label className="wf-label">Cantitate (sticle)</label>
-              <input
+              <label className="wf-label" htmlFor="wf-cantitate-sticle">Cantitate (sticle)</label>
+              <input id="wf-cantitate-sticle"
                 className="wf-input"
                 type="number"
                 min="0"
@@ -886,8 +886,8 @@ export default function WineForm({ wine = null }) {
               />
             </div>
             <div className="wf-field">
-              <label className="wf-label">Mărime sticlă</label>
-              <select
+              <label className="wf-label" htmlFor="wf-marime-sticla">Mărime sticlă</label>
+              <select id="wf-marime-sticla"
                 className="wf-select"
                 value={form.bottleSize}
                 onChange={(e) => set("bottleSize", e.target.value)}>
@@ -899,8 +899,8 @@ export default function WineForm({ wine = null }) {
               </select>
             </div>
             <div className="wf-field">
-              <label className="wf-label">Temperatură servire</label>
-              <input
+              <label className="wf-label" htmlFor="wf-temperatura-servire">Temperatură servire</label>
+              <input id="wf-temperatura-servire"
                 className="wf-input"
                 placeholder="ex. 16-18°C"
                 value={form.servingTemperature}
@@ -908,8 +908,8 @@ export default function WineForm({ wine = null }) {
               />
             </div>
             <div className="wf-field wf-full">
-              <label className="wf-label">Soiuri de struguri</label>
-              <input
+              <label className="wf-label" htmlFor="wf-soiuri-de-struguri">Soiuri de struguri</label>
+              <input id="wf-soiuri-de-struguri"
                 className="wf-input"
                 placeholder="ex. Cabernet Sauvignon, Merlot"
                 value={form.grapeVarieties}
@@ -917,8 +917,8 @@ export default function WineForm({ wine = null }) {
               />
             </div>
             <div className="wf-field wf-full">
-              <label className="wf-label">Asocieri gastronomice</label>
-              <input
+              <label className="wf-label" htmlFor="wf-asocieri-gastronomice">Asocieri gastronomice</label>
+              <input id="wf-asocieri-gastronomice"
                 className="wf-input"
                 placeholder="ex. Vită, Brânzeturi maturate"
                 value={form.foodPairing}
@@ -926,7 +926,7 @@ export default function WineForm({ wine = null }) {
               />
             </div>
             <div className="wf-field wf-full">
-              <label className="wf-label">Profil aromatic</label>
+              <label className="wf-label" htmlFor="wf-profil-aromatic">Profil aromatic</label>
               <div className="wf-aroma-wrap">
                 {form.aromaProfile.length > 0 && (
                   <div className="wf-aroma-tags">
@@ -943,7 +943,7 @@ export default function WineForm({ wine = null }) {
                     ))}
                   </div>
                 )}
-                <input
+                <input id="wf-profil-aromatic"
                   className="wf-aroma-input"
                   placeholder={
                     form.aromaProfile.length === 0
@@ -997,8 +997,8 @@ export default function WineForm({ wine = null }) {
               </div>
             </div>
             <div className="wf-field wf-full">
-              <label className="wf-label">Potențial de maturare</label>
-              <input
+              <label className="wf-label" htmlFor="wf-potential-de-maturare">Potențial de maturare</label>
+              <input id="wf-potential-de-maturare"
                 className="wf-input"
                 placeholder="ex. 5-10 ani"
                 value={form.agingPotential}
@@ -1037,8 +1037,8 @@ export default function WineForm({ wine = null }) {
               </select>
             </div>
             <div className="wf-field">
-              <label className="wf-label">Preț achiziție</label>
-              <input
+              <label className="wf-label" htmlFor="wf-pret-achizitie">Preț achiziție</label>
+              <input id="wf-pret-achizitie"
                 className="wf-input"
                 type="number"
                 step="0.01"
@@ -1049,8 +1049,8 @@ export default function WineForm({ wine = null }) {
               />
             </div>
             <div className="wf-field">
-              <label className="wf-label">Valoare estimată</label>
-              <input
+              <label className="wf-label" htmlFor="wf-valoare-estimata">Valoare estimată</label>
+              <input id="wf-valoare-estimata"
                 className="wf-input"
                 type="number"
                 step="0.01"
@@ -1061,8 +1061,8 @@ export default function WineForm({ wine = null }) {
               />
             </div>
             <div className="wf-field">
-              <label className="wf-label">Data achiziției</label>
-              <input
+              <label className="wf-label" htmlFor="wf-data-achizitiei">Data achiziției</label>
+              <input id="wf-data-achizitiei"
                 className="wf-input"
                 type="date"
                 value={form.purchaseDate}
@@ -1070,8 +1070,8 @@ export default function WineForm({ wine = null }) {
               />
             </div>
             <div className="wf-field">
-              <label className="wf-label">Locație pivniță</label>
-              <input
+              <label className="wf-label" htmlFor="wf-locatie-pivnita">Locație pivniță</label>
+              <input id="wf-locatie-pivnita"
                 className="wf-input"
                 placeholder="ex. Raft A, Rândul 3"
                 list="wf-locations"
@@ -1143,7 +1143,7 @@ export default function WineForm({ wine = null }) {
                   <span
                     style={{
                       fontSize: "0.8rem",
-                      color: "rgba(245,230,232,0.4)",
+                      color: "rgba(245,230,232,0.6)",
                       alignSelf: "center",
                       marginLeft: "0.25rem",
                     }}>
@@ -1153,8 +1153,8 @@ export default function WineForm({ wine = null }) {
               </div>
             </div>
             <div className="wf-field wf-full">
-              <label className="wf-label">Notițe de degustare</label>
-              <textarea
+              <label className="wf-label" htmlFor="wf-notite-de-degustare">Notițe de degustare</label>
+              <textarea id="wf-notite-de-degustare"
                 className="wf-textarea"
                 placeholder="Descrie culoarea, structura, gustul, finisajul..."
                 value={form.tastingNotes}

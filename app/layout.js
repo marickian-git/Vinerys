@@ -52,9 +52,10 @@ export default function RootLayout({ children }) {
         <meta name="msapplication-TileImage" content={appPath('/icons/icon-144.png')} />
       </head>
       <body className={inter.className} style={{ background: "#0d0608" }}>
+        <a href="#continut" className="skip-link">Sari la conținut</a>
         <Providers>
           <Navbar />
-          <main className="pt-16 min-h-screen" style={{ background: '#0d0608' }}>
+          <main id="continut" tabIndex={-1} className="pt-16 min-h-screen" style={{ background: '#0d0608' }}>
             {children}
           </main>
         </Providers>

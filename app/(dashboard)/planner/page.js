@@ -19,7 +19,7 @@ export default async function PlannerPage() {
   const thisYear = plan.years[0];
 
   return (
-    <main style={{ minHeight: '100vh', background: '#0d0608', color: '#f5e6e8', padding: '6rem 1.25rem 4rem', fontFamily: 'Jost, system-ui, sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: '#0d0608', color: '#f5e6e8', padding: '6rem 1.25rem 4rem', fontFamily: 'Jost, system-ui, sans-serif' }}>
       <div style={{ maxWidth: 900, margin: '0 auto' }}>
         <Link href="/wines" style={{ color: 'rgba(245,230,232,0.6)', fontSize: '0.75rem', textDecoration: 'none', textTransform: 'uppercase', letterSpacing: '0.12em' }}>← Pivniță</Link>
         <h1 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontWeight: 300, fontSize: '2.4rem', margin: '1rem 0 0.25rem' }}>Plan de consum</h1>
@@ -37,7 +37,7 @@ export default async function PlannerPage() {
 
         <div role="img" aria-label="Sticle de deschis pe an" style={{ display: 'grid', gridTemplateColumns: `repeat(${plan.years.length}, minmax(0, 1fr))`, gap: 6, alignItems: 'end', height: 110, margin: '1.5rem 0 0.4rem' }}>
           {plan.years.map((y) => (
-            <div key={y.year} style={{ height: `${Math.max(3, (y.bottles / max) * 100)}%`, background: y.wines.some((w) => w.status === 'overdue') ? STATUS.overdue.color : '#c44569', borderRadius: 4, opacity: y.bottles ? 1 : 0.25 }} />
+            <div key={y.year} style={{ height: `${Math.max(3, (y.bottles / max) * 100)}%`, background: y.wines.some((w) => w.status === 'overdue') ? STATUS.overdue.color : '#d97a95', borderRadius: 4, opacity: y.bottles ? 1 : 0.25 }} />
           ))}
         </div>
         <div aria-hidden="true" style={{ display: 'grid', gridTemplateColumns: `repeat(${plan.years.length}, minmax(0, 1fr))`, gap: 6, fontSize: '0.7rem', color: 'rgba(245,230,232,0.6)', textAlign: 'center' }}>
@@ -72,6 +72,6 @@ export default async function PlannerPage() {
           )}
         </div>
       </div>
-    </main>
+    </div>
   );
 }

@@ -101,7 +101,7 @@ function TastingItem({ tasting, showWine, onDelete }) {
         {tasting.aromas?.length > 0 && <div style={{ fontSize: '0.75rem', color: 'rgba(245,230,232,0.65)', marginTop: 4 }}>{tasting.aromas.join(' · ')}</div>}
       </div>
       {onDelete && (
-        <button type="button" aria-label="Șterge degustarea" onClick={() => onDelete(tasting.id)} style={{ background: 'none', border: 'none', color: 'rgba(245,230,232,0.5)', cursor: 'pointer', alignSelf: 'flex-start' }}>✕</button>
+        <button type="button" aria-label="Șterge degustarea" onClick={() => onDelete(tasting.id)} style={{ background: 'none', border: 'none', color: 'rgba(245,230,232,0.6)', cursor: 'pointer', alignSelf: 'flex-start' }}>✕</button>
       )}
     </li>
   );

@@ -46,24 +46,24 @@ export default function Error({ error, reset }) {
         }
         .er-eyebrow {
           font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.2em;
-          color: rgba(220,80,80,0.5); margin-bottom: 0.6rem;
+          color: #e06b6b; margin-bottom: 0.6rem;
         }
         .er-title {
           font-family: 'Cormorant Garamond', serif;
           font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 300;
           color: #f5e6e8; margin-bottom: 0.75rem; line-height: 1.2;
         }
-        .er-title em { font-style: italic; color: rgba(220,80,80,0.8); }
+        .er-title em { font-style: italic; color: #e06b6b; }
         .er-divider {
           width: 60px; height: 1px; margin: 0 auto 1.5rem;
           background: linear-gradient(to right, transparent, rgba(220,80,80,0.3), transparent);
         }
         .er-sub {
-          font-size: 0.83rem; color: rgba(245,230,232,0.28);
+          font-size: 0.83rem; color: rgba(245,230,232,0.6);
           font-weight: 300; line-height: 1.75; margin-bottom: 1.25rem;
         }
         .er-message {
-          font-size: 0.72rem; color: rgba(220,80,80,0.45);
+          font-size: 0.72rem; color: #e06b6b;
           background: rgba(220,80,80,0.05); border: 1px solid rgba(220,80,80,0.12);
           border-radius: 8px; padding: 0.7rem 1rem;
           margin-bottom: 2.5rem; font-family: monospace;
@@ -86,7 +86,7 @@ export default function Error({ error, reset }) {
         .er-btn-ghost {
           display: inline-flex; align-items: center; gap: 0.45rem;
           padding: 0.75rem 1.5rem; background: transparent;
-          border: 1px solid rgba(196,69,105,0.2); color: rgba(245,230,232,0.45);
+          border: 1px solid rgba(196,69,105,0.2); color: rgba(245,230,232,0.6);
           text-decoration: none; border-radius: 10px; font-size: 0.8rem;
           letter-spacing: 0.1em; text-transform: uppercase; transition: all 0.2s;
         }

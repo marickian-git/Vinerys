@@ -86,7 +86,7 @@ export default function ExportButton() {
         @keyframes expIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
 
         .exp-section { padding: 0.3rem 0.6rem 0.2rem; }
-        .exp-section-label { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.15em; color: rgba(196,69,105,0.5); margin-bottom: 0.3rem; }
+        .exp-section-label { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.15em; color: #d97a95; margin-bottom: 0.3rem; }
 
         .exp-item {
           display: flex; align-items: center; gap: 0.6rem;
@@ -99,7 +99,7 @@ export default function ExportButton() {
         .exp-item:hover { background: rgba(196,69,105,0.08); color: rgba(245,230,232,0.95); }
         .exp-item:disabled { opacity: 0.4; cursor: wait; }
         .exp-item-icon { font-size: 0.9rem; width: 1.2rem; text-align: center; flex-shrink: 0; }
-        .exp-item-sub { font-size: 0.65rem; color: rgba(245,230,232,0.3); display: block; margin-top: 1px; }
+        .exp-item-sub { font-size: 0.65rem; color: rgba(245,230,232,0.6); display: block; margin-top: 1px; }
 
         .exp-divider { height: 1px; background: rgba(196,69,105,0.08); margin: 0.3rem 0; }
 

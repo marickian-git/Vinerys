@@ -63,14 +63,14 @@ export default function VoiceAdd() {
   };
 
   const field = { minWidth: 0, background: '#1a0f12', color: '#f5e6e8', border: '1px solid rgba(196,69,105,0.35)', borderRadius: 10, padding: '0.6rem 0.8rem', fontSize: '0.95rem', width: '100%', boxSizing: 'border-box' };
-  const label = { display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(245,230,232,0.55)' };
+  const label = { display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(245,230,232,0.6)' };
   const button = { padding: '0.7rem 1.1rem', borderRadius: 10, border: 'none', background: '#8b1a2e', color: '#f5e6e8', fontSize: '0.9rem', cursor: 'pointer' };
   const wine = state.wine;
 
   return (
     <section aria-labelledby="voice-add-title" style={{ border: '1px solid rgba(196,69,105,0.2)', borderRadius: 16, padding: '1.25rem', marginBottom: '2rem', color: '#f5e6e8' }}>
       <h2 id="voice-add-title" style={{ margin: '0 0 0.25rem', fontSize: '1.05rem', fontWeight: 500 }}>Adăugare rapidă</h2>
-      <p style={{ margin: '0 0 0.9rem', fontSize: '0.82rem', color: 'rgba(245,230,232,0.55)' }}>
+      <p style={{ margin: '0 0 0.9rem', fontSize: '0.82rem', color: 'rgba(245,230,232,0.6)' }}>
         {supported ? 'Apasă pe microfon și spune' : 'Scrie'} ce ai cumpărat, ex. „6 Fetească Neagră 2021 de la Davino cu 80 lei”.
       </p>
       <form onSubmit={(e) => { e.preventDefault(); parse(); }} style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
@@ -111,7 +111,7 @@ export default function VoiceAdd() {
           <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap' }}>
             <button type="button" onClick={save} disabled={state.loading || !wine.name?.trim()} style={button}>{state.loading ? 'Salvez…' : 'Adaugă în pivniță'}</button>
             <button type="button" onClick={() => setState((s) => ({ ...s, wine: null }))} style={{ ...button, background: 'transparent', border: '1px solid rgba(196,69,105,0.35)' }}>Renunță</button>
-            <span style={{ fontSize: '0.75rem', color: 'rgba(245,230,232,0.5)' }}>{state.source === 'ai' ? 'Interpretat cu AI' : 'Interpretat fără AI: verifică câmpurile'}</span>
+            <span style={{ fontSize: '0.75rem', color: 'rgba(245,230,232,0.6)' }}>{state.source === 'ai' ? 'Interpretat cu AI' : 'Interpretat fără AI: verifică câmpurile'}</span>
           </div>
         </div>
       )}

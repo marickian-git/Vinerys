@@ -36,7 +36,7 @@ export default async function ValuePage() {
     ['ROI', formatRoi(report.roi)],
   ];
   return (
-    <main style={{ minHeight: '100vh', background: '#0d0608', color: '#f5e6e8', padding: '6rem 1.25rem 4rem', fontFamily: 'Jost, system-ui, sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: '#0d0608', color: '#f5e6e8', padding: '6rem 1.25rem 4rem', fontFamily: 'Jost, system-ui, sans-serif' }}>
       <div style={{ maxWidth: 820, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <Link href="/wines" style={{ color: 'rgba(245,230,232,0.6)', fontSize: '0.75rem', textDecoration: 'none', textTransform: 'uppercase', letterSpacing: '0.12em' }}>← Pivniță</Link>
         <h1 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontWeight: 300, fontSize: '2.4rem', margin: 0 }}>Valoarea pivniței</h1>
@@ -55,6 +55,6 @@ export default async function ValuePage() {
           <Link href="/value/report" style={{ color: '#d97a95' }}>Raport pentru asigurare (printabil / PDF) →</Link>
         </p>
       </div>
-    </main>
+    </div>
   );
 }

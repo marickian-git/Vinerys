@@ -20,7 +20,7 @@ export default async function LabelsPage({ params, searchParams }) {
   const caption = [wine.name, wine.vintage].filter(Boolean).join(' ');
 
   return (
-    <main style={{ background: '#ffffff', color: '#111111', minHeight: '100vh', padding: '1.5rem', fontFamily: 'system-ui, sans-serif' }}>
+    <div style={{ background: '#ffffff', color: '#111111', minHeight: '100vh', padding: '1.5rem', fontFamily: 'system-ui, sans-serif' }}>
       <style>{`
         @media print { .no-print { display: none !important; } main { padding: 0 !important; } @page { margin: 10mm; } }
         .qr svg { width: 100%; height: auto; display: block; }
@@ -42,6 +42,6 @@ export default async function LabelsPage({ params, searchParams }) {
           </figure>
         ))}
       </div>
-    </main>
+    </div>
   );
 }

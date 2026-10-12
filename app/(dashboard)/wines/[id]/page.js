@@ -34,10 +34,10 @@ const TYPE_CONFIG = {
 };
 
 const STATUS_CONFIG = {
-  IN_CELLAR: { label: 'În pivniță', color: 'rgba(85,196,78,0.8)' },
-  CONSUMED: { label: 'Consumat', color: 'rgba(245,230,232,0.3)' },
+  IN_CELLAR: { label: 'În pivniță', color: '#6fbf6a' },
+  CONSUMED: { label: 'Consumat', color: 'rgba(245,230,232,0.6)' },
   SOLD: { label: 'Vândut', color: 'rgba(212,175,55,0.7)' },
-  GIFTED: { label: 'Dăruit', color: 'rgba(196,69,105,0.7)' },
+  GIFTED: { label: 'Dăruit', color: '#d97a95' },
 };
 
 function InfoRow({ label, value }) {
@@ -79,7 +79,7 @@ export default async function WineDetailPage({ params }) {
         .wd-back {
           display: inline-flex; align-items: center; gap: 0.4rem;
           font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.12em;
-          color: rgba(245,230,232,0.3); text-decoration: none;
+          color: rgba(245,230,232,0.6); text-decoration: none;
           margin-bottom: 2rem; transition: color 0.2s;
         }
         .wd-back:hover { color: rgba(245,230,232,0.65); }
@@ -115,13 +115,13 @@ export default async function WineDetailPage({ params }) {
           line-height: 1.1; letter-spacing: -0.02em; margin-bottom: 0.4rem;
         }
         .wd-producer {
-          font-size: 0.88rem; color: rgba(245,230,232,0.4); font-weight: 300;
+          font-size: 0.88rem; color: rgba(245,230,232,0.6); font-weight: 300;
           letter-spacing: 0.06em; margin-bottom: 1.25rem;
         }
         .wd-stars { display: flex; gap: 3px; margin-bottom: 1.5rem; }
         .wd-star { font-size: 1.1rem; }
         .wd-star-fill { color: #d4af37; }
-        .wd-star-empty { color: rgba(245,230,232,0.12); }
+        .wd-star-empty { color: rgba(245,230,232,0.6); }
 
         .wd-quick-stats {
           display: grid; grid-template-columns: repeat(3, 1fr);
@@ -130,7 +130,7 @@ export default async function WineDetailPage({ params }) {
         }
         .wd-qs-item { background: rgba(255,255,255,0.02); padding: 1rem; text-align: center; }
         .wd-qs-value { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; font-weight: 600; color: #f5e6e8; line-height: 1; margin-bottom: 0.3rem; }
-        .wd-qs-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.12em; color: rgba(245,230,232,0.3); font-weight: 400; }
+        .wd-qs-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.12em; color: rgba(245,230,232,0.6); font-weight: 400; }
 
         .wd-actions-row { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.5rem; }
 
@@ -142,7 +142,7 @@ export default async function WineDetailPage({ params }) {
         }
         .wd-section-title {
           font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.18em;
-          color: #c44569; font-weight: 400; margin-bottom: 1.1rem;
+          color: #d97a95; font-weight: 400; margin-bottom: 1.1rem;
           padding-bottom: 0.6rem; border-bottom: 1px solid rgba(196,69,105,0.1);
         }
 
@@ -151,7 +151,7 @@ export default async function WineDetailPage({ params }) {
           gap: 1rem; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.03);
         }
         .wd-info-row:last-child { border-bottom: none; padding-bottom: 0; }
-        .wd-info-label { font-size: 0.75rem; color: rgba(245,230,232,0.35); font-weight: 300; flex-shrink: 0; }
+        .wd-info-label { font-size: 0.75rem; color: rgba(245,230,232,0.6); font-weight: 300; flex-shrink: 0; }
         .wd-info-value { font-size: 0.82rem; color: rgba(245,230,232,0.75); text-align: right; font-weight: 400; }
 
         .wd-tasting-notes {
@@ -164,7 +164,7 @@ export default async function WineDetailPage({ params }) {
         .wd-tag {
           padding: 0.25rem 0.65rem; background: rgba(255,255,255,0.04);
           border: 1px solid rgba(196,69,105,0.15); border-radius: 20px;
-          font-size: 0.72rem; color: rgba(245,230,232,0.55); font-weight: 300;
+          font-size: 0.72rem; color: rgba(245,230,232,0.6); font-weight: 300;
         }
         .wd-price-big { font-family: 'Cormorant Garamond', serif; font-size: 2rem; font-weight: 600; color: rgba(212,175,55,0.85); line-height: 1; }
 
@@ -225,7 +225,7 @@ export default async function WineDetailPage({ params }) {
                   {stars.map((filled, i) => (
                     <span key={i} className={`wd-star ${filled ? 'wd-star-fill' : 'wd-star-empty'}`}>★</span>
                   ))}
-                  <span style={{ fontSize: '0.78rem', color: 'rgba(245,230,232,0.3)', marginLeft: '0.4rem', alignSelf: 'center' }}>{wine.rating}/5</span>
+                  <span style={{ fontSize: '0.78rem', color: 'rgba(245,230,232,0.6)', marginLeft: '0.4rem', alignSelf: 'center' }}>{wine.rating}/5</span>
                 </div>
               )}
 
@@ -282,7 +282,7 @@ export default async function WineDetailPage({ params }) {
               {wine.purchasePrice && (
                 <div style={{ marginBottom: '1rem' }}>
                   <div className="wd-price-big">{formatMoney(wine.purchasePrice, wine.currency)}</div>
-                  <div style={{ fontSize: '0.68rem', color: 'rgba(245,230,232,0.3)', marginTop: '0.2rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Preț achiziție</div>
+                  <div style={{ fontSize: '0.68rem', color: 'rgba(245,230,232,0.6)', marginTop: '0.2rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Preț achiziție</div>
                 </div>
               )}
               <InfoRow label="Valoare estimată" value={wine.estimatedValue ? formatMoney(wine.estimatedValue, wine.currency) : null} />
@@ -295,7 +295,7 @@ export default async function WineDetailPage({ params }) {
                 <div className="wd-section-title">Soiuri & Gastronomie</div>
                 {wine.grapeVarieties?.length > 0 && (
                   <div style={{ marginBottom: '1rem' }}>
-                    <div style={{ fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'rgba(245,230,232,0.3)', marginBottom: '0.5rem' }}>Soiuri de struguri</div>
+                    <div style={{ fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'rgba(245,230,232,0.6)', marginBottom: '0.5rem' }}>Soiuri de struguri</div>
                     <div className="wd-tags">
                       {wine.grapeVarieties.map(g => <span key={g} className="wd-tag">{g}</span>)}
                     </div>
@@ -303,7 +303,7 @@ export default async function WineDetailPage({ params }) {
                 )}
                 {wine.foodPairing?.length > 0 && (
                   <div>
-                    <div style={{ fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'rgba(245,230,232,0.3)', marginBottom: '0.5rem' }}>Asocieri gastronomice</div>
+                    <div style={{ fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'rgba(245,230,232,0.6)', marginBottom: '0.5rem' }}>Asocieri gastronomice</div>
                     <div className="wd-tags">
                       {wine.foodPairing.map(f => <span key={f} className="wd-tag">{f}</span>)}
                     </div>

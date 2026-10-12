@@ -155,7 +155,7 @@ export default function ImageUpload({
           font-size: 0.68rem;
           text-transform: uppercase;
           letter-spacing: 0.15em;
-          color: rgba(245,230,232,0.45);
+          color: rgba(245,230,232,0.6);
           margin-bottom: 0.5rem;
           font-weight: 400;
         }
@@ -238,13 +238,13 @@ export default function ImageUpload({
         }
         .iu-empty-title {
           font-size: 0.82rem;
-          color: rgba(245,230,232,0.55);
+          color: rgba(245,230,232,0.6);
           font-weight: 300;
           margin-top: 0.25rem;
         }
         .iu-empty-sub {
           font-size: 0.65rem;
-          color: rgba(245,230,232,0.22);
+          color: rgba(245,230,232,0.6);
           letter-spacing: 0.08em;
           text-transform: uppercase;
         }
@@ -252,7 +252,7 @@ export default function ImageUpload({
           font-family: 'Cormorant Garamond', serif;
           font-size: 1rem;
           font-style: italic;
-          color: #c44569;
+          color: #d97a95;
           font-weight: 300;
           margin-top: 0.5rem;
         }
@@ -294,7 +294,7 @@ export default function ImageUpload({
         .iu-spin { width: 26px; height: 26px; border: 2px solid rgba(196,69,105,0.25); border-top-color: #c44569; border-radius: 50%; animation: iuspin 0.7s linear infinite; }
         @keyframes iuspin { to { transform: rotate(360deg); } }
 
-        .iu-hint { font-size: 0.62rem; color: rgba(245,230,232,0.18); margin-top: 0.4rem; letter-spacing: 0.06em; }
+        .iu-hint { font-size: 0.62rem; color: rgba(245,230,232,0.6); margin-top: 0.4rem; letter-spacing: 0.06em; }
       `}</style>
 
       <div className="iu-wrap">
@@ -304,7 +304,7 @@ export default function ImageUpload({
           {...getRootProps()}
           whileHover="animate"
           className={`iu-dropzone ${isDragActive ? "drag" : ""} ${preview ? "has-image" : ""}`}>
-          <input {...getInputProps()} />
+          <input {...getInputProps({ 'aria-label': label || 'Fotografie' })} />
 
           {preview ? (
             <>

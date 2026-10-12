@@ -116,7 +116,7 @@ export default function ListsManager({ lists, wines }) {
                     </span>
                     {list.kind === 'GIFTS' && item.reserved && <span style={{ fontSize: '0.72rem', color: '#e8b04a' }}>rezervat 🎁</span>}
                     {item.url && <a href={item.url} target="_blank" rel="noopener noreferrer" style={{ color: '#d97a95', fontSize: '0.75rem' }}>magazin ↗</a>}
-                    <button type="button" aria-label={`Scoate ${item.name}`} onClick={async () => { await removeFromList(item.id); refresh(); }} style={{ background: 'none', border: 'none', color: 'rgba(245,230,232,0.5)', cursor: 'pointer' }}>✕</button>
+                    <button type="button" aria-label={`Scoate ${item.name}`} onClick={async () => { await removeFromList(item.id); refresh(); }} style={{ background: 'none', border: 'none', color: 'rgba(245,230,232,0.6)', cursor: 'pointer' }}>✕</button>
                   </li>
                 ))}
               </ul>

@@ -1,19 +1,44 @@
 @import "tailwindcss";
 
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+  --foreground-rgb: 245, 230, 232;
+  --background-rgb: 13, 6, 8;
+  --focus-ring: #f0b4c4;
 }
 
+/* Tema e întunecată: textul fără culoare explicită moștenește deschis, nu negru */
 body {
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  background: rgb(var(--background-rgb));
+}
+
+/* REFACTOR-007: focus vizibil la navigarea cu tastatura, pe orice element interactiv */
+:where(a, button, input, select, textarea, summary, [tabindex], [role="button"], [role="switch"], [role="tab"]):focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.skip-link {
+  position: absolute;
+  left: 0.75rem;
+  top: -4rem;
+  z-index: 1000;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  background: #f5e6e8;
+  color: #0d0608;
+  font-weight: 500;
+  text-decoration: none;
+}
+.skip-link:focus { top: 0.75rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 @layer components {

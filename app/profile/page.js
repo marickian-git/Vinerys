@@ -37,7 +37,7 @@ export default async function ProfilePage() {
         .prof-page { min-height: 100vh; background: #0d0608; padding: 6rem 1.5rem 4rem; font-family: 'Jost', sans-serif; }
         .prof-inner { max-width: 900px; margin: 0 auto; }
 
-        .prof-back { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.12em; color: rgba(245,230,232,0.3); text-decoration: none; margin-bottom: 2rem; transition: color 0.2s; }
+        .prof-back { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.12em; color: rgba(245,230,232,0.6); text-decoration: none; margin-bottom: 2rem; transition: color 0.2s; }
         .prof-back:hover { color: rgba(245,230,232,0.65); }
 
         /* Hero card */
@@ -103,8 +103,8 @@ export default async function ProfilePage() {
           line-height: 1.1;
           margin-bottom: 0.25rem;
         }
-        .prof-email { font-size: 0.82rem; color: rgba(245,230,232,0.35); font-weight: 300; margin-bottom: 0.75rem; }
-        .prof-join { font-size: 0.7rem; color: rgba(245,230,232,0.2); text-transform: uppercase; letter-spacing: 0.12em; }
+        .prof-email { font-size: 0.82rem; color: rgba(245,230,232,0.6); font-weight: 300; margin-bottom: 0.75rem; }
+        .prof-join { font-size: 0.7rem; color: rgba(245,230,232,0.6); text-transform: uppercase; letter-spacing: 0.12em; }
 
         .prof-actions { display: flex; gap: 0.65rem; flex-shrink: 0; flex-wrap: wrap; }
         .prof-btn-edit {
@@ -122,7 +122,7 @@ export default async function ProfilePage() {
           padding: 0.6rem 1.1rem;
           background: transparent;
           border: 1px solid rgba(196,69,105,0.2);
-          color: rgba(245,230,232,0.5); text-decoration: none;
+          color: rgba(245,230,232,0.6); text-decoration: none;
           border-radius: 8px; font-size: 0.75rem;
           letter-spacing: 0.1em; text-transform: uppercase;
           transition: all 0.2s; white-space: nowrap;
@@ -155,7 +155,7 @@ export default async function ProfilePage() {
           color: #f5e6e8; line-height: 1;
           margin-bottom: 0.35rem;
         }
-        .prof-stat-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.15em; color: rgba(245,230,232,0.3); }
+        .prof-stat-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.15em; color: rgba(245,230,232,0.6); }
 
         /* Edit form card */
         .prof-card {
@@ -167,7 +167,7 @@ export default async function ProfilePage() {
         }
         .prof-card-title {
           font-size: 0.68rem; text-transform: uppercase;
-          letter-spacing: 0.18em; color: #c44569;
+          letter-spacing: 0.18em; color: #d97a95;
           font-weight: 400; margin-bottom: 1.25rem;
           padding-bottom: 0.75rem;
           border-bottom: 1px solid rgba(196,69,105,0.1);

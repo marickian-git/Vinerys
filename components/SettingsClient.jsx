@@ -109,20 +109,20 @@ export default function SettingsClient({
         .set-page { min-height: 100vh; background: #0d0608; padding: 6rem 1.5rem 4rem; font-family: 'Jost', sans-serif; }
         .set-inner { max-width: 680px; margin: 0 auto; }
 
-        .set-back { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.12em; color: rgba(245,230,232,0.3); text-decoration: none; margin-bottom: 2rem; transition: color 0.2s; }
+        .set-back { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.12em; color: rgba(245,230,232,0.6); text-decoration: none; margin-bottom: 2rem; transition: color 0.2s; }
         .set-back:hover { color: rgba(245,230,232,0.65); }
 
         .set-header { margin-bottom: 2.5rem; }
-        .set-eyebrow { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.2em; color: #c44569; margin-bottom: 0.4rem; }
+        .set-eyebrow { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.2em; color: #d97a95; margin-bottom: 0.4rem; }
         .set-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.8rem, 3vw, 2.5rem); font-weight: 300; color: #f5e6e8; line-height: 1.1; }
 
         .set-divider { height: 1px; background: linear-gradient(to right, rgba(196,69,105,0.3), transparent); margin-bottom: 2rem; }
 
         .set-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(196,69,105,0.08); border-radius: 16px; padding: 1.75rem; margin-bottom: 1.25rem; }
-        .set-card-title { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.18em; color: #c44569; font-weight: 400; margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid rgba(196,69,105,0.1); }
+        .set-card-title { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.18em; color: #d97a95; font-weight: 400; margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid rgba(196,69,105,0.1); }
 
         .set-field { margin-bottom: 1rem; }
-        .set-label { display: block; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.15em; color: rgba(245,230,232,0.45); margin-bottom: 0.5rem; font-weight: 400; }
+        .set-label { display: block; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.15em; color: rgba(245,230,232,0.6); margin-bottom: 0.5rem; font-weight: 400; }
         .set-input {
           width: 100%; padding: 0.75rem 1rem;
           background: rgba(255,255,255,0.04); border: 1px solid rgba(196,69,105,0.15);
@@ -136,7 +136,7 @@ export default function SettingsClient({
 
         .set-strength { display: flex; gap: 4px; margin-top: 0.4rem; align-items: center; }
         .set-strength-bar { height: 3px; flex: 1; border-radius: 2px; background: rgba(255,255,255,0.06); transition: background 0.3s; }
-        .set-strength-label { font-size: 0.65rem; color: rgba(245,230,232,0.3); margin-left: 0.4rem; transition: color 0.3s; white-space: nowrap; }
+        .set-strength-label { font-size: 0.65rem; color: rgba(245,230,232,0.6); margin-left: 0.4rem; transition: color 0.3s; white-space: nowrap; }
 
         .set-btn {
           padding: 0.72rem 1.5rem; background: linear-gradient(135deg, #8b1a2e, #c44569);
@@ -151,26 +151,26 @@ export default function SettingsClient({
         .set-btn-ghost {
           padding: 0.72rem 1.5rem; background: transparent;
           border: 1px solid rgba(196,69,105,0.2); border-radius: 8px;
-          color: rgba(245,230,232,0.5); font-family: 'Jost', sans-serif;
+          color: rgba(245,230,232,0.6); font-family: 'Jost', sans-serif;
           font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase;
           cursor: pointer; transition: all 0.2s; width: 100%;
         }
         .set-btn-ghost:hover { border-color: rgba(196,69,105,0.4); color: rgba(245,230,232,0.8); }
 
         .set-card-danger { border-color: rgba(220,80,80,0.15); }
-        .set-card-danger .set-card-title { color: rgba(220,80,80,0.7); border-bottom-color: rgba(220,80,80,0.1); }
-        .set-danger-text { font-size: 0.8rem; color: rgba(245,230,232,0.35); font-weight: 300; line-height: 1.7; margin-bottom: 1.25rem; }
-        .set-delete-hint { font-size: 0.72rem; color: rgba(245,230,232,0.3); margin-bottom: 0.5rem; }
-        .set-delete-hint strong { color: rgba(220,80,80,0.7); font-weight: 500; }
+        .set-card-danger .set-card-title { color: #e06b6b; border-bottom-color: rgba(220,80,80,0.1); }
+        .set-danger-text { font-size: 0.8rem; color: rgba(245,230,232,0.6); font-weight: 300; line-height: 1.7; margin-bottom: 1.25rem; }
+        .set-delete-hint { font-size: 0.72rem; color: rgba(245,230,232,0.6); margin-bottom: 0.5rem; }
+        .set-delete-hint strong { color: #e06b6b; font-weight: 500; }
 
         .set-btn-danger {
           padding: 0.72rem 1.5rem; background: transparent;
           border: 1px solid rgba(220,80,80,0.3); border-radius: 8px;
-          color: rgba(220,80,80,0.6); font-family: 'Jost', sans-serif;
+          color: #e06b6b; font-family: 'Jost', sans-serif;
           font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase;
           cursor: pointer; transition: all 0.2s; width: 100%;
         }
-        .set-btn-danger:hover:not(:disabled) { background: rgba(220,80,80,0.08); border-color: rgba(220,80,80,0.5); color: rgba(220,80,80,0.9); }
+        .set-btn-danger:hover:not(:disabled) { background: rgba(220,80,80,0.08); border-color: rgba(220,80,80,0.5); color: #e06b6b; }
         .set-btn-danger:disabled { opacity: 0.35; cursor: not-allowed; }
 
         .set-spinner { width: 12px; height: 12px; border: 2px solid rgba(245,230,232,0.3); border-top-color: #f5e6e8; border-radius: 50%; animation: setspin 0.6s linear infinite; display: inline-block; margin-right: 6px; vertical-align: middle; }
@@ -289,7 +289,7 @@ export default function SettingsClient({
                     <p
                       style={{
                         fontSize: "0.68rem",
-                        color: "rgba(220,80,80,0.8)",
+                        color: "#e06b6b",
                         marginTop: "0.35rem",
                       }}>
                       Parolele nu coincid
@@ -315,7 +315,7 @@ export default function SettingsClient({
             <p
               style={{
                 fontSize: "0.8rem",
-                color: "rgba(245,230,232,0.35)",
+                color: "rgba(245,230,232,0.6)",
                 marginBottom: "1.25rem",
                 fontWeight: 300,
                 lineHeight: 1.7,

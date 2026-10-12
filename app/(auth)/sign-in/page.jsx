@@ -105,11 +105,11 @@ export default function SignInPage() {
           margin-bottom: 1.5rem;
           letter-spacing: -0.02em;
         }
-        .wine-tagline em { font-style: italic; color: #c44569; }
+        .wine-tagline em { font-style: italic; color: #d97a95; }
 
         .wine-desc {
           font-size: 0.9rem;
-          color: rgba(245, 230, 232, 0.5);
+          color: rgba(245,230,232,0.6);
           font-weight: 300;
           letter-spacing: 0.08em;
           text-transform: uppercase;
@@ -118,8 +118,8 @@ export default function SignInPage() {
 
         .wine-stats { display: flex; gap: 2rem; }
         .stat { display: flex; flex-direction: column; gap: 0.3rem; }
-        .stat-num { font-family: 'Cormorant Garamond', serif; font-size: 2rem; font-weight: 600; color: #c44569; line-height: 1; }
-        .stat-label { font-size: 0.7rem; color: rgba(245, 230, 232, 0.4); text-transform: uppercase; letter-spacing: 0.12em; }
+        .stat-num { font-family: 'Cormorant Garamond', serif; font-size: 2rem; font-weight: 600; color: #d97a95; line-height: 1; }
+        .stat-label { font-size: 0.7rem; color: rgba(245,230,232,0.6); text-transform: uppercase; letter-spacing: 0.12em; }
         .divider-vert { width: 1px; background: rgba(196, 69, 105, 0.3); align-self: stretch; }
 
         /* ── RIGHT PANEL ── */
@@ -162,10 +162,10 @@ export default function SignInPage() {
         }
 
         .form-title { font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; font-weight: 300; color: #f5e6e8; margin-bottom: 0.5rem; line-height: 1.2; }
-        .form-subtitle { font-size: 0.82rem; color: rgba(245, 230, 232, 0.4); font-weight: 300; letter-spacing: 0.05em; margin-bottom: 2.5rem; }
+        .form-subtitle { font-size: 0.82rem; color: rgba(245,230,232,0.6); font-weight: 300; letter-spacing: 0.05em; margin-bottom: 2.5rem; }
 
         .field-group { margin-bottom: 1.25rem; }
-        .field-label { display: block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.15em; color: rgba(245, 230, 232, 0.5); margin-bottom: 0.6rem; font-weight: 400; }
+        .field-label { display: block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.15em; color: rgba(245,230,232,0.6); margin-bottom: 0.6rem; font-weight: 400; }
         .field-input {
           width: 100%; padding: 0.85rem 1rem;
           background: rgba(255, 255, 255, 0.04);
@@ -195,13 +195,13 @@ export default function SignInPage() {
         .submit-btn span { position: relative; z-index: 1; }
 
         .form-footer { margin-top: 2rem; text-align: center; }
-        .form-footer p { font-size: 0.8rem; color: rgba(245, 230, 232, 0.35); font-weight: 300; }
-        .form-footer a { color: #c44569; text-decoration: none; font-weight: 400; transition: color 0.2s; }
+        .form-footer p { font-size: 0.8rem; color: rgba(245,230,232,0.6); font-weight: 300; }
+        .form-footer a { color: #d97a95; text-decoration: none; font-weight: 400; transition: color 0.2s; }
         .form-footer a:hover { color: #e0607a; }
 
         .separator { display: flex; align-items: center; gap: 1rem; margin: 1.75rem 0; }
         .sep-line { flex: 1; height: 1px; background: rgba(196, 69, 105, 0.15); }
-        .sep-text { font-size: 0.7rem; color: rgba(245, 230, 232, 0.25); text-transform: uppercase; letter-spacing: 0.1em; }
+        .sep-text { font-size: 0.7rem; color: rgba(245,230,232,0.6); text-transform: uppercase; letter-spacing: 0.1em; }
 
         .spinner { width: 16px; height: 16px; border: 2px solid rgba(245, 230, 232, 0.3); border-top-color: #f5e6e8; border-radius: 50%; animation: spin 0.6s linear infinite; display: inline-block; margin-right: 8px; vertical-align: middle; }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -378,7 +378,7 @@ export default function SignInPage() {
                 />
               </div>
               <p style={{ textAlign: "right", margin: "-0.5rem 0 1.25rem" }}>
-                <Link href="/forgot-password" style={{ fontSize: "0.75rem", color: "rgba(196,69,105,0.85)", textDecoration: "none" }}>
+                <Link href="/forgot-password" style={{ fontSize: "0.75rem", color: "#d97a95", textDecoration: "none" }}>
                   Ai uitat parola?
                 </Link>
               </p>

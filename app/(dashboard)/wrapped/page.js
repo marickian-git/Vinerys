@@ -21,7 +21,7 @@ export default async function WrappedPage({ searchParams }) {
   const maxMonth = Math.max(1, ...w.months);
 
   return (
-    <main style={{ minHeight: '100vh', background: '#0d0608', color: '#f5e6e8', padding: '5.5rem 1rem 4rem', fontFamily: 'Jost, system-ui, sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: '#0d0608', color: '#f5e6e8', padding: '5.5rem 1rem 4rem', fontFamily: 'Jost, system-ui, sans-serif' }}>
       <div style={{ maxWidth: 560, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <nav aria-label="An" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem' }}>
           <Link href={`/wrapped?year=${year - 1}`} style={{ color: '#d97a95' }}>← {year - 1}</Link>
@@ -89,6 +89,6 @@ export default async function WrappedPage({ searchParams }) {
 
         {w.bottles > 0 && <WrappedShare text={wrappedShareText(w)} />}
       </div>
-    </main>
+    </div>
   );
 }

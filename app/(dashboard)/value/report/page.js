@@ -10,7 +10,7 @@ export default async function ValueReportPage() {
   const { currency } = report;
   const cell = { padding: '4px 6px', borderBottom: '1px solid #ddd', textAlign: 'left', fontSize: '9.5pt' };
   return (
-    <main style={{ background: '#fff', color: '#111', minHeight: '100vh', padding: '1.5rem', fontFamily: 'Georgia, serif' }}>
+    <div style={{ background: '#fff', color: '#111', minHeight: '100vh', padding: '1.5rem', fontFamily: 'Georgia, serif' }}>
       <style>{'@media print { .no-print { display: none !important; } main { padding: 0 !important; } @page { margin: 14mm; } }'}</style>
       <div className="no-print" style={{ marginBottom: '1rem', fontFamily: 'system-ui, sans-serif' }}><PrintButton label="Printează / Salvează PDF" /></div>
       <h1 style={{ margin: 0, fontSize: '18pt' }}>Raport de valoare · {report.owner}</h1>
@@ -42,6 +42,6 @@ export default async function ValueReportPage() {
         Valorile sunt estimări (introduse manual sau sugerate de AI la scanare) și nu reprezintă o evaluare autorizată.
         {report.rows.some((r) => r.originalCurrency !== currency) && ` Sumele în alte monede sunt convertite în ${currency} cu cursul BCE din ziua generării.`}
       </p>
-    </main>
+    </div>
   );
 }

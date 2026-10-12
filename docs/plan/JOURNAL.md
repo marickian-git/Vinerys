@@ -427,6 +427,13 @@ Plus `describeTools()` (textul pentru prompt) și `runTool(userId, name, args)` 
 - **Învățat:** un `const body` din handler intra în conflict cu destructurarea rezultatului, așa că variabila a devenit `scan`. Un stream fără eveniment `result` înseamnă conexiune întreruptă și primește un mesaj explicit.
 - **Next:** #78 (accesibilitate).
 
+### #78 REFACTOR-007 Accesibilitate
+
+- **Făcut:** `tests/e2e/a11y.spec.js` (axe-core, 15 ecrane + test de tastatură). Am corectat 150+ noduri cu probleme: contrast (un script schimbă doar proprietatea `color`, sare peste `::placeholder`/`disabled` și peste PDF-ul alb din export), etichete asociate (22 de câmpuri în `WineForm`), `select`-uri fără nume, link în text fără subliniere. Am adăugat `globals.css` (body deschis, `:focus-visible`, skip link, reduced motion), Navbar (`aria-current`, `aria-expanded`, Escape, `inert`), `<main>` imbricate devenite `<div>` și elemente clickabile devenite butoane.
+- **Decizii:** pragul α = 0,6 pentru text secundar (minimul calculat e 0,51, rămâne marjă pentru fundaluri semi-transparente). Badge-urile blocate au chenar punctat în loc de opacitate (opacitatea strica contrastul). Testul axe rulează în CI, deci orice regresie de contrast pică build-ul.
+- **Învățat:** body-ul moștenea `color: rgb(0,0,0)` din template-ul Next, de aceea componentele noi fără culoare explicită aveau text negru invizibil (setări monedă, push). `openWine` cere să fii pe `/wines`.
+- **Next:** checkpoint 8, PR + merge lot 3+4.
+
 ---
 
 ## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub

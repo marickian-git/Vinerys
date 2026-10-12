@@ -11,7 +11,7 @@ export default async function PublicListPage({ params }) {
   if (!list) notFound();
   const gifts = list.kind === 'GIFTS';
   return (
-    <main style={{ minHeight: '100vh', background: '#0d0608', color: '#f5e6e8', padding: '4rem 1.25rem', fontFamily: 'Jost, system-ui, sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: '#0d0608', color: '#f5e6e8', padding: '4rem 1.25rem', fontFamily: 'Jost, system-ui, sans-serif' }}>
       <div style={{ maxWidth: 680, margin: '0 auto' }}>
         <p style={{ margin: 0, fontSize: '0.75rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#d97a95' }}>{list.owner}</p>
         <h1 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontWeight: 400, fontSize: '2.4rem', margin: '0.4rem 0' }}>{list.name}</h1>
@@ -30,6 +30,6 @@ export default async function PublicListPage({ params }) {
           ))}
         </ul>
       </div>
-    </main>
+    </div>
   );
 }

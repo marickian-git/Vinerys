@@ -117,11 +117,11 @@ export default function SignUpPage() {
           margin-bottom: 1.2rem;
           letter-spacing: -0.02em;
         }
-        .wine-tagline em { font-style: italic; color: #c44569; }
+        .wine-tagline em { font-style: italic; color: #d97a95; }
 
         .wine-desc {
           font-size: 0.85rem;
-          color: rgba(245, 230, 232, 0.45);
+          color: rgba(245,230,232,0.6);
           font-weight: 300;
           letter-spacing: 0.1em;
           text-transform: uppercase;
@@ -132,7 +132,7 @@ export default function SignUpPage() {
         .feature-list { display: flex; flex-direction: column; gap: 0.9rem; align-items: flex-start; }
         .feature-item { display: flex; align-items: center; gap: 0.75rem; }
         .feature-dot { width: 6px; height: 6px; border-radius: 50%; background: #c44569; flex-shrink: 0; box-shadow: 0 0 8px rgba(196,69,105,0.6); }
-        .feature-text { font-size: 0.8rem; color: rgba(245, 230, 232, 0.5); letter-spacing: 0.06em; font-weight: 300; }
+        .feature-text { font-size: 0.8rem; color: rgba(245,230,232,0.6); letter-spacing: 0.06em; font-weight: 300; }
 
         .wine-right {
           display: flex;
@@ -174,10 +174,10 @@ export default function SignUpPage() {
         }
 
         .form-title { font-family: 'Cormorant Garamond', serif; font-size: 2rem; font-weight: 300; color: #f5e6e8; margin-bottom: 0.4rem; line-height: 1.2; }
-        .form-subtitle { font-size: 0.82rem; color: rgba(245, 230, 232, 0.4); font-weight: 300; letter-spacing: 0.05em; margin-bottom: 2rem; }
+        .form-subtitle { font-size: 0.82rem; color: rgba(245,230,232,0.6); font-weight: 300; letter-spacing: 0.05em; margin-bottom: 2rem; }
 
         .field-group { margin-bottom: 1.1rem; }
-        .field-label { display: block; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.15em; color: rgba(245, 230, 232, 0.5); margin-bottom: 0.55rem; font-weight: 400; }
+        .field-label { display: block; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.15em; color: rgba(245,230,232,0.6); margin-bottom: 0.55rem; font-weight: 400; }
         .field-input {
           width: 100%; padding: 0.8rem 1rem;
           background: rgba(255, 255, 255, 0.04);
@@ -212,16 +212,16 @@ export default function SignUpPage() {
         .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
         .submit-btn span { position: relative; z-index: 1; }
 
-        .terms-note { font-size: 0.72rem; color: rgba(245, 230, 232, 0.25); text-align: center; margin-top: 1rem; line-height: 1.6; font-weight: 300; }
+        .terms-note { font-size: 0.72rem; color: rgba(245,230,232,0.6); text-align: center; margin-top: 1rem; line-height: 1.6; font-weight: 300; }
 
         .form-footer { margin-top: 1.5rem; text-align: center; }
-        .form-footer p { font-size: 0.8rem; color: rgba(245, 230, 232, 0.35); font-weight: 300; }
-        .form-footer a { color: #c44569; text-decoration: none; font-weight: 400; transition: color 0.2s; }
+        .form-footer p { font-size: 0.8rem; color: rgba(245,230,232,0.6); font-weight: 300; }
+        .form-footer a { color: #d97a95; text-decoration: none; font-weight: 400; transition: color 0.2s; }
         .form-footer a:hover { color: #e0607a; }
 
         .separator { display: flex; align-items: center; gap: 1rem; margin: 1.5rem 0; }
         .sep-line { flex: 1; height: 1px; background: rgba(196, 69, 105, 0.15); }
-        .sep-text { font-size: 0.7rem; color: rgba(245, 230, 232, 0.25); text-transform: uppercase; letter-spacing: 0.1em; }
+        .sep-text { font-size: 0.7rem; color: rgba(245,230,232,0.6); text-transform: uppercase; letter-spacing: 0.1em; }
 
         .spinner { width: 16px; height: 16px; border: 2px solid rgba(245, 230, 232, 0.3); border-top-color: #f5e6e8; border-radius: 50%; animation: spin 0.6s linear infinite; display: inline-block; margin-right: 8px; vertical-align: middle; }
         @keyframes spin { to { transform: rotate(360deg); } }
