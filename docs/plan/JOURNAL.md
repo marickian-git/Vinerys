@@ -245,6 +245,19 @@ Pe pagina vinului apare secțiunea „Jurnal de degustare”. Pagina `/tastings`
 `getConsumptionPlan()` și pagina `/planner` (protejată, link din Profil): grafic pe ani, apoi secțiuni pe ani cu statusul fiecărui vin (trecut de vârf / ultimul an / în fereastră). Teste unit + e2e `tests/e2e/planner.spec.js`.
 **Decizii:** planul e calculat la fiecare afișare, nu salvat. Alocarea manuală a sticlelor pe ani („assign bottles to years”) cere sticle individuale, deci vine cu modelul `Bottle` (#30).
 
+### #48 CELLAR-002 QR pentru fiecare sticlă
+**Făcut:**
+- `utils/qr.js` (`bottleUrl`, `qrSvg` cu pachetul `qrcode` 1.5.4, corecție M).
+- Pagina de printat `/wines/[id]/labels` (`?count=N`, CSS `@media print`, `PrintButton`), link „Etichete QR” pe pagina vinului.
+- Pagina de scanare `/q/[id]` (protejată), cu `QuickConsume`: un tap = o sticlă consumată, apoi „Notează cum a fost” spre jurnal (#106).
+- Teste unit + e2e `tests/e2e/qr.spec.js`.
+
+**Decizii:**
+- QR-ul e per vin până la modelul `Bottle` (#30). Atunci URL-ul devine `/q/<bottleId>`, iar `/q/<wineId>` rămâne compatibil.
+- Pe `/q`, scanarea ține loc de confirmare, deci consumul e fără al doilea click (spre deosebire de butonul din pagina vinului).
+
+**Învățat:** cu `loading.jsx`, `notFound()` dintr-o pagină trimisă în flux întoarce status 200 cu conținutul 404. Testele verifică conținutul, nu statusul.
+
 ---
 
 ## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub

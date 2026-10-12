@@ -244,6 +244,7 @@ export default async function WineDetailPage({ params }) {
 
               <div className="wd-actions-row">
                 <WineActions wineId={wine.id} isFavorite={wine.isFavorite} />
+                <Link href={`/wines/${wine.id}/labels`} className="wd-qr-link" style={{ fontSize: '0.75rem', color: 'rgba(245,230,232,0.7)', alignSelf: 'center' }}>▦ Etichete QR</Link>
                 {wine.quantity > 0 && <ConsumeButton wineId={wine.id} currentQuantity={wine.quantity} />}
               </div>
             </div>

@@ -52,7 +52,7 @@ Același flux. Branch-ul a fost repornit din `main` (`137957e`). Un singur merge
 | 20 | #61 | SOCIAL-005 Badge-uri | done | `efd008a` | 8 badge-uri cu 4 niveluri (Bronz → Platină) calculate din date, fără tabel nou: țări, soiuri, degustări, sticle consumate, pivniță, regiuni românești, deschise în fereastră, scanări AI. Card pe Profil, cu „Următoarea provocare”. „Toate DOC-urile din România” așteaptă baza DOC (RO-002, #63); până atunci se numără regiunile |
 | — | | **Checkpoint 4** | | | |
 | 21 | #52 | CELLAR-006 Planificator de consum | done | | Pagina `/planner`: sticlele din pivniță împărțite uniform pe anii ferestrei (orizont de 10 ani), cu cele depășite în anul curent marcate și cele aflate în ultimul an. Vinurile fără fereastră sunt listate separat, cu link de editare. Fallback pe anii din `agingPotential`. Planul e calculat, nu salvat; „assign bottles to years” manual vine cu modelul Bottle (#30) |
-| 22 | #48 | CELLAR-002 QR per sticlă | todo | | |
+| 22 | #48 | CELLAR-002 QR per sticlă | done | | QR per vin (o etichetă pentru fiecare sticlă, până la 48) pe `/wines/[id]/labels` (printabil, SVG inline), cu link „Etichete QR” pe pagina vinului. Scanarea deschide `/q/[id]`: „Deschid o sticlă” consumă dintr-un singur tap, apoi „Notează cum a fost”. QR-ul unic per sticlă vine cu modelul Bottle (#30). Dependență nouă: `qrcode` |
 | 23 | #87 | AI-012 Chei de platformă + cote | todo | | |
 | 24 | #84 | ARCH-008 API REST /api/v1 | todo | | |
 | 25 | #35 | DATA-007 Multi-currency | todo | | |
