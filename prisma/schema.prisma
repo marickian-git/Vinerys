@@ -159,6 +159,10 @@ model Wine {
   bottleImageUrl       String?
   labelImageUrl        String?
 
+  // „Ce gătesc cu el?” (HOME-003): răspunsul AI cache-uit, valid cât timp pairingKey e același
+  pairing              Json?
+  pairingKey           String?
+
   // Status
   isFavorite           Boolean     @default(false)
   consumptionDate      DateTime?

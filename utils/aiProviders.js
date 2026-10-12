@@ -294,6 +294,28 @@ export async function analyzeWineLabel(imageBase64, mimeType, provider, apiKey, 
     return response.result;
 }
 
+// Un singur răspuns text (fără imagine): agenții se încearcă pe rând, după prioritate, până reușește unul.
+// Folosit de pairing (HOME-003). Întoarce rezultatul normalizat și consumul fiecărei încercări.
+export async function generateWithAgents(agents, prompt, normalize, { operation = 'text' } = {}) {
+    const usable = agents
+        .filter((agent) => agent.enabled !== false && agent.apiKey?.trim() && AI_PROVIDERS[agent.provider] && !['Invalid credentials'].includes(agent.lastStatus))
+        .sort((a, b) => (a.priority || 0) - (b.priority || 0));
+    if (!usable.length) throw new Error('Niciun agent AI activ și configurat');
+    const usage = [];
+    let lastError;
+    for (const agent of usable) {
+        try {
+            const response = await withRetry({ ...agent, maxRetries: Math.min(agent.maxRetries ?? 1, 1) }, prompt, null, null, normalize);
+            usage.push(usageEntry(operation, agent, { status: 'fulfilled', value: response }));
+            return { result: response.result, provider: agent.provider, usage };
+        } catch (error) {
+            usage.push(usageEntry(operation, agent, { status: 'rejected', reason: error }));
+            lastError = error;
+        }
+    }
+    throw Object.assign(lastError ?? new Error('AI indisponibil'), { usage });
+}
+
 // O linie de consum per apel de agent (AI-013), reușit sau nu
 function usageEntry(operation, agent, settledItem) {
     const value = settledItem.status === 'fulfilled' ? settledItem.value : null;

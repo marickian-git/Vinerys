@@ -17,7 +17,9 @@ import { auth } from "./auth";
 import { decryptSecret, encryptSecret } from "./aiSecrets";
 import { getProviderDefinition, isKnownProvider, listProviderDefinitions } from "./aiProviderRegistry";
 import { validateProviderBaseUrl } from "./aiUrlSecurity";
-import { listProviderModels } from "./aiProviders";
+import { generateWithAgents, listProviderModels } from "./aiProviders";
+import { normalizePairing, pairingKey, pairingPrompt } from "./pairing";
+import { recordAIUsage } from "./aiUsage";
 import { shareUrlFor } from "./share";
 import { LIMITS, rateLimit, tooManyRequestsMessage } from "./rateLimit";
 import { listUserObjects, objectKeyFromUrl, removeObjects } from "./storage";
@@ -808,4 +810,47 @@ export async function importWines(rows, { source = 'csv' } = {}) {
   }
 
   return { success: true, imported: valid.length, skipped };
+}
+
+// ─────────────────────────────────────────
+// „CE GĂTESC CU EL?” (HOME-003)
+// ─────────────────────────────────────────
+
+const PAIRING_LIMIT = { limit: 20, windowMs: 10 * 60 * 1000 };
+
+// Răspunsul din cache dacă identitatea vinului nu s-a schimbat; altfel (sau la refresh) îl generează cu agenții AI
+export async function getWinePairing(wineId, { refresh = false } = {}) {
+  const user = await getCurrentUser();
+  const wine = await prisma.wine.findFirst({ where: { id: wineId, userId: user.id } });
+  if (!wine) return { error: 'Vinul nu a fost găsit' };
+
+  const key = pairingKey(wine);
+  if (!refresh && wine.pairing && wine.pairingKey === key) return { pairing: wine.pairing, cached: true };
+
+  const limited = rateLimit(`pairing:${user.id}`, PAIRING_LIMIT);
+  if (!limited.ok) return { error: tooManyRequestsMessage(limited.retryAfter) };
+
+  const agents = (await prisma.aIAgent.findMany({ where: { userId: user.id, enabled: true } })).flatMap((agent) => {
+    try {
+      return [{ ...agent, apiKey: decryptSecret(agent.encryptedApiKey) }];
+    } catch {
+      return [];
+    }
+  });
+  if (!agents.length) return { error: 'Configurează un agent AI în Setări ca să primești sugestii.' };
+
+  const requestId = randomBytes(8).toString('hex');
+  const log = logger.child({ requestId, userId: user.id, wineId });
+  try {
+    const { result, usage, provider } = await generateWithAgents(agents, pairingPrompt(wine), normalizePairing, { operation: 'pairing' });
+    await recordAIUsage(user.id, requestId, usage, log);
+    const pairing = { ...result, provider, generatedAt: new Date().toISOString() };
+    await prisma.wine.update({ where: { id: wine.id }, data: { pairing, pairingKey: key } });
+    log.info('pairing generated', { provider });
+    return { pairing, cached: false };
+  } catch (error) {
+    await recordAIUsage(user.id, requestId, error.usage, log);
+    log.warn('pairing failed', { error: serializeError(error) });
+    return { error: 'Sommelierul AI nu a răspuns. Încearcă din nou.' };
+  }
 }

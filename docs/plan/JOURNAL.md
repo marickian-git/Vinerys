@@ -140,6 +140,18 @@ Curățenia contului rulează în `finally`. Raportul OK/FAIL iese cu cod 0/1, i
 **Decizii:** fără job programat în Actions. Un workflow nou cere push cu scope-ul `workflow`, iar rularea din GitHub spre serverul de acasă depinde de rețea. Pentru început: manual, după ce Watchtower preia imaginea.
 **Next:** după merge, `SMOKE_URL=https://casa-spiridus.go.ro/crama SMOKE_EXPECT_VERSION=<sha> npm run smoke:prod`.
 
+### #104 HOME-003 Vin → mâncare: „Ce gătesc cu el?”
+**Făcut:**
+- `utils/pairing.js`: `pairingKey`, `pairingPrompt` (răspuns în română, cel puțin un preparat românesc când se potrivește), `normalizePairing` (3 preparate, temperatură 4–22 °C, decantare 0–240 min).
+- `generateWithAgents` în `aiProviders`: încearcă agenții pe rând, după prioritate, și întoarce consumul fiecărei încercări.
+- `getWinePairing(wineId, { refresh })` cu cache pe `Wine.pairing` + `pairingKey` (migrația `20261012000623_wine_pairing`) și rate limit 20 / 10 min.
+- `components/wines/WinePairing.jsx` pe pagina vinului („Ce gătesc cu el?” / „Alte sugestii”, marcat „Generat de AI”).
+- `utils/aiUsage.js` (`recordAIUsage`) e comun pentru scanare și pairing.
+- Teste: `tests/unit/pairing.test.js`, inclusiv fallback-ul între agenți cu `fetch` simulat.
+
+**Decizii:** cache-ul ține cât timp nu se schimbă identitatea (nume, producător, an, tip, soiuri, regiune). Cantitatea sau ratingul nu îl invalidează. Un agent care eșuează nu blochează: se trece la următorul.
+**Învățat:** primul test e2e după `next start` poate depăși timeout-ul de 5 s al `toHaveURL` (server rece). În CI e acoperit de `retries: 1`.
+
 ---
 
 ## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub
