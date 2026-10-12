@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { BASE, addWine, signUpViaApi } from './helpers';
+import { BASE, addWine, openWine, signUpViaApi } from './helpers';
 
 test('adăugare vin, consum până la zero, statistici corecte', async ({ page }) => {
   await signUpViaApi(page);
@@ -13,8 +13,7 @@ test('adăugare vin, consum până la zero, statistici corecte', async ({ page }
 
   // Consum: primul click cere confirmare, al doilea consumă
   await page.goto(`${BASE}/wines`);
-  await page.getByText(name).first().click();
-  await expect(page).toHaveURL(/\/crama\/wines\/[^/]+$/);
+  await openWine(page, name);
   const bottles = page.locator('.wd-qs-item', { hasText: 'Sticle' }).locator('.wd-qs-value');
   await expect(bottles).toHaveText('2');
   for (const remaining of ['1', '0']) {

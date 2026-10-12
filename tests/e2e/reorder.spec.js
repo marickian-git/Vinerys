@@ -1,12 +1,11 @@
 import { expect, test } from '@playwright/test';
-import { BASE, addWine, signUpViaApi } from './helpers';
+import { BASE, addWine, openWine, signUpViaApi } from './helpers';
 
 test('„Cumpără din nou” după ultima sticlă dintr-un vin favorit', async ({ page }) => {
   await signUpViaApi(page);
   const name = `Reorder E2E ${Date.now()}`;
   await addWine(page, { name, quantity: 1 });
-  await page.getByText(name).first().click();
-  await expect(page).toHaveURL(/\/crama\/wines\/[^/]+$/);
+  await openWine(page, name);
 
   await page.getByRole('button', { name: /Favorit/ }).click();
   await expect(page.getByRole('button', { name: /❤️/ })).toBeVisible();

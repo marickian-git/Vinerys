@@ -1,12 +1,11 @@
 import { expect, test } from '@playwright/test';
-import { BASE, addWine, signUpViaApi } from './helpers';
+import { BASE, addWine, openWine, signUpViaApi } from './helpers';
 
 test('etichete QR per sticlă și consum cu un tap după scanare', async ({ page }) => {
   await signUpViaApi(page);
   const name = `QR E2E ${Date.now()}`;
   await addWine(page, { name, quantity: 2 });
-  await page.getByText(name).first().click();
-  await expect(page).toHaveURL(/\/crama\/wines\/[^/]+$/);
+  await openWine(page, name);
   const wineId = page.url().split('/').pop();
 
   await page.getByRole('link', { name: /Etichete QR/ }).click();

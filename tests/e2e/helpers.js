@@ -32,3 +32,9 @@ export async function addWine(page, { name, quantity = 1, estimatedValue } = {})
   await expect(page).toHaveURL(new RegExp(`${BASE}/wines$`), { timeout: 20_000 });
   await expect(page.getByText(name).first()).toBeVisible();
 }
+
+// Deschide pagina unui vin din listă (navigarea poate depăși 5 s pe un server încărcat)
+export async function openWine(page, name) {
+  await page.getByText(name).first().click();
+  await expect(page).toHaveURL(new RegExp(`${BASE}/wines/[^/]+$`), { timeout: 20_000 });
+}

@@ -1,12 +1,11 @@
 import { expect, test } from '@playwright/test';
-import { BASE, addWine, signUpViaApi } from './helpers';
+import { BASE, addWine, openWine, signUpViaApi } from './helpers';
 
 test('jurnal de degustare: adăugare, rating propagat pe vin, pagina /tastings, ștergere', async ({ page }) => {
   await signUpViaApi(page);
   const name = `Tasting E2E ${Date.now()}`;
   await addWine(page, { name, quantity: 2 });
-  await page.getByText(name).first().click();
-  await expect(page).toHaveURL(/\/crama\/wines\/[^/]+$/);
+  await openWine(page, name);
 
   await page.getByRole('button', { name: '+ Adaugă degustare' }).click();
   await page.getByRole('button', { name: '4 din 5' }).click();
