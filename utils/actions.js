@@ -205,6 +205,21 @@ export async function getCellarLocations() {
 // plus potrivire exactă în regiune, țară, soiuri, arome, asocieri și note
 async function fuzzyWineMatches(userId, text) {
   const like = likePattern(text);
+  try {
+    return await trigramWineMatches(userId, text, like);
+  } catch (error) {
+    // Fără pg_trgm (extensia nu a putut fi creată): potrivire simplă, fără toleranță la greșeli
+    logger.warn('trigram search unavailable, falling back to ILIKE', { error: serializeError(error) });
+    const rows = await prisma.$queryRaw`
+      SELECT id FROM "Wine"
+      WHERE "userId" = ${userId} AND translate(lower(concat_ws(' ', name, producer, region, subregion, country,
+        array_to_string("grapeVarieties", ' '), array_to_string("aromaProfile", ' '), array_to_string("foodPairing", ' '), "tastingNotes")),
+        'ăâîșşțţ', 'aaisstt') LIKE ${like}`;
+    return new Map(rows.map((row) => [row.id, 1]));
+  }
+}
+
+async function trigramWineMatches(userId, text, like) {
   // translate() scoate diacriticele românești fără extensia unaccent; textul căutat e deja fără diacritice (foldKey)
   const rows = await prisma.$queryRaw`
     WITH w AS (
