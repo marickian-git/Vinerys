@@ -206,7 +206,7 @@ export default function WineFilters({ countries = [], totalResults = 0 }) {
         {/* Row 1: search + dropdowns + advanced toggle */}
         <div className="wf-row1">
           <form className="wf-search-form" onSubmit={handleSearch}>
-            <input className="wf-search-input" placeholder="Caută vin, producător, regiune..." value={search} onChange={e => setSearch(e.target.value)} />
+            <input className="wf-search-input" placeholder="Caută… ex. roșii gata de băut sub 150" value={search} onChange={e => setSearch(e.target.value)} />
             <button type="submit" className="wf-search-btn">🔍</button>
           </form>
 

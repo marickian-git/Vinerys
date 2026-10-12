@@ -152,6 +152,16 @@ Curățenia contului rulează în `finally`. Raportul OK/FAIL iese cu cod 0/1, i
 **Decizii:** cache-ul ține cât timp nu se schimbă identitatea (nume, producător, an, tip, soiuri, regiune). Cantitatea sau ratingul nu îl invalidează. Un agent care eșuează nu blochează: se trece la următorul.
 **Învățat:** primul test e2e după `next start` poate depăși timeout-ul de 5 s al `toHaveURL` (server rece). În CI e acoperit de `retries: 1`.
 
+### #55 CELLAR-009 Căutare inteligentă
+**Făcut:**
+- Migrația `wine_search_trgm`: `CREATE EXTENSION pg_trgm` + indecși GIN trigram pe `name` și `producer`, declarați în schema (`ops: raw("gin_trgm_ops")`), deci CI-ul nu raportează drift.
+- `utils/searchQuery.js` (`parseSearchQuery`) traduce „roșii gata de băut sub 150 lei” în filtre (tip, fereastră de consum, preț min/max, an, favorite, trecute de vârf). Restul textului devine căutare fuzzy (`fuzzyWineMatches`): `word_similarity` pe nume/producător plus `LIKE` în regiune, țară, soiuri, arome, asocieri și note. Rezultatele sunt ordonate după relevanță când nu e aleasă altă sortare.
+- Model `SavedFilter` (migrația `saved_filters`), acțiunile `getSavedFilters/saveFilter/deleteSavedFilter`, componenta `SavedFilters` în Pivniță, cu placeholder nou în căutare.
+- Teste: `tests/unit/searchQuery.test.js`, e2e `tests/e2e/search.spec.js` (greșeală de tastare, limbaj natural, regiune, filtru salvat).
+
+**Decizii:** fără extensia `unaccent`. `translate()` scoate diacriticele românești direct în SQL, iar textul căutat trece prin `foldKey`. „lei”/„€” sunt ignorate, deci prețul se compară cu valoarea salvată (multi-currency = #35).
+**Învățat:** în regex-uri cu alternative, variantele lungi trebuie puse primele („trecute de vârf” înaintea lui „trecute”). `pg_trgm` e o extensie „trusted” (PG13+), deci proprietarul DB-ului o poate crea fără superuser.
+
 ---
 
 ## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub
