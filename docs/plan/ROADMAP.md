@@ -18,7 +18,7 @@ multi-limbă și, la final, aplicație mobilă în App Store / Google Play.
 
 ---
 
-## Faza 0 — Stabilizare și curățenie  `🟨` (0.1–0.3 gata; rămâne deploy + 0.4)
+## Faza 0 — Stabilizare și curățenie  `✅` (0.4 gata pe 12.10, PR #124)
 
 Obiectiv: aplicația actuală funcționează corect și sigur; avem plasă de siguranță (CI, teste) pentru refactor.
 Detalii probleme: vezi `AUDIT.md`.
@@ -51,8 +51,10 @@ Detalii probleme: vezi `AUDIT.md`.
 - [x] Health check care verifică și DB-ul (+ `version`)
 - [x] Migrație baseline `wine_log` (tabela lipsea din istoricul de migrații)
 
-### 0.4 Observabilitate `⬜`
-- [ ] Logging structurat (pino) + Sentry (sau alternativă self-hosted)
+### 0.4 Observabilitate `✅` (#76, #77, #75, #123)
+- [x] Logging structurat (logger propriu JSON, fără pino) + raportare erori Sentry/GlitchTip opțională (`SENTRY_DSN`)
+- [x] Erori standard (`AppError`, `withApiHandler`, requestId)
+- [x] Test de fum în producție (`npm run smoke:prod`)
 
 ---
 
@@ -60,7 +62,7 @@ Detalii probleme: vezi `AUDIT.md`.
 
 Obiectiv: structura care susține design nou, multi-limbă, business și mobile fără rescrieri ulterioare.
 
-### 1.1 Strat de servicii + API `⬜`
+### 1.1 Strat de servicii + API `🟨` (scheme Zod comune gata, #28)
 - [ ] `server/` cu servicii pe domenii (wines, cellars, ai, media, stats) — logică pură, testabilă
 - [ ] Server actions devin wrapper-e subțiri peste servicii
 - [ ] API REST `/api/v1/*` peste aceleași servicii (pentru aplicația mobilă), auth prin bearer token
@@ -71,7 +73,7 @@ Obiectiv: structura care susține design nou, multi-limbă, business și mobile 
 - [ ] Separare `Wine` (eticheta) / `Bottle` (exemplar: preț, locație, dată) / `Tasting` (degustare: notă, rating, mâncare, poze)
 - [ ] `Event` log ca sursă de adevăr pentru istoric și statistici
 - [ ] Migrare date existente fără pierderi + script de verificare
-- [ ] Normalizare și vocabulare canonice: țări, locații, arome, culoare derivată — DATA-010 (de creat pe GitHub)
+- [x] Normalizare și vocabulare canonice: țări, locații, arome, culoare derivată — DATA-010 (#120)
 
 ### 1.3 Pipeline imagini `⬜`
 - [ ] `sharp`: resize + WebP + thumbnail la upload
@@ -88,9 +90,9 @@ Obiectiv: structura care susține design nou, multi-limbă, business și mobile 
 ### 1.5 AI găzduit `⬜`
 - [ ] Chei de platformă + cote per utilizator (necesar pentru utilizatori obișnuiți / business)
 - [ ] BYO keys rămâne opțiune avansată
-- [ ] Cache după hash imagine + bază canonică de vinuri (al doilea scan = instant, gratuit)
+- [x] Cache după hash imagine (#43); baza canonică de vinuri rămâne la modelul de date nou
 - [ ] Structured outputs native unde providerul suportă
-- [ ] Tracking cost per agent / per utilizator
+- [x] Tracking cost per agent / per utilizator (#88)
 
 ---
 
@@ -152,7 +154,7 @@ Pentru fiecare câmp din model decidem cum devine vizual:
 Obiectiv: în 10 secunde știi ce sticlă să deschizi și cu ce mâncare.
 
 - [ ] 3.1 **Scor de urgență** (trecut de vârf > iese anul ăsta > la vârf > intră curând) + secțiunea „De băut curând”
-- [ ] 3.2 **Vin → mâncare**: „Ce gătesc cu el?” — 3 preparate, temperatură servire, decantare
+- [x] 3.2 **Vin → mâncare**: „Ce gătesc cu el?” — 3 preparate, temperatură servire, decantare (#104)
 - [ ] 3.3 **Mâncare → vin**: „Ce gătesc azi?” (text / voce / poză) → top 3 sticle din pivniță, scor = potrivire × urgență, cu explicație
 - [ ] 3.4 **Deschide sticla** → consum cu un tap → follow-up a doua zi (rating, notă, poză masă)
 - [ ] 3.5 **Notificări push**: plan de weekend, vinuri care intră/ies din fereastră
@@ -167,10 +169,10 @@ Obiectiv: în 10 secunde știi ce sticlă să deschizi și cu ce mâncare.
 - [ ] 4.2 Etichete QR per sticlă → scan = consum / detalii
 - [ ] 4.3 Planificator de consum pe ani + curbă de maturitate
 - [ ] 4.4 Valoare și ROI, multi-monedă, raport PDF pentru asigurare
-- [ ] 4.5 Căutare fuzzy (`pg_trgm`) + filtre salvate
-- [ ] 4.6 Import Vivino / CellarTracker (CSV)
+- [x] 4.5 Căutare fuzzy (`pg_trgm`) + limbaj natural + filtre salvate (#55)
+- [x] 4.6 Import Vivino / CellarTracker / CSV generic (#64, #65)
 - [ ] 4.7 Scanare raft (mai multe sticle) / bon / factură
-- [ ] 4.8 „Vinerys Wrapped” — recap anual partajabil
+- [x] 4.8 „Vinerys Wrapped” — recap anual partajabil (#57; imaginea story vine cu designul nou)
 - [ ] 4.9 Pivniță comună familie (folosește `CellarMember` din 1.2)
 
 ---
@@ -183,7 +185,7 @@ Obiectiv: validăm înainte să construim; construim doar ce are cerere confirma
 - [ ] 5 interviuri crame + 5 restaurante/wine baruri + 10 colecționari
 - [ ] Nume/brand, domeniu propriu, landing page cu waitlist
 - [ ] Hosting de producție (nu doar serverul de acasă): Postgres gestionat, S3/R2, backup, monitorizare → decizie D5
-- [ ] Legal: GDPR, Termeni, Politică confidențialitate, cookie consent
+- [~] Legal: export GDPR + schițe Termeni / Confidențialitate (#111); textele cer revizuire juridică, cookie consent nu e necesar (doar cookie-uri esențiale)
 
 ### 5.1 B2C Freemium `⬜`
 - [ ] Planuri Free / Pro, plăți (Stripe), cote AI, pagină de pricing
@@ -272,7 +274,11 @@ Mapare suplimentară: 1.4 → M11 · 2.0–2.4 → M10 · 3.x → M12 · 5.x →
 | D1 | Direcție vizuală (A/B/C) | ⬜ deschisă | — |
 | D2 | Limbi inițiale | ✅ | RO + EN, structură extensibilă |
 | D3 | Tehnologie mobile | ⬜ deschisă | Recomandare: Expo + API v1 |
-| D4 | Provider email (reset parolă, notificări) | ⬜ deschisă | Ex: Resend / SMTP propriu |
+| D4 | Provider email (reset parolă, notificări) | ✅ | SMTP generic, Brevo (07.10) |
 | D5 | Hosting producție pentru business | ⬜ deschisă | — |
 | D6 | Modele business prioritare | 🟨 propus | B2C freemium → Pașaport crame → Restaurante |
 | D7 | Ordinea fazelor | ✅ | 0 → 1 → 2 → 3 → 4/5 → 6 (2 și 3 pot avansa în paralel după 1) |
+| D8 | Logging | ✅ 11.10 | Logger propriu JSON fără dependențe (merge și în edge), nu pino |
+| D9 | Raportare erori | ✅ 11.10 | Client minimal compatibil Sentry/GlitchTip, activ doar cu `SENTRY_DSN`; fără SDK (greutate pe Pi). Recomandat: GlitchTip în CasaOS |
+| D10 | Prețuri AI | ✅ 11.10 | Nu se hardcodează: `agent.metadata.pricing` sau `AI_PRICING_JSON`; fără preț → cost `null` |
+| D11 | Ritm de deploy | ✅ 11.10 | Merge rar în `main`, cu multe issue-uri pe PR (cerut de utilizator) |

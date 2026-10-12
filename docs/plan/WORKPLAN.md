@@ -33,11 +33,11 @@ Consecințe pentru planul ăsta:
 | 9 | #64 | INT-001 Import CSV Vivino | done | `c542d27` | Pagina `/wines/import`: upload, auto-detectare format, mapare coloane editabilă, preview cu Nou/Duplicat/Eroare, import în tranzacție + `wine_log` ADDED. Motor comun `utils/csvImport.js` (și pentru #65 și CSV generic, inclusiv exportul Vinerys). Rating 1–5 rotunjit; zecimalele Vivino se pierd |
 | 10 | #65 | INT-002 Import CSV CellarTracker | done | `be5fa76` | Preset CellarTracker (detectat după `iWine`) peste motorul din #64: tipuri compuse („White - Sweet/Dessert”), mărime în ml, BeginConsume/EndConsume, Valuation, Location, scor pe 100 → 1–5, NV (1001) → fără an |
 | — | | **Checkpoint 2** | | | |
-| 11 | #123 | CI-008 Smoke test producție | done | | `scripts/smoke-prod.mjs` + `npm run smoke:prod`: 10 pași, cont de test creat și șters în `finally`, așteaptă `version` din `/health`, webhook la eșec. Verificat local 10/10 (fără MinIO). Fără job programat în GitHub Actions: modificarea workflow-urilor cere scope-ul `workflow`; se rulează manual după deploy |
-| 12 | #104 | HOME-003 Vin → mâncare | done | | Secțiunea „Ce gătesc cu el?” pe pagina vinului: 3 preparate + temperatură + decantare + pahar, generate cu agenții utilizatorului (fallback pe rând), cache pe vin (`pairing`/`pairingKey`, migrație), invalidat când se schimbă identitatea vinului. Consumul AI intră în `ai_usage` |
-| 13 | #55 | CELLAR-009 Căutare fuzzy (pg_trgm) | done | | pg_trgm (`word_similarity` pe nume/producător, fără diacritice cu `translate`) + căutare în regiune/soiuri/arome/asocieri/note + limbaj natural (tip, „gata de băut”, „trecute de vârf”, sub/peste preț, an, favorite). Filtre salvate (max 20). 2 migrații. Moneda în „lei/€” e ignorată; prețul se compară cu valoarea salvată (multi-currency = #35) |
-| 14 | #57 | SOCIAL-001 Vinerys Wrapped | done | | Pagina `/wrapped?year=` ca o poveste verticală de carduri: sticle, țări, soiul anului, ritmul pe luni, producătorul preferat, cea mai scumpă sticlă, preferatele, pivnița azi. Distribuire prin Web Share / clipboard. Istoricul vechi vine din `consumptionDate`. Fără imagine generată și fără pagină publică (vin cu designul nou, #94) |
-| 15 | #77 | REFACTOR-006 Sentry (opțional, pe DSN) | done | | Fără SDK: client minimal compatibil Sentry/GlitchTip (`utils/errorReporting.js`), activ doar cu `SENTRY_DSN`. Server: `instrumentation.js` → `onRequestError`. Browser: `app/error.jsx` → `/api/client-errors`. Release = `APP_VERSION`, mediul = `SENTRY_ENVIRONMENT`. Verificat cap-coadă cu un endpoint fals. Fără source maps (cer SDK + upload la build) |
+| 11 | #123 | CI-008 Smoke test producție | done | `e210058` | `scripts/smoke-prod.mjs` + `npm run smoke:prod`: 10 pași, cont de test creat și șters în `finally`, așteaptă `version` din `/health`, webhook la eșec. Verificat local 10/10 (fără MinIO). Fără job programat în GitHub Actions: modificarea workflow-urilor cere scope-ul `workflow`; se rulează manual după deploy |
+| 12 | #104 | HOME-003 Vin → mâncare | done | `083e709` | Secțiunea „Ce gătesc cu el?” pe pagina vinului: 3 preparate + temperatură + decantare + pahar, generate cu agenții utilizatorului (fallback pe rând), cache pe vin (`pairing`/`pairingKey`, migrație), invalidat când se schimbă identitatea vinului. Consumul AI intră în `ai_usage` |
+| 13 | #55 | CELLAR-009 Căutare fuzzy (pg_trgm) | done | `0ff37bb`, `154d5ba` | pg_trgm (`word_similarity` pe nume/producător, fără diacritice cu `translate`) + căutare în regiune/soiuri/arome/asocieri/note + limbaj natural (tip, „gata de băut”, „trecute de vârf”, sub/peste preț, an, favorite). Filtre salvate (max 20). 2 migrații. Moneda în „lei/€” e ignorată; prețul se compară cu valoarea salvată (multi-currency = #35) |
+| 14 | #57 | SOCIAL-001 Vinerys Wrapped | done | `609e4c5` | Pagina `/wrapped?year=` ca o poveste verticală de carduri: sticle, țări, soiul anului, ritmul pe luni, producătorul preferat, cea mai scumpă sticlă, preferatele, pivnița azi. Distribuire prin Web Share / clipboard. Istoricul vechi vine din `consumptionDate`. Fără imagine generată și fără pagină publică (vin cu designul nou, #94) |
+| 15 | #77 | REFACTOR-006 Sentry (opțional, pe DSN) | done | `a7f92d0` | Fără SDK: client minimal compatibil Sentry/GlitchTip (`utils/errorReporting.js`), activ doar cu `SENTRY_DSN`. Server: `instrumentation.js` → `onRequestError`. Browser: `app/error.jsx` → `/api/client-errors`. Release = `APP_VERSION`, mediul = `SENTRY_ENVIRONMENT`. Verificat cap-coadă cu un endpoint fals. Fără source maps (cer SDK + upload la build) |
 
 ## Sărite (cu motiv)
 
@@ -85,4 +85,28 @@ Consecințe pentru planul ăsta:
   - Completează `[PLACEHOLDER]`-ele din paginile legale.
   - Opțional: setează `AI_PRICING_JSON`.
 - **Rămase:** rândurile 11–15.
+
+### Checkpoint 3 — 2026-10-12 (planul inițial terminat)
+
+- **Terminate (5):**
+  - #123 smoke test producție
+  - #104 „Ce gătesc cu el?”
+  - #55 căutare fuzzy + limbaj natural + filtre salvate
+  - #57 Wrapped
+  - #77 raportare erori
+- **În plus:**
+  - `dde8373`: timeout e2e mai mare la adăugarea vinului (flaky pe server rece).
+  - `154d5ba`: migrația `pg_trgm` nu mai poate bloca pornirea containerului. Testată și pe o bază fără drept de CREATE.
+- **Teste:** 175 unit, e2e 14/14, drift = 0, CI verde pe PR #124.
+- **Total sesiune:** 16 issue-uri închise prin PR #124, plus #125 (teme) deschis pentru alegere.
+- **Migrații noi (se aplică automat la pornire):** `scan_cache`, `ai_usage`, `wine_pairing`, `wine_search_trgm`, `saved_filters`.
+- **După deploy:**
+  - `npm run smoke:prod`
+  - `node scripts/normalize-wines.mjs` (dry-run, apoi `--apply`)
+  - opțional `SENTRY_DSN` / `AI_PRICING_JSON`
+- **Rămân pentru sesiunile următoare:**
+  - după publicarea `feat/phase-2-design`: design (#122, #125, #89–#97), #102;
+  - modelul de date nou (#29–#33, #85), care cere aprobare;
+  - #27 strat de servicii, #84 API v1, #87 cote AI;
+  - push (#53), i18n (#98–#101).
 

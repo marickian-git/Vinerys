@@ -40,8 +40,8 @@ Starea proiectului la commit `c0473ae`. Bifează problemele când sunt rezolvate
 - **Styling:** ~30 de fișiere cu blocuri `<style>` inline, ~22 de `@import` Google Fonts la runtime, ~100 de `style={{}}`. Tailwind și daisyUI sunt instalate, dar aproape nefolosite. Culorile sunt hardcodate peste tot.
 - **Fișiere mari:** `WineForm.jsx` (1222 linii), `AISettingsSection.jsx` (953), `dashboard/page.js` (909), `utils/actions.js` (708).
 - **Limbaj și organizare:** JS și TS amestecate. `package.json` se numește `nextjs-tutorial`, README-ul conține boilerplate.
-- **Fără teste.** CI-ul face build și push direct pe `latest`, fără lint, typecheck, teste sau migrații automate.
-- **Statistici:** încarcă toate vinurile în memorie. Dashboard-ul apelează `getCurrentUser` de 4 ori.
+- ~~**Fără teste.**~~ ✅ Faza 0.3: 175 teste unit, 14 e2e, CI cu lint/typecheck/migrații/drift
+- ~~**Statistici:** încarcă toate vinurile în memorie. Dashboard-ul apelează `getCurrentUser` de 4 ori.~~ ✅ `3503414` (#34): agregări în DB + `cache()`
 - **Model de date:** un rând `Wine` înseamnă N sticle, deci nu se pot urmări sticle individuale.
 - **Monedă și limbă:** moneda e fixă pe €, textele sunt hardcodate în română.
 - **AI:** utilizatorul trebuie să-și aducă propriile chei API, o barieră pentru utilizatorii non-tehnici.
