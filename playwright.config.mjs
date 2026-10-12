@@ -36,6 +36,7 @@ export default defineConfig({
       MINIO_ACCESS_KEY: 'e2e',
       MINIO_SECRET_KEY: 'e2e-secret',
       SMTP_HOST: '',
+      AUTH_SIGNUP_MAX: '100',
     },
   },
 });

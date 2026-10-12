@@ -92,6 +92,21 @@ Tokenii sunt în `docs/design/proposed-themes.tokens.json`, iar `tests/unit/prop
 
 **Next:** UI pentru prețuri per agent în formularul de agent (split AISettingsSection, #74). Cotele per utilizator (AI-012) se pot construi direct peste `ai_usage`.
 
+### #111 BIZ-004 GDPR: export date + pagini legale
+**Făcut:**
+- `GET /api/account/export`: JSON descărcabil cu profil, vinuri, `wine_log`, agenți AI (fără chei), `ai_usage` și sesiuni (dată/IP/browser). Rate limit 5/oră.
+- În Setări, cardul „Datele tale” are buton de descărcare.
+- `/legal/privacy` și `/legal/terms` (`components/LegalPage.jsx`), plus link pe sign-up.
+- E2E: `tests/e2e/gdpr.spec.js` (export, 401 fără sesiune, pagini publice).
+
+**Decizii:**
+- Fără banner de cookie-uri: folosim doar cookie-uri strict necesare (sesiune, preferințe). Textul o spune explicit și promite consimțământ dacă apar altele.
+- Textele legale sunt schițe: operatorul, contactul, găzduirea și retenția backup-urilor sunt `[PLACEHOLDER]`. Trebuie revizuite înainte de lansarea publică (BIZ-002/BIZ-003).
+
+**Învățat / capcane:**
+- **Prisma 7: `migrate dev` nu mai rulează `generate`.** După o migrație nouă trebuie rulat `npx prisma generate`, altfel `prisma.<model>` e `undefined` la rulare (build-ul din CI îl rulează, deci acolo nu se vede).
+- Limita de sign-up (5/oră/IP) bloca suita e2e la al 6-lea cont. Acum e configurabilă prin `AUTH_SIGNUP_MAX`, setat la 100 doar în `playwright.config.mjs`. În producție rămâne 5.
+
 ---
 
 ## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub
