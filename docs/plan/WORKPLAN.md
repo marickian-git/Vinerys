@@ -46,7 +46,7 @@ Același flux. Branch-ul a fost repornit din `main` (`137957e`). Un singur merge
 | # | Issue | Titlu | Status | Commit | Note / interpretare |
 |---|---|---|---|---|---|
 | 16 | #66 | INT-003 „Cumpără din nou” | done | | Card pe pagina vinului când s-a terminat un vin cu rating ≥ 4 sau favorit (issue-ul cere ≥ 5; prea rar pe scara 1–5): linkuri de căutare Vivino / Google Shopping + „L-am cumpărat din nou” (readuce vinul în pivniță cu sticle noi, `wine_log` ADDED restock). Afilierea rămâne pentru BIZ |
-| 17 | #31 | DATA-003 Modelul Tasting | todo | | Aditiv: legat de `Wine` acum, de `Bottle` când vine modelul nou (#30) |
+| 17 | #31 | DATA-003 Modelul Tasting | done | | Model `Tasting` (migrație + valoarea `TASTED` în `LogAction`): vin, dată, rating, ocazie, oameni, mâncare, loc, note, poze, arome. Aditiv, fără să atingă `Wine`; primește `bottleId` când vine #30. `Wine.rating` = media degustărilor. CRUD în actions + `schemas/tasting.js`; export GDPR include degustările și filtrele salvate |
 | 18 | #49 | CELLAR-003 Jurnal de degustare | todo | | |
 | 19 | #106 | HOME-005 „Deschide sticla” + follow-up | todo | | |
 | 20 | #61 | SOCIAL-005 Badge-uri | todo | | |

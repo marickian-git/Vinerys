@@ -3,9 +3,9 @@ import { createLogger, serializeError } from './logger';
 
 const logger = createLogger('storage');
 
-export const UPLOAD_FOLDERS = ['wines/labels', 'wines/bottles', 'avatars'];
+export const UPLOAD_FOLDERS = ['wines/labels', 'wines/bottles', 'avatars', 'tastings'];
 
-const KEY_PATTERN = /^(wines\/labels|wines\/bottles|avatars|wines)\/([A-Za-z0-9]+)_[A-Za-z0-9._-]+$/;
+const KEY_PATTERN = /^(wines\/labels|wines\/bottles|avatars|tastings|wines)\/([A-Za-z0-9]+)_[A-Za-z0-9._-]+$/;
 
 // Extrage cheia obiectului dintr-un URL salvat (http://host/minio/vinerys/<cheie codată>)
 export function objectKeyFromUrl(value, bucket = BUCKET) {

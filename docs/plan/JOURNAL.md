@@ -198,6 +198,19 @@ Primul lot a fost planul inițial (15 issue-uri, pentru bugetul „câteva credi
 
 **Învățat — bug găsit de e2e (`de51761`):** `z.coerce.boolean("false")` dă `true`. Formularul trimite `isFavorite` ca text, deci orice vin salvat din formular devenea favorit și nu mai putea fi scos de la favorite prin editare. Bug-ul exista și înainte de #28 (schema era la fel în `actions.js`). De verificat în producție câte vinuri sunt marcate favorite fără să fi fost alese.
 
+### #31 DATA-003 Modelul Tasting
+**Făcut:**
+- Model `Tasting` (`tasting`): `wineId` cu `SetNull` + `wineName` ca instantaneu, `tastedAt`, `rating`, `occasion`, `people[]`, `food`, `location`, `notes`, `photoUrls[]`, `aromas[]`. `LogAction.TASTED` nou. Migrația `20261012063610_tasting`.
+- Acțiuni `getTastings`/`createTasting`/`updateTasting`/`deleteTasting`; aromele și persoanele trec prin normalizatori (#120).
+- Pozele merg în folderul `tastings` (whitelist-ul de upload). `releaseImages` numără și referințele din degustări.
+- `Wine.rating` se sincronizează cu media degustărilor.
+- Exportul GDPR include degustările și filtrele salvate.
+
+**Decizii:**
+- Model aditiv: nu schimbă `Wine`, deci decizia mare Wine/Bottle (#30) rămâne deschisă.
+- O degustare supraviețuiește ștergerii vinului (jurnalul e al utilizatorului).
+- Ratingul vinului e media rotunjită, ca listele, filtrele și Wrapped să meargă fără modificări.
+
 ---
 
 ## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub

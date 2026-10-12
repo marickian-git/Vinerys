@@ -10,10 +10,11 @@ import { WineInputSchema, parseWineForm } from "../schemas/wine";
 import { duplicateKey } from "./csvImport";
 import { likePattern, parseSearchQuery } from "./searchQuery";
 import { buildWrapped } from "./wrapped";
-import { dedupeLocations, normalizeWineData } from "./normalize";
+import { cleanText, dedupeLocations, normalizeAromas, normalizeList, normalizeWineData } from "./normalize";
 import { countsBy, monthlySeries, nearMaturityWines, overdueWines } from "./stats";
 import { CellarNameSchema, PasswordChangeSchema, ProfileInputSchema, firstIssueMessage } from "../schemas/account";
 import { AIAgentInputSchema } from "../schemas/ai";
+import { TastingInputSchema } from "../schemas/tasting";
 import prisma from "./db";
 import { auth } from "./auth";
 import { decryptSecret, encryptSecret } from "./aiSecrets";
@@ -92,11 +93,12 @@ async function releaseImages(urls) {
   for (const url of new Set(urls.filter(Boolean))) {
     const key = objectKeyFromUrl(url);
     if (!key) continue;
-    const [wineRefs, userRefs] = await Promise.all([
+    const [wineRefs, userRefs, tastingRefs] = await Promise.all([
       prisma.wine.count({ where: { OR: [{ labelImageUrl: url }, { bottleImageUrl: url }] } }),
       prisma.user.count({ where: { image: url } }),
+      prisma.tasting.count({ where: { photoUrls: { has: url } } }),
     ]);
-    if (wineRefs + userRefs === 0) keys.push(key);
+    if (wineRefs + userRefs + tastingRefs === 0) keys.push(key);
   }
   await removeObjects(keys);
 }
@@ -1018,5 +1020,96 @@ export async function restockWine(id, input = {}) {
   revalidatePath('/wines');
   revalidatePath(`/wines/${id}`);
   revalidatePath('/dashboard');
+  return { success: true };
+}
+
+// ─────────────────────────────────────────
+// DEGUSTĂRI (DATA-003 / CELLAR-003)
+// ─────────────────────────────────────────
+
+// Ratingul vinului = media degustărilor cu rating (compatibilitate cu listele și statisticile existente)
+async function syncWineRating(tx, wineId) {
+  if (!wineId) return;
+  const { _avg } = await tx.tasting.aggregate({ where: { wineId, rating: { not: null } }, _avg: { rating: true } });
+  if (_avg.rating != null) await tx.wine.update({ where: { id: wineId }, data: { rating: Math.round(_avg.rating) } });
+}
+
+function tastingData(input) {
+  const parsed = TastingInputSchema.safeParse(input ?? {});
+  if (!parsed.success) return { error: z.flattenError(parsed.error).fieldErrors };
+  const data = parsed.data;
+  return {
+    data: {
+      ...data,
+      tastedAt: data.tastedAt ?? new Date(),
+      people: normalizeList(data.people),
+      aromas: normalizeAromas(data.aromas),
+      occasion: cleanText(data.occasion),
+      location: cleanText(data.location),
+      food: cleanText(data.food),
+    },
+  };
+}
+
+export async function getTastings({ wineId, limit = 100 } = {}) {
+  const user = await getCurrentUser();
+  return prisma.tasting.findMany({
+    where: { userId: user.id, ...(wineId && { wineId }) },
+    orderBy: { tastedAt: 'desc' },
+    take: Math.min(Number(limit) || 100, 500),
+    include: { wine: { select: { id: true, name: true, producer: true, vintage: true, type: true, labelImageUrl: true } } },
+  });
+}
+
+export async function createTasting(input) {
+  const user = await getCurrentUser();
+  const parsed = tastingData(input);
+  if (parsed.error) return { error: parsed.error };
+  const wine = await prisma.wine.findFirst({ where: { id: parsed.data.wineId, userId: user.id }, select: { id: true, name: true } });
+  if (!wine) return { error: 'Vinul nu a fost găsit' };
+
+  const tasting = await prisma.$transaction(async (tx) => {
+    const created = await tx.tasting.create({ data: { ...parsed.data, userId: user.id, wineName: wine.name } });
+    await syncWineRating(tx, wine.id);
+    await tx.wineLog.create({ data: { wineId: wine.id, userId: user.id, action: 'TASTED', details: { tastingId: created.id, rating: created.rating } } });
+    return created;
+  });
+
+  revalidatePath(`/wines/${wine.id}`);
+  revalidatePath('/tastings');
+  return { success: true, tasting };
+}
+
+export async function updateTasting(id, input) {
+  const user = await getCurrentUser();
+  const existing = await prisma.tasting.findFirst({ where: { id, userId: user.id } });
+  if (!existing) return { error: 'Degustarea nu a fost găsită' };
+  const parsed = tastingData({ ...input, wineId: existing.wineId ?? input?.wineId });
+  if (parsed.error) return { error: parsed.error };
+  const { wineId, ...data } = parsed.data;
+
+  const tasting = await prisma.$transaction(async (tx) => {
+    const updated = await tx.tasting.update({ where: { id }, data });
+    await syncWineRating(tx, existing.wineId);
+    return updated;
+  });
+  await releaseImages(existing.photoUrls.filter((url) => !tasting.photoUrls.includes(url)));
+
+  revalidatePath(`/wines/${wineId}`);
+  revalidatePath('/tastings');
+  return { success: true, tasting };
+}
+
+export async function deleteTasting(id) {
+  const user = await getCurrentUser();
+  const existing = await prisma.tasting.findFirst({ where: { id, userId: user.id } });
+  if (!existing) return { error: 'Degustarea nu a fost găsită' };
+  await prisma.$transaction(async (tx) => {
+    await tx.tasting.delete({ where: { id } });
+    await syncWineRating(tx, existing.wineId);
+  });
+  await releaseImages(existing.photoUrls);
+  if (existing.wineId) revalidatePath(`/wines/${existing.wineId}`);
+  revalidatePath('/tastings');
   return { success: true };
 }

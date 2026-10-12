@@ -33,6 +33,7 @@ model User {
   aiAgents      AIAgent[]
   aiUsage       AIUsage[]
   savedFilters  SavedFilter[]
+  tastings      Tasting[]
 
 
   @@map("user")
@@ -173,6 +174,7 @@ model Wine {
   updatedAt            DateTime    @updatedAt
 
   wineLogs             WineLog[]
+  tastings             Tasting[]
 
   @@index([userId])
   @@index([type])
@@ -199,6 +201,32 @@ model WineLog {
   @@index([userId])
   @@index([action])
   @@map("wine_log")
+}
+
+// Degustare (DATA-003): mai multe pe vin, cu ocazie, oameni, mâncare, loc, note, poze și arome.
+// Legată de Wine acum; când vine Bottle (#30) primește și bottleId. wineName păstrează contextul dacă vinul e șters.
+model Tasting {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wineId    String?
+  wine      Wine?    @relation(fields: [wineId], references: [id], onDelete: SetNull)
+  wineName  String
+  tastedAt  DateTime @default(now())
+  rating    Int?
+  occasion  String?
+  people    String[]
+  food      String?
+  location  String?
+  notes     String?
+  photoUrls String[]
+  aromas    String[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, tastedAt])
+  @@index([wineId])
+  @@map("tasting")
 }
 
 // Filtre salvate în Pivniță (CELLAR-009): parametrii din URL, sub un nume
@@ -292,4 +320,5 @@ enum LogAction {
   GIFTED
   SCAN_AI
   DELETE
+  TASTED
 }
