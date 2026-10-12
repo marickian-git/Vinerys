@@ -374,6 +374,21 @@ Plus `describeTools()` (textul pentru prompt) și `runTool(userId, name, args)` 
 
 **Decizii:** numele celui care rezervă se păstrează, dar nu e afișat nimănui, inclusiv proprietarului, pentru surpriză. Poate fi arătat după o dată aleasă, într-o versiune viitoare.
 
+### #53 CELLAR-007 Notificări push
+**Făcut:**
+- Modelele `PushSubscription` și `NotificationLog` (unic pe `userId + key`, ca rezumatul să plece o singură dată pe lună). Migrația `push_notifications`.
+- `utils/digest.js` (`buildDigest`: mesaje românești, link spre vin când e unul singur, altfel spre `/planner`) și `server/push.js` (`sendToUser`: șterge abonamentele 404/410; `sendMonthlyDigests`).
+- Rute: `/api/push/subscribe` (GET cheia publică, POST, DELETE) și `/api/cron/digest` (Bearer `CRON_SECRET`, comparat în timp constant).
+- `public/push-sw.js` (doar `push` + `notificationclick`). `ServiceWorkerRegister` îl păstrează și curăță în continuare restul.
+- Cardul „Notificări” din Setări (`PushSetting`), cu stări pentru browser fără suport, server neconfigurat, activ și inactiv.
+- Teste: unit pentru digest, e2e pentru dezactivarea fără VAPID și autorizarea cron-ului. Ad-hoc pe DB: trimitere, ștergerea abonamentului expirat, fără dublură în aceeași lună.
+
+**Decizii:**
+- Service worker separat pentru push, fiindcă `sw.js` e dezînregistrat intenționat (cache-uri private, B13) până la PWA-001.
+- Cron extern în loc de un scheduler în aplicație: containerul rulează o singură instanță, iar CasaOS/crontab e mai simplu și vizibil.
+
+**De făcut de utilizator:** `npx web-push generate-vapid-keys`, apoi `VAPID_*` + `CRON_SECRET` în CasaOS și un cron lunar cu `curl` (comanda e în `.env.example`).
+
 ---
 
 ## 2026-10-07 — DATA-009 raport de completitudine + merge blocat de GitHub

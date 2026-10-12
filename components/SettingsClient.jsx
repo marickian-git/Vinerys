@@ -10,6 +10,7 @@ import ShareLinkSection from "@/components/ShareLinkSection";
 import AISettingsSection from "@/components/AISettingsSection";
 import AIUsageSummary from "@/components/AIUsageSummary";
 import CurrencySetting from "@/components/CurrencySetting";
+import PushSetting from "@/components/PushSetting";
 import { appPath } from "@/utils/appPath";
 import EmailVerificationBanner from "@/components/EmailVerificationBanner";
 
@@ -200,6 +201,12 @@ export default function SettingsClient({
               initialAgents={aiAgents}
               providers={aiProviders}
             />
+          </div>
+
+          {/* Notificări push (CELLAR-007) */}
+          <div className="set-card">
+            <div className="set-card-title">🔔 Notificări</div>
+            <PushSetting />
           </div>
 
           {/* Monedă (DATA-007) */}

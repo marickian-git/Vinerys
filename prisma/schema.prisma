@@ -37,6 +37,8 @@ model User {
   savedFilters  SavedFilter[]
   tastings      Tasting[]
   wineLists     WineList[]
+  pushSubscriptions PushSubscription[]
+  notificationLogs  NotificationLog[]
 
 
   @@map("user")
@@ -290,6 +292,32 @@ model WineListItem {
 
   @@index([listId, position])
   @@map("wine_list_item")
+}
+
+// Notificări push (CELLAR-007): abonamentele browserelor și ce s-a trimis deja (fără dubluri)
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("push_subscription")
+}
+
+model NotificationLog {
+  id     String   @id @default(cuid())
+  userId String
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  key    String
+  sentAt DateTime @default(now())
+
+  @@unique([userId, key])
+  @@map("notification_log")
 }
 
 // Filtre salvate în Pivniță (CELLAR-009): parametrii din URL, sub un nume

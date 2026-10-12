@@ -69,7 +69,7 @@ Același flux. Branch-ul a fost repornit din `main` (`137957e`). Un singur merge
 | 30 | #54 | CELLAR-008 Istoric de preț și ROI | done | `12c1b79` | Tabela `wine_valuation` (migrație cu backfill: valoarea curentă devine primul punct). Se scrie la creare, la import și la schimbarea valorii sau monedei. Pe pagina vinului: sparkline + ROI. Pagina `/value`: valoare, cost, câștig, ROI, top câștiguri/pierderi, în moneda utilizatorului. `/value/report`: raport printabil/PDF pentru asigurare. Fără prețuri de piață automate (nu există o sursă publică) |
 | — | | **Checkpoint 6** | | | |
 | 31 | #59 | SOCIAL-003 Wishlist și liste publice | done | | Liste (`wine_list` + `wine_list_item`, migrație): wishlist, recomandări, cadouri. Elementele vin din pivniță sau sunt vinuri noi, cu notă și link spre magazin. Fiecare listă poate fi publică prin link (`/l/<id>`, fără cont, noindex). Cadouri: vizitatorul rezervă cu numele, proprietarul vede doar „rezervat” (surpriza rămâne), iar „cumpărat” se bifează. Exportul GDPR include listele |
-| 32 | #53 | CELLAR-007 Notificări push | todo | | |
+| 32 | #53 | CELLAR-007 Notificări push | done | | Web Push (VAPID, `web-push`), cu migrație pentru abonamente + jurnal anti-dubluri. Service worker separat `push-sw.js` (fără cache). Activare din Setări. Rezumat lunar: trecute de vârf / ies anul acesta / intră anul acesta, cu link spre vin sau plan. Trimis de `POST /api/cron/digest` (`CRON_SECRET`), rulat de un cron extern. Abonamentele expirate se șterg. Dezactivat elegant fără chei VAPID. Plan de weekend (#107) poate folosi același canal |
 
 ## Sărite (cu motiv)
 
